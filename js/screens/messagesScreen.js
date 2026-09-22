@@ -116,9 +116,14 @@ function renderChatThread(conv, state) {
           </div>
         </div>
 
-        <span class="price-tag" style="font-size: 1.1rem;">
-          <span class="currency">€</span>${conv.jobPayment}
-        </span>
+        <div style="display: flex; align-items: center; gap: 0.4rem;">
+          <button id="btn-chat-report" data-job-id="${conv.jobId}" title="Diesen Chat oder Vorfall melden" style="color: #ef4444; font-size: 0.72rem; font-weight: 700; padding: 3px 6px; border: 1px solid #fecaca; border-radius: 6px; background: #fef2f2; cursor: pointer; display: flex; align-items: center; gap: 2px;">
+            <span>🚩</span><span>Melden</span>
+          </button>
+          <span class="price-tag" style="font-size: 1.1rem;">
+            <span class="currency">€</span>${conv.jobPayment}
+          </span>
+        </div>
       </div>
 
       <!-- Linked Job Banner & Status Action -->
@@ -269,6 +274,14 @@ export function attachMessagesScreenEvents() {
       if (jobId) {
         store.openReviewModal(jobId);
       }
+    });
+  }
+
+  const chatReportBtn = document.getElementById('btn-chat-report');
+  if (chatReportBtn) {
+    chatReportBtn.addEventListener('click', () => {
+      const jobId = chatReportBtn.getAttribute('data-job-id');
+      store.openReportModal(jobId);
     });
   }
 }

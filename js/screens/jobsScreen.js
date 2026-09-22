@@ -1,5 +1,5 @@
 /**
- * QuickJob Jobs Discovery & Filter Screen
+ * QuickJob Jobs Discovery, Bookmarks & My Jobs Screen
  */
 import { store } from '../state/store.js';
 import { JobCategories } from '../models/types.js';
@@ -9,21 +9,53 @@ export function renderJobsScreen(state) {
   const user = state.currentUser;
   const isMinor = user.ageCategory === 'YOUTH_14_17';
   const filters = state.filters;
+  const currentTab = filters.feedTab || 'all';
+
+  const bookmarkedJobsCount = state.jobs.filter(j => j.isBookmarked).length;
+  const myJobsCount = state.jobs.filter(j => 
+    j.hasApplied || (j.worker && j.worker.id === user.id) || (j.employer && j.employer.id === user.id)
+  ).length;
 
   // Filter jobs
   let filtered = state.jobs.filter(job => {
-    // Quick Filter Logic
-    if (filters.quickFilter === 'direct' && job.applicationMode !== 'DIRECT_ACCEPT') return false;
-    if (filters.quickFilter === 'near' && job.distanceKm > 2) return false;
-    if (filters.quickFilter === 'high_pay' && job.payment < 30) return false;
-    if (filters.quickFilter === 'youth') {
-      if (job.minAge && job.minAge > 17) return false;
-      if (job.category === 'disposal') return false;
+    // 1. Tab filtering
+    if (currentTab === 'saved') {
+      if (!job.isBookmarked) return false;
+    } else if (currentTab === 'my_jobs') {
+      const isMyJob = job.hasApplied || (job.worker && job.worker.id === user.id) || (job.employer && job.employer.id === user.id);
+      if (!isMyJob) return false;
     }
 
-    // Category filter
-    if (filters.category !== 'all' && job.category !== filters.category) {
-      return false;
+    // 2. Quick Filter Logic (on discover tab)
+    if (currentTab === 'all') {
+      if (filters.quickFilter === 'direct' && job.applicationMode !== 'DIRECT_ACCEPT') return false;
+      if (filters.quickFilter === 'near' && job.distanceKm > 2) return false;
+      if (filters.quickFilter === 'high_pay' && job.payment < 30) return false;
+      if (filters.quickFilter === 'youth') {
+        if (job.minAge && job.minAge > 17) return false;
+        if (job.category === 'disposal') return false;
+      }
+
+      // Category filter
+      if (filters.category !== 'all' && job.category !== filters.category) {
+        return false;
+      }
+
+      // Min payment
+      if (filters.minPayment > 0 && job.payment < filters.minPayment) {
+        return false;
+      }
+
+      // Max distance
+      if (filters.maxDistanceKm < 10 && job.distanceKm > filters.maxDistanceKm) {
+        return false;
+      }
+
+      // Age restriction check
+      if (filters.onlySuitableForMyAge && isMinor) {
+        if (job.minAge && job.minAge > 17) return false;
+        if (job.category === 'disposal') return false; // hazardous heavy bulk waste restricted
+      }
     }
 
     // Search query
@@ -33,22 +65,6 @@ export function renderJobsScreen(state) {
       const matchDesc = job.description.toLowerCase().includes(q);
       const matchLoc = job.approxLocation.toLowerCase().includes(q);
       if (!matchTitle && !matchDesc && !matchLoc) return false;
-    }
-
-    // Min payment
-    if (filters.minPayment > 0 && job.payment < filters.minPayment) {
-      return false;
-    }
-
-    // Max distance
-    if (filters.maxDistanceKm < 10 && job.distanceKm > filters.maxDistanceKm) {
-      return false;
-    }
-
-    // Age restriction check
-    if (filters.onlySuitableForMyAge && isMinor) {
-      if (job.minAge && job.minAge > 17) return false;
-      if (job.category === 'disposal') return false; // hazardous heavy bulk waste restricted
     }
 
     return true;
@@ -69,7 +85,20 @@ export function renderJobsScreen(state) {
 
   return `
     <div class="screen-container" id="screen-jobs">
-      <!-- Search & Filter Controls -->
+      <!-- 3-Segment Feed Navigation -->
+      <div class="segmented-control" id="jobs-segment-control">
+        <button class="segment-btn ${currentTab === 'all' ? 'active' : ''}" data-feed-tab="all" id="tab-feed-all">
+          <span>🌐</span><span>Entdecken</span>
+        </button>
+        <button class="segment-btn ${currentTab === 'saved' ? 'active' : ''}" data-feed-tab="saved" id="tab-feed-saved">
+          <span>⭐</span><span>Gemerkt (${bookmarkedJobsCount})</span>
+        </button>
+        <button class="segment-btn ${currentTab === 'my_jobs' ? 'active' : ''}" data-feed-tab="my_jobs" id="tab-feed-myjobs">
+          <span>📋</span><span>Meine Aufträge (${myJobsCount})</span>
+        </button>
+      </div>
+
+      <!-- Search Box (always available) -->
       <div style="display: flex; flex-direction: column; gap: 0.65rem;">
         <div class="search-box">
           <span style="color: #94a3b8;">🔍</span>
@@ -82,82 +111,84 @@ export function renderJobsScreen(state) {
           ${filters.query ? '<button id="btn-clear-jobs-search" style="color: #94a3b8;">✕</button>' : ''}
         </div>
 
-        <!-- 1-Tap Quick Action Filter Pills -->
-        <div class="quick-filter-pills" id="jobs-quick-pills">
-          <button class="quick-filter-pill ${activeQuick === 'all' ? 'active' : ''}" data-quick="all">
-            <span>✨</span><span>Alle</span>
-          </button>
-          <button class="quick-filter-pill ${activeQuick === 'direct' ? 'active' : ''}" data-quick="direct">
-            <span>⚡</span><span>Sofort-Zuschlag</span>
-          </button>
-          <button class="quick-filter-pill ${activeQuick === 'youth' ? 'active' : ''}" data-quick="youth">
-            <span>🛡️</span><span>Jugend-konform</span>
-          </button>
-          <button class="quick-filter-pill ${activeQuick === 'near' ? 'active' : ''}" data-quick="near">
-            <span>📍</span><span>Unter 2 km</span>
-          </button>
-          <button class="quick-filter-pill ${activeQuick === 'high_pay' ? 'active' : ''}" data-quick="high_pay">
-            <span>💰</span><span>Ab 30 €</span>
-          </button>
-        </div>
+        ${currentTab === 'all' ? `
+          <!-- 1-Tap Quick Action Filter Pills -->
+          <div class="quick-filter-pills" id="jobs-quick-pills">
+            <button class="quick-filter-pill ${activeQuick === 'all' ? 'active' : ''}" data-quick="all">
+              <span>✨</span><span>Alle</span>
+            </button>
+            <button class="quick-filter-pill ${activeQuick === 'direct' ? 'active' : ''}" data-quick="direct">
+              <span>⚡</span><span>Sofort-Zuschlag</span>
+            </button>
+            <button class="quick-filter-pill ${activeQuick === 'youth' ? 'active' : ''}" data-quick="youth">
+              <span>🛡️</span><span>Jugend-konform</span>
+            </button>
+            <button class="quick-filter-pill ${activeQuick === 'near' ? 'active' : ''}" data-quick="near">
+              <span>📍</span><span>Unter 2 km</span>
+            </button>
+            <button class="quick-filter-pill ${activeQuick === 'high_pay' ? 'active' : ''}" data-quick="high_pay">
+              <span>💰</span><span>Ab 30 €</span>
+            </button>
+          </div>
 
-        <!-- Filter Row -->
-        <div class="filter-row">
-          <select class="filter-select" id="filter-sort">
-            <option value="closest" ${filters.sortBy === 'closest' ? 'selected' : ''}>Sort: Closest</option>
-            <option value="highest_pay" ${filters.sortBy === 'highest_pay' ? 'selected' : ''}>Sort: Highest Pay</option>
-          </select>
+          <!-- Filter Row -->
+          <div class="filter-row">
+            <select class="filter-select" id="filter-sort">
+              <option value="closest" ${filters.sortBy === 'closest' ? 'selected' : ''}>Sort: Closest</option>
+              <option value="highest_pay" ${filters.sortBy === 'highest_pay' ? 'selected' : ''}>Sort: Highest Pay</option>
+            </select>
 
-          <select class="filter-select" id="filter-distance">
-            <option value="10" ${filters.maxDistanceKm >= 10 ? 'selected' : ''}>Distance: All (<10 km)</option>
-            <option value="2" ${filters.maxDistanceKm === 2 ? 'selected' : ''}>Distance: < 2 km</option>
-            <option value="5" ${filters.maxDistanceKm === 5 ? 'selected' : ''}>Distance: < 5 km</option>
-          </select>
+            <select class="filter-select" id="filter-distance">
+              <option value="10" ${filters.maxDistanceKm >= 10 ? 'selected' : ''}>Distance: All (<10 km)</option>
+              <option value="2" ${filters.maxDistanceKm === 2 ? 'selected' : ''}>Distance: < 2 km</option>
+              <option value="5" ${filters.maxDistanceKm === 5 ? 'selected' : ''}>Distance: < 5 km</option>
+            </select>
 
-          <select class="filter-select" id="filter-pay">
-            <option value="0" ${filters.minPayment === 0 ? 'selected' : ''}>Min Pay: All</option>
-            <option value="25" ${filters.minPayment === 25 ? 'selected' : ''}>Min: €25+</option>
-            <option value="40" ${filters.minPayment === 40 ? 'selected' : ''}>Min: €40+</option>
-          </select>
-        </div>
+            <select class="filter-select" id="filter-pay">
+              <option value="0" ${filters.minPayment === 0 ? 'selected' : ''}>Min Pay: All</option>
+              <option value="25" ${filters.minPayment === 25 ? 'selected' : ''}>Min: €25+</option>
+              <option value="40" ${filters.minPayment === 40 ? 'selected' : ''}>Min: €40+</option>
+            </select>
+          </div>
 
-        <!-- Age Filter Banner / Toggle -->
-        ${isMinor ? `
-          <div style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: var(--qj-radius-sm); padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: space-between;">
-            <div style="font-size: 0.76rem; color: #5b21b6; font-weight: 600; display: flex; align-items: center; gap: 0.35rem;">
-              <span>🛡️</span>
-              <span>Jugendschutz aktiv (14–17 Jahre)</span>
+          <!-- Age Filter Banner / Toggle -->
+          ${isMinor ? `
+            <div style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: var(--qj-radius-sm); padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+              <div style="font-size: 0.76rem; color: #5b21b6; font-weight: 600; display: flex; align-items: center; gap: 0.35rem;">
+                <span>🛡️</span>
+                <span>Jugendschutz aktiv (14–17 Jahre)</span>
+              </div>
+              <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; color: #6b21a8; font-weight: 700; cursor: pointer;">
+                <input type="checkbox" id="check-age-filter" ${filters.onlySuitableForMyAge ? 'checked' : ''} />
+                <span>Safe for me</span>
+              </label>
             </div>
-            <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; color: #6b21a8; font-weight: 700; cursor: pointer;">
-              <input type="checkbox" id="check-age-filter" ${filters.onlySuitableForMyAge ? 'checked' : ''} />
-              <span>Safe for me</span>
-            </label>
+          ` : ''}
+
+          <!-- Category Scroll Bar -->
+          <div class="category-scroll">
+            <div class="category-chip ${filters.category === 'all' ? 'active' : ''}" data-cat="all">
+              <span>✨</span>
+              <span>All</span>
+            </div>
+            ${JobCategories.map(cat => `
+              <div class="category-chip ${filters.category === cat.id ? 'active' : ''}" data-cat="${cat.id}">
+                <span>${cat.icon}</span>
+                <span>${cat.name}</span>
+              </div>
+            `).join('')}
           </div>
         ` : ''}
-
-        <!-- Category Scroll Bar -->
-        <div class="category-scroll">
-          <div class="category-chip ${filters.category === 'all' ? 'active' : ''}" data-cat="all">
-            <span>✨</span>
-            <span>All</span>
-          </div>
-          ${JobCategories.map(cat => `
-            <div class="category-chip ${filters.category === cat.id ? 'active' : ''}" data-cat="${cat.id}">
-              <span>${cat.icon}</span>
-              <span>${cat.name}</span>
-            </div>
-          `).join('')}
-        </div>
       </div>
 
       <!-- Results Count Header -->
       <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.25rem;">
         <span style="font-size: 0.85rem; font-weight: 700; color: var(--qj-text-muted);">
-          Showing ${filtered.length} microjob${filtered.length === 1 ? '' : 's'}
+          ${currentTab === 'saved' ? `Gemerkt (${filtered.length})` : currentTab === 'my_jobs' ? `Meine Aufträge (${filtered.length})` : `Gefundene Microjobs (${filtered.length})`}
         </span>
-        ${(filters.category !== 'all' || filters.query || filters.minPayment > 0 || filters.maxDistanceKm < 10) ? `
+        ${(currentTab === 'all' && (filters.category !== 'all' || filters.query || filters.minPayment > 0 || filters.maxDistanceKm < 10)) ? `
           <button id="btn-reset-filters" style="font-size: 0.78rem; color: var(--qj-primary); font-weight: 700;">
-            Clear filters
+            Filter zurücksetzen
           </button>
         ` : ''}
       </div>
@@ -167,16 +198,40 @@ export function renderJobsScreen(state) {
         <div class="jobs-list" id="jobs-cards-container">
           ${filtered.map(job => renderJobCard(job)).join('')}
         </div>
+      ` : currentTab === 'saved' ? `
+        <!-- Empty Saved Bookmarks State -->
+        <div style="text-align: center; padding: 3rem 1.5rem; background: #ffffff; border: 1.5px dashed var(--qj-border); border-radius: var(--qj-radius-lg); margin-top: 0.5rem;">
+          <div style="font-size: 2.8rem; margin-bottom: 0.5rem;">⭐</div>
+          <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main);">Noch keine gemerkten Jobs</h3>
+          <p style="font-size: 0.85rem; color: var(--qj-text-muted); margin: 0.35rem 0 1.25rem 0; line-height: 1.45;">
+            Tippe auf das Stern-Symbol bei einem Microjob, um ihn in deiner Merkliste zu speichern.
+          </p>
+          <button class="btn btn-primary btn-sm" id="btn-browse-from-saved">
+            Jobs entdecken →
+          </button>
+        </div>
+      ` : currentTab === 'my_jobs' ? `
+        <!-- Empty My Jobs State -->
+        <div style="text-align: center; padding: 3rem 1.5rem; background: #ffffff; border: 1.5px dashed var(--qj-border); border-radius: var(--qj-radius-lg); margin-top: 0.5rem;">
+          <div style="font-size: 2.8rem; margin-bottom: 0.5rem;">📋</div>
+          <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main);">Keine aktiven Aufträge</h3>
+          <p style="font-size: 0.85rem; color: var(--qj-text-muted); margin: 0.35rem 0 1.25rem 0; line-height: 1.45;">
+            Hier werden Jobs angezeigt, auf die du dich beworben hast oder die du selbst als Auftraggeber inseriert hast.
+          </p>
+          <button class="btn btn-primary btn-sm" id="btn-browse-from-myjobs">
+            Jetzt bewerben →
+          </button>
+        </div>
       ` : `
-        <!-- Empty State -->
-        <div style="text-align: center; padding: 3rem 1.5rem; background: #ffffff; border: 1px dashed var(--qj-border); border-radius: var(--qj-radius-lg); margin-top: 1rem;">
-          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
-          <h3 style="font-size: 1.1rem; font-weight: 700;">No microjobs found</h3>
+        <!-- Empty Search Results State -->
+        <div style="text-align: center; padding: 3rem 1.5rem; background: #ffffff; border: 1.5px dashed var(--qj-border); border-radius: var(--qj-radius-lg); margin-top: 0.5rem;">
+          <div style="font-size: 2.8rem; margin-bottom: 0.5rem;">🔍</div>
+          <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main);">Keine Microjobs gefunden</h3>
           <p style="font-size: 0.85rem; color: var(--qj-text-muted); margin: 0.35rem 0 1.25rem 0;">
-            No active jobs match your current search or distance filters.
+            Keine aktiven Jobs entsprechen deiner Suche oder deinen Filtern.
           </p>
           <button class="btn btn-primary btn-sm" id="btn-empty-reset">
-            Reset all filters
+            Filter zurücksetzen
           </button>
         </div>
       `}
@@ -185,6 +240,29 @@ export function renderJobsScreen(state) {
 }
 
 export function attachJobsScreenEvents() {
+  // Segmented Feed Tab switcher
+  const tabBtns = document.querySelectorAll('.segment-btn[data-feed-tab]');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-feed-tab');
+      store.setFeedTab(tab);
+    });
+  });
+
+  const browseFromSaved = document.getElementById('btn-browse-from-saved');
+  if (browseFromSaved) {
+    browseFromSaved.addEventListener('click', () => {
+      store.setFeedTab('all');
+    });
+  }
+
+  const browseFromMyJobs = document.getElementById('btn-browse-from-myjobs');
+  if (browseFromMyJobs) {
+    browseFromMyJobs.addEventListener('click', () => {
+      store.setFeedTab('all');
+    });
+  }
+
   const searchInput = document.getElementById('jobs-search-input');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {

@@ -9,6 +9,7 @@ const STORAGE_KEY = 'quickjob_state_v1';
 class Store {
   constructor() {
     this.listeners = [];
+    this._replyTimeouts = {};
     this.state = this.loadInitialState();
   }
 
@@ -44,11 +45,13 @@ class Store {
       selectedConversationId: null,
       reviewJobId: null,
       applicantJobId: null,
+      reportJobId: null,
       isFilterModalOpen: false,
       isSafetyModalOpen: false,
       viewportSize: 'size-390',
       toast: null,
       filters: {
+        feedTab: 'all', // 'all', 'saved', 'my_jobs'
         category: 'all',
         query: '',
         maxDistanceKm: 10,
@@ -159,12 +162,22 @@ class Store {
   resetFilters() {
     this.setState({
       filters: {
+        feedTab: 'all',
         category: 'all',
         query: '',
         maxDistanceKm: 10,
         minPayment: 0,
         sortBy: 'closest',
         onlySuitableForMyAge: true
+      }
+    });
+  }
+
+  setFeedTab(tab) {
+    this.setState({
+      filters: {
+        ...this.state.filters,
+        feedTab: tab
       }
     });
   }
@@ -250,6 +263,7 @@ class Store {
 
   sendMessage(conversationId, text) {
     if (!text || !text.trim()) return;
+    const cleanText = text.trim();
     const convs = this.state.conversations.map(c => {
       if (c.id === conversationId) {
         return {
@@ -260,7 +274,7 @@ class Store {
               id: `msg_${Date.now()}`,
               senderId: this.state.currentUser.id,
               senderName: this.state.currentUser.name,
-              text: text.trim(),
+              text: cleanText,
               timestamp: 'Just now',
               isMine: true
             }
@@ -270,6 +284,67 @@ class Store {
       return c;
     });
     this.setState({ conversations: convs });
+
+    // Interactive simulated response from the participant
+    this.triggerSimulatedReply(conversationId, cleanText);
+  }
+
+  triggerSimulatedReply(conversationId, userText) {
+    if (this._replyTimeouts && this._replyTimeouts[conversationId]) {
+      clearTimeout(this._replyTimeouts[conversationId]);
+    }
+
+    const conv = this.state.conversations.find(c => c.id === conversationId);
+    if (!conv) return;
+
+    const lower = userText.toLowerCase();
+    let replyText = '';
+
+    if (lower.includes('arrived') || lower.includes('da') || lower.includes('hier') || lower.includes('vor ort')) {
+      replyText = 'Super! Ich öffne direkt die Tür bzw. komme zum Tor. Bis gleich!';
+    } else if (lower.includes('3pm') || lower.includes('okay') || lower.includes('zeit') || lower.includes('uhr') || lower.includes('passt')) {
+      replyText = 'Ja, perfekt! Die Uhrzeit passt mir hervorragend. Alles steht bereit.';
+    } else if (lower.includes('fertig') || lower.includes('done') || lower.includes('erledigt')) {
+      replyText = 'Großartig! Vielen Dank für die saubere Arbeit. Ich habe den Betrag gerade freigegeben!';
+    } else if (lower.includes('frage') || lower.includes('werkzeug') || lower.includes('handschuhe') || lower.includes('tool')) {
+      replyText = 'Alles nötige Werkzeug habe ich bereits vor Ort bereitgestellt. Du brauchst nur Arbeitskleidung!';
+    } else {
+      const genericReplies = [
+        'Vielen Dank für die schnelle Nachricht! Wir freuen uns auf die Zusammenarbeit.',
+        'Alles klar, notiert! Melde dich einfach kurz, sobald du da bist.',
+        'Klingt hervorragend. Bis später!'
+      ];
+      replyText = genericReplies[Math.floor(Math.random() * genericReplies.length)];
+    }
+
+    this._replyTimeouts[conversationId] = setTimeout(() => {
+      const currentConv = this.state.conversations.find(c => c.id === conversationId);
+      if (!currentConv) return;
+
+      const replyMsg = {
+        id: `msg_reply_${Date.now()}`,
+        senderId: currentConv.participant.id,
+        senderName: currentConv.participant.name,
+        text: replyText,
+        timestamp: 'Just now',
+        isMine: false
+      };
+
+      const updatedConvs = this.state.conversations.map(c => {
+        if (c.id === conversationId) {
+          return {
+            ...c,
+            messages: [...c.messages, replyMsg]
+          };
+        }
+        return c;
+      });
+
+      this.setState({ conversations: updatedConvs });
+      if (this.state.currentScreen !== 'messages' || this.state.selectedConversationId !== conversationId) {
+        this.showToast(`💬 Neue Nachricht von ${currentConv.participant.name}`);
+      }
+    }, 850);
   }
 
   // Job lifecycle state machine transitions
@@ -454,8 +529,30 @@ class Store {
       currentScreen: 'messages',
       selectedConversationId: conv.id
     });
+  }
 
-    this.showToast(`🎉 ${applicant.name} ausgewählt! Adresse freigeschaltet.`);
+  // Safety Incident Report
+  openReportModal(jobId) {
+    this.setState({ reportJobId: jobId, selectedJobId: null });
+  }
+
+  closeReportModal() {
+    this.setState({ reportJobId: null });
+  }
+
+  submitReport(jobId, category, details) {
+    const jobs = this.state.jobs.map(j => {
+      if (j.id === jobId) {
+        return { ...j, moderation: 'FLAGGED' };
+      }
+      return j;
+    });
+
+    this.setState({
+      jobs,
+      reportJobId: null
+    });
+    this.showToast('🛡️ Sicherheitsmeldung vertraulich eingegangen. Unser Team prüft den Vorfall sofort.');
   }
 
   // Wallet Payout

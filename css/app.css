@@ -788,3 +788,38 @@
   box-shadow: 0 2px 6px rgba(14, 167, 107, 0.25);
 }
 
+/* Segmented Tabs (Feed / Bookmarks / My Jobs) */
+.segmented-control {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: var(--qj-radius-md);
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid var(--qj-border);
+}
+
+.segment-btn {
+  flex: 1;
+  padding: 0.5rem 0.4rem;
+  border-radius: var(--qj-radius-sm);
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--qj-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.segment-btn.active {
+  background: #ffffff;
+  color: var(--qj-text-main);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+

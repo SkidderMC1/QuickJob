@@ -19,9 +19,37 @@ let wizardState = {
   applicationMode: ApplicationModes.APPLICATION_REQUIRED
 };
 
+export function calculateHourlyRate(payment, durationStr) {
+  let hours = 1.0;
+  const dur = durationStr || '≈ 1 hour';
+  if (dur.includes('45 min')) hours = 0.75;
+  else if (dur.includes('1.5 hour')) hours = 1.5;
+  else if (dur.includes('2 hour')) hours = 2.0;
+  else if (dur.includes('3 hour')) hours = 3.0;
+  else if (dur.includes('1 hour')) hours = 1.0;
+
+  const rate = Math.round((Number(payment || 0) / hours) * 10) / 10;
+  let status = 'fair';
+  let badgeClass = 'badge-success';
+  let text = `Fair & Attraktiv: €${rate.toFixed(2)}/Std (Hohe Erfolgsquote 🚀)`;
+
+  if (rate < 12.5) {
+    status = 'low';
+    badgeClass = 'badge-warning';
+    text = `Unter Richtwert: €${rate.toFixed(2)}/Std (Tipp: Mind. €13–15/Std für schnelle Zusagen)`;
+  } else if (rate >= 20.0) {
+    status = 'premium';
+    badgeClass = 'badge-primary';
+    text = `Top-Vergütung: €${rate.toFixed(2)}/Std (Besonders begehrt ⭐)`;
+  }
+
+  return { hours, rate, status, badgeClass, text };
+}
+
 export function renderCreateJobScreen(state) {
   const step = wizardState.step;
   const safety = classifyJobSafety(wizardState);
+  const fairPay = calculateHourlyRate(wizardState.payment, wizardState.estimatedDuration);
 
   return `
     <div class="screen-container" id="screen-create">
@@ -180,6 +208,21 @@ export function renderCreateJobScreen(state) {
             </select>
           </div>
 
+          <!-- Dynamic Fair-Pay Hourly Calculator Widget -->
+          <div id="wizard-fair-pay-box" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+            <div>
+              <div style="font-size: 0.72rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.03em;">
+                💰 Berechneter Stundenlohn
+              </div>
+              <div id="wizard-fair-pay-text" style="font-size: 0.82rem; font-weight: 600; color: #1e293b; margin-top: 2px;">
+                ${fairPay.text}
+              </div>
+            </div>
+            <span class="badge ${fairPay.badgeClass}" id="wizard-fair-pay-badge" style="font-size: 0.85rem; font-weight: 800; white-space: nowrap;">
+              €${fairPay.rate.toFixed(2)}/h
+            </span>
+          </div>
+
           <div class="form-group">
             <label class="form-label" for="wizard-schedule">Preferred Date & Time</label>
             <input 
@@ -309,6 +352,11 @@ export function renderCreateJobScreen(state) {
               <span style="font-size: 0.78rem; font-weight: 700; color: #475569;">Altersfreigabe (automatisch ermittelt):</span>
               <span class="badge ${safety.badgeClass}">${safety.badgeText}</span>
             </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.65rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 0.35rem;">
+              <span style="font-size: 0.78rem; font-weight: 700; color: #475569;">Berechneter Stundenlohn:</span>
+              <span class="badge ${fairPay.badgeClass}">€${fairPay.rate.toFixed(2)}/Std</span>
+            </div>
           </div>
 
           <!-- Safe Escrow Notice -->
@@ -401,16 +449,29 @@ export function attachCreateJobEvents() {
   const payInput = document.getElementById('wizard-pay-input');
   const payVal = document.getElementById('wizard-pay-val');
 
+  const updateFairPayUI = () => {
+    const fairPay = calculateHourlyRate(wizardState.payment, wizardState.estimatedDuration);
+    const textEl = document.getElementById('wizard-fair-pay-text');
+    const badgeEl = document.getElementById('wizard-fair-pay-badge');
+    if (textEl && badgeEl) {
+      textEl.textContent = fairPay.text;
+      badgeEl.className = `badge ${fairPay.badgeClass}`;
+      badgeEl.textContent = `€${fairPay.rate.toFixed(2)}/h`;
+    }
+  };
+
   if (paySlider && payInput && payVal) {
     paySlider.addEventListener('input', (e) => {
       wizardState.payment = Number(e.target.value);
       payInput.value = wizardState.payment;
       payVal.textContent = wizardState.payment;
+      updateFairPayUI();
     });
     payInput.addEventListener('input', (e) => {
       wizardState.payment = Number(e.target.value);
       paySlider.value = wizardState.payment;
       payVal.textContent = wizardState.payment;
+      updateFairPayUI();
     });
   }
 
@@ -418,6 +479,7 @@ export function attachCreateJobEvents() {
   if (durationSelect) {
     durationSelect.addEventListener('change', (e) => {
       wizardState.estimatedDuration = e.target.value;
+      updateFairPayUI();
     });
   }
 

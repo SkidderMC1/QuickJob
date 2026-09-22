@@ -33,9 +33,14 @@ export function renderJobDetailModal(jobId, state) {
             </span>
           </div>
 
-          <button id="btn-close-detail" style="font-size: 1.25rem; color: #64748b; padding: 4px;">
-            ✕
-          </button>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <button id="btn-report-job" data-job-id="${job.id}" title="Problem oder Verstoß melden" style="color: #ef4444; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border: 1px solid #fecaca; border-radius: 6px; background: #fef2f2; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+              <span>🚩</span><span>Melden</span>
+            </button>
+            <button id="btn-close-detail" style="font-size: 1.25rem; color: #64748b; padding: 4px;">
+              ✕
+            </button>
+          </div>
         </div>
 
         <!-- Body Scrollable Content -->
@@ -218,6 +223,14 @@ export function attachJobDetailEvents() {
     applicantsBtn.addEventListener('click', () => {
       const jobId = applicantsBtn.getAttribute('data-job-id');
       store.openApplicantModal(jobId);
+    });
+  }
+
+  const reportBtn = document.getElementById('btn-report-job');
+  if (reportBtn) {
+    reportBtn.addEventListener('click', () => {
+      const jobId = reportBtn.getAttribute('data-job-id') || store.getState().selectedJobId;
+      store.openReportModal(jobId);
     });
   }
 }

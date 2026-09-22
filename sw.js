@@ -3,7 +3,7 @@
  * Provides offline support, caching, and instant startup
  */
 
-const CACHE_NAME = 'quickjob-v2';
+const CACHE_NAME = 'quickjob-v3';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -31,6 +31,7 @@ const ASSETS_TO_CACHE = [
   './js/screens/safetyModal.js',
   './js/screens/reviewModal.js',
   './js/screens/applicantModal.js',
+  './js/screens/reportModal.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png'

@@ -14,6 +14,7 @@ import { renderProfileScreen, attachProfileScreenEvents } from './screens/profil
 import { renderSafetyModal, attachSafetyModalEvents } from './screens/safetyModal.js';
 import { renderReviewModal, attachReviewModalEvents } from './screens/reviewModal.js';
 import { renderApplicantModal, attachApplicantModalEvents } from './screens/applicantModal.js';
+import { renderReportModal, attachReportModalEvents } from './screens/reportModal.js';
 import { renderDebugDrawer, attachDebugDrawerEvents } from './components/debugDrawer.js';
 
 function getCurrentTimeString() {
@@ -66,6 +67,9 @@ function renderApp() {
 
         <!-- Applicant Management & Selection Modal -->
         ${renderApplicantModal(state)}
+
+        <!-- Report Incident / Safety Violation Modal -->
+        ${renderReportModal(state)}
 
         <!-- Bottom Navigation Bar -->
         ${renderBottomNav(state)}
@@ -133,6 +137,9 @@ function renderApp() {
             <!-- Applicant Management & Selection Modal -->
             ${renderApplicantModal(state)}
 
+            <!-- Report Incident / Safety Violation Modal -->
+            ${renderReportModal(state)}
+
             <!-- Bottom Navigation Bar -->
             ${renderBottomNav(state)}
 
@@ -163,6 +170,7 @@ function renderApp() {
   if (state.isSafetyModalOpen) attachSafetyModalEvents();
   if (state.reviewJobId) attachReviewModalEvents();
   if (state.applicantJobId) attachApplicantModalEvents();
+  if (state.reportJobId) attachReportModalEvents();
 }
 
 function escapeHTML(str) {

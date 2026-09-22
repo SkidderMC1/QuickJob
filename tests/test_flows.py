@@ -115,6 +115,27 @@ def run_tests():
                 reset_filters_btn.click()
                 page.wait_for_timeout(300)
 
+            # Test Bookmarking & Tab Switching (TASK-001)
+            first_bookmark_btn = page.query_selector(".job-card .bookmark-btn")
+            assert first_bookmark_btn is not None, "Bookmark button must be present on job cards"
+            first_bookmark_btn.click()
+            page.wait_for_timeout(300)
+            log("✓ Toggled bookmark on first job card")
+
+            # Switch to 'Gemerkt' tab
+            saved_tab_btn = page.query_selector("#tab-feed-saved")
+            assert saved_tab_btn is not None, "Gemerkt tab button must exist"
+            saved_tab_btn.click()
+            page.wait_for_timeout(300)
+            saved_cards = page.query_selector_all(".job-card")
+            assert len(saved_cards) >= 1, "Gemerkt tab must display bookmarked jobs"
+            page.screenshot(path=os.path.join(ARTIFACTS_DIR, "feed_saved_tab.png"))
+            log(f"✓ Verified 'Gemerkt' tab with {len(saved_cards)} card(s)")
+
+            # Switch back to 'Entdecken' tab
+            page.click("#tab-feed-all")
+            page.wait_for_timeout(300)
+
             total_cards = len(page.query_selector_all(".job-card"))
             assert total_cards >= 6, f"Expected at least 6 initial jobs, found {total_cards}"
             log(f"✓ Total {total_cards} microjobs active in feed")
@@ -136,10 +157,42 @@ def run_tests():
             screenshot_path = os.path.join(ARTIFACTS_DIR, "job_detail_modal.png")
             page.screenshot(path=screenshot_path)
             log(f"✓ Job detail modal screenshot saved: {screenshot_path}")
+
+            # Test Safety Incident Reporting from Job Detail (TASK-002)
+            report_btn = page.query_selector("#btn-report-job")
+            assert report_btn is not None, "Report button must be present in Job Detail header"
+            report_btn.click()
+            page.wait_for_selector("#report-modal-sheet", timeout=5000)
+            
+            report_sheet_text = page.inner_text("#report-modal-sheet")
+            assert "Sicherheitsmeldung" in report_sheet_text
+            assert "116 111" in report_sheet_text, "Official emergency helpline must be displayed"
+            
+            # Select danger category and fill details
+            danger_radio = page.query_selector('input[name="reportCat"][value="youth_safety"]')
+            if danger_radio:
+                danger_radio.click()
+            page.fill("#report-details-input", "Gefährliche Arbeit in großer Höhe ohne Absturzsicherung gefordert.")
+            
+            report_screenshot = os.path.join(ARTIFACTS_DIR, "safety_incident_report_modal.png")
+            page.screenshot(path=report_screenshot)
+            log(f"✓ Safety incident report modal screenshot saved: {report_screenshot}")
+
+            page.click("#btn-submit-report")
+            page.wait_for_timeout(400)
+            toast_el = page.query_selector("#toast-notice")
+            assert toast_el is not None, "Submitting report must trigger toast confirmation"
+            assert "Sicherheitsmeldung" in toast_el.inner_text()
+            log("✓ Safety incident reported and confirmed with toast notice")
             passed_steps += 1
 
             # Step 5: Apply to Job and verify state transition to Chat
             log("\n[Step 5] Applying to Job and checking state transition...")
+            # Re-open job detail sheet after report modal closed
+            first_card = page.query_selector(".job-card")
+            first_card.click()
+            page.wait_for_selector("#job-detail-sheet", timeout=5000)
+
             action_btn = page.query_selector("#btn-action-apply, #btn-action-accept")
             assert action_btn is not None, "Apply or Accept CTA must be visible in job detail"
             action_btn.click()
@@ -150,20 +203,26 @@ def run_tests():
             passed_steps += 1
 
             # Step 6: Chat interaction & Lifecycle Actions + Review Modal
-            log("\n[Step 6] Testing chat messaging, lifecycle transitions, and 5-star review modal...")
+            log("\n[Step 6] Testing chat messaging, simulated auto-reply, and 5-star review modal...")
             quick_reply = page.query_selector('.quick-reply-btn[data-reply="Is 3pm okay?"]')
             if quick_reply:
                 quick_reply.click()
                 page.wait_for_timeout(300)
             
             chat_input = page.query_selector("#chat-input-field")
-            chat_input.fill("Looking forward to helping out on Saturday!")
+            chat_input.fill("Ich bin vor Ort angekommen!")
             page.click("#btn-send-message")
-            page.wait_for_timeout(300)
+            page.wait_for_timeout(1200) # Wait for simulated auto-reply
             
             bubbles = page.query_selector_all(".chat-bubble")
-            assert len(bubbles) >= 2, "Chat should have message history"
-            log(f"✓ Chat working smoothly with {len(bubbles)} message bubbles")
+            assert len(bubbles) >= 3, f"Expected at least 3 chat bubbles with simulated reply, got {len(bubbles)}"
+            chat_text = page.inner_text("#chat-messages-scroll")
+            assert any(word in chat_text for word in ["Tür", "Tor", "Arbeit", "hervorragend", "Nachricht"]), "Simulated contextual reply should appear"
+            log("✓ Simulated interactive chat auto-reply received successfully")
+
+            # Verify chat report button is available
+            chat_report_btn = page.query_selector("#btn-chat-report")
+            assert chat_report_btn is not None, "Chat header must contain report button"
             
             complete_btn = page.query_selector("#btn-chat-complete-job")
             if complete_btn:
@@ -231,13 +290,28 @@ def run_tests():
             page.click("#btn-wizard-next")
             page.wait_for_timeout(300)
             
-            page.fill("#wizard-pay-input", "45")
+            # Step 3: Test Fair Pay & Hourly Wage Widget (TASK-004)
+            fair_pay_box = page.query_selector("#wizard-fair-pay-box")
+            assert fair_pay_box is not None, "Step 3 must display Fair Pay & Hourly Rate Widget"
+            initial_rate = page.inner_text("#wizard-fair-pay-badge")
+            assert "€" in initial_rate, f"Hourly rate badge should show euro amount, got '{initial_rate}'"
+
+            # Change payment amount to test live recalculation
+            page.fill("#wizard-pay-input", "50")
+            page.wait_for_timeout(200)
+            updated_rate = page.inner_text("#wizard-fair-pay-badge")
+            assert "€50.00/h" in updated_rate, f"Hourly rate should be updated to €50.00/h, got '{updated_rate}'"
+            log(f"✓ Fair Pay widget dynamically recalculated hourly wage to {updated_rate}")
+
             page.click("#btn-wizard-next")
             page.wait_for_timeout(300)
             
             page.fill("#wizard-location", "Wuppertal-Barmen")
             page.click("#btn-wizard-next")
             page.wait_for_timeout(300)
+
+            card_preview_text = page.inner_text("#screen-create")
+            assert "Berechneter Stundenlohn" in card_preview_text, "Step 5 preview card must show hourly wage"
             
             screenshot_path = os.path.join(ARTIFACTS_DIR, "create_job_preview_step5.png")
             page.screenshot(path=screenshot_path)
