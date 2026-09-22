@@ -42,9 +42,10 @@ class Store {
       isDebugDrawerOpen: false,
       selectedJobId: null,
       selectedConversationId: null,
+      reviewJobId: null,
+      applicantJobId: null,
       isFilterModalOpen: false,
       isSafetyModalOpen: false,
-      isReviewModalOpen: false,
       viewportSize: 'size-390',
       toast: null,
       filters: {
@@ -329,6 +330,150 @@ class Store {
       selectedJobId: null
     });
     this.showToast('Microjob published successfully!');
+  }
+
+  // Review & Rating Modal actions
+  openReviewModal(jobId) {
+    this.setState({ reviewJobId: jobId });
+  }
+
+  closeReviewModal() {
+    this.setState({ reviewJobId: null });
+  }
+
+  submitReview(jobId, rating, tags = [], comment = '') {
+    const jobs = this.state.jobs.map(j => {
+      if (j.id === jobId) {
+        return { ...j, state: JobStates.REVIEWED };
+      }
+      return j;
+    });
+
+    const convs = this.state.conversations.map(c => {
+      if (c.jobId === jobId) {
+        return { ...c, status: JobStates.REVIEWED };
+      }
+      return c;
+    });
+
+    this.setState({
+      jobs,
+      conversations: convs,
+      reviewJobId: null
+    });
+    this.showToast(`⭐ Danke! Deine ★${rating}-Bewertung wurde veröffentlicht.`);
+  }
+
+  // Applicant Management actions
+  openApplicantModal(jobId) {
+    this.setState({ applicantJobId: jobId, selectedJobId: null });
+  }
+
+  closeApplicantModal() {
+    this.setState({ applicantJobId: null });
+  }
+
+  assignApplicant(jobId, applicantId) {
+    const job = this.state.jobs.find(j => j.id === jobId);
+    if (!job) return;
+
+    const applicant = (job.applicants || []).find(a => a.id === applicantId);
+    if (!applicant) return;
+
+    const updatedJobs = this.state.jobs.map(j => {
+      if (j.id === jobId) {
+        return {
+          ...j,
+          state: JobStates.WORKER_SELECTED,
+          worker: {
+            id: applicant.id,
+            name: applicant.name,
+            avatarText: applicant.avatarText
+          }
+        };
+      }
+      return j;
+    });
+
+    // Create or find conversation thread
+    let conv = this.state.conversations.find(c => c.jobId === jobId);
+    let updatedConvs = [...this.state.conversations];
+    if (!conv) {
+      conv = {
+        id: `conv_${Date.now()}`,
+        jobId: job.id,
+        jobTitle: job.title,
+        jobPayment: job.payment,
+        status: JobStates.WORKER_SELECTED,
+        participant: {
+          id: applicant.id,
+          name: applicant.name,
+          avatarText: applicant.avatarText,
+          role: applicant.ageCategoryLabel || 'Helfer'
+        },
+        messages: [
+          {
+            id: `msg_${Date.now()}`,
+            senderId: this.state.currentUser.id,
+            senderName: this.state.currentUser.name,
+            text: `Hallo ${applicant.name}! Du wurdest für "${job.title}" ausgewählt. Die genaue Adresse lautet: ${job.exactAddress}. Bis bald!`,
+            timestamp: 'Just now',
+            isMine: true
+          }
+        ]
+      };
+      updatedConvs.unshift(conv);
+    } else {
+      updatedConvs = updatedConvs.map(c => {
+        if (c.jobId === jobId) {
+          return {
+            ...c,
+            status: JobStates.WORKER_SELECTED,
+            messages: [
+              ...c.messages,
+              {
+                id: `msg_${Date.now()}`,
+                senderId: this.state.currentUser.id,
+                senderName: this.state.currentUser.name,
+                text: `Du wurdest als Helfer bestätigt! Genaue Adresse: ${job.exactAddress}`,
+                timestamp: 'Just now',
+                isMine: true
+              }
+            ]
+          };
+        }
+        return c;
+      });
+    }
+
+    this.setState({
+      jobs: updatedJobs,
+      conversations: updatedConvs,
+      applicantJobId: null,
+      selectedJobId: null,
+      currentScreen: 'messages',
+      selectedConversationId: conv.id
+    });
+
+    this.showToast(`🎉 ${applicant.name} ausgewählt! Adresse freigeschaltet.`);
+  }
+
+  // Wallet Payout
+  withdrawFunds() {
+    const user = this.state.currentUser;
+    const amount = user.walletBalance || 0;
+    if (amount <= 0) {
+      this.showToast('Dein auszahlbares Guthaben beträgt €0,00.', 'error');
+      return;
+    }
+
+    const updatedUser = {
+      ...user,
+      walletBalance: 0.0
+    };
+
+    this.setState({ currentUser: updatedUser });
+    this.showToast(`💸 Auszahlung von €${amount.toFixed(2)} auf dein Bankkonto veranlasst! (1–2 Werktage)`);
   }
 
   resetAll() {

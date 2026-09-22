@@ -3,7 +3,7 @@
  * Provides offline support, caching, and instant startup
  */
 
-const CACHE_NAME = 'quickjob-v1';
+const CACHE_NAME = 'quickjob-v2';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -16,10 +16,12 @@ const ASSETS_TO_CACHE = [
   './js/models/types.js',
   './js/data/mockData.js',
   './js/state/store.js',
+  './js/utils/safetyClassifier.js',
   './js/components/devBar.js',
   './js/components/header.js',
   './js/components/nav.js',
   './js/components/jobCard.js',
+  './js/components/debugDrawer.js',
   './js/screens/homeScreen.js',
   './js/screens/jobsScreen.js',
   './js/screens/jobDetailScreen.js',
@@ -27,6 +29,8 @@ const ASSETS_TO_CACHE = [
   './js/screens/messagesScreen.js',
   './js/screens/profileScreen.js',
   './js/screens/safetyModal.js',
+  './js/screens/reviewModal.js',
+  './js/screens/applicantModal.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png'
@@ -58,18 +62,13 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch Event: Cache First, fallback to Network
+// Fetch Event: Network First with Cache fallback (ensures latest code is served)
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
-        // Cache external assets if valid
+    fetch(event.request)
+      .then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -77,12 +76,14 @@ self.addEventListener('fetch', (event) => {
           });
         }
         return networkResponse;
-      }).catch(() => {
-        // Fallback to cached index.html for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      });
-    })
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) return cachedResponse;
+          if (event.request.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+        });
+      })
   );
 });

@@ -16,6 +16,9 @@ export const mockUsers = {
     ratingCount: 32,
     completedJobs: 32,
     reliability: 97,
+    walletBalance: 75.0,
+    escrowBalance: 28.0,
+    totalEarned: 185.0,
     isIdentityVerified: true,
     hasParentConsent: true,
     skills: ['Garden', 'Computer & Technology', 'Tutoring'],
@@ -48,6 +51,9 @@ export const mockUsers = {
     ratingCount: 19,
     completedJobs: 19,
     reliability: 100,
+    walletBalance: 120.0,
+    escrowBalance: 0.0,
+    totalEarned: 340.0,
     isIdentityVerified: true,
     hasParentConsent: false, // not needed for 18+
     skills: ['Tutoring', 'Shopping & Errands', 'Animals'],
@@ -65,6 +71,9 @@ export const mockUsers = {
     rating: 4.9,
     ratingCount: 24,
     completedJobs: 24,
+    walletBalance: 50.0,
+    escrowBalance: 28.0,
+    totalEarned: 0.0,
     isIdentityVerified: true,
     isCompany: false,
     locationApprox: 'Wuppertal-Elberfeld (Briller Viertel)',
@@ -80,6 +89,9 @@ export const mockUsers = {
     rating: 4.8,
     ratingCount: 45,
     completedJobs: 45,
+    walletBalance: 450.0,
+    escrowBalance: 55.0,
+    totalEarned: 0.0,
     isIdentityVerified: true,
     isCompany: true,
     companyReg: 'HRB 29841 (Amtsgericht Wuppertal)',
@@ -115,6 +127,33 @@ export const initialJobs = [
     description: 'We have a standard 120m² front garden. Electric lawnmower and green waste bags are provided on site. Need lawn mowed and edges trimmed along the stone pathway.',
     requirements: ['Punctual', 'Garden gloves recommended', 'Responsible handling of electric mower'],
     applicantsCount: 2,
+    applicants: [
+      {
+        id: 'user_jasper',
+        name: 'Jasper Klein',
+        avatarText: 'JK',
+        age: 16,
+        ageCategoryLabel: 'Youth · 14–17',
+        rating: 4.9,
+        completedJobs: 32,
+        reliability: 97,
+        hasParentConsent: true,
+        appliedAt: '2 hours ago',
+        pitch: 'Hallo Herr Dr. Lang! Ich helfe gerne im Garten, bringe eigene Handschuhe mit und bin pünktlich um 14:00 vor Ort.'
+      },
+      {
+        id: 'user_sophia',
+        name: 'Sophia Weber',
+        avatarText: 'SW',
+        age: 22,
+        ageCategoryLabel: 'Young Worker · 18–25',
+        rating: 5.0,
+        completedJobs: 19,
+        reliability: 100,
+        appliedAt: '3 hours ago',
+        pitch: 'Hallo, ich wohne um die Ecke und kann Samstag gerne beim Rasenmähen unterstützen.'
+      }
+    ],
     isBookmarked: false
   },
   {
@@ -143,6 +182,7 @@ export const initialJobs = [
     description: 'Got a new Panasonic Smart TV. Need someone patient to connect it to our Telekom home WiFi, login to ARD Mediathek and show me how to switch HDMI channels.',
     requirements: ['Friendly & patient demeanor', 'Familiar with basic Smart TV setup'],
     applicantsCount: 0,
+    applicants: [],
     isBookmarked: false
   },
   {
@@ -171,6 +211,7 @@ export const initialJobs = [
     description: 'Barnaby is a gentle, well-trained 4-year-old Golden Retriever. Just needs an afternoon walk around the Hardt botanical grounds. Leash and treats provided!',
     requirements: ['Comfortable with medium-large friendly dogs', 'Stout footwear'],
     applicantsCount: 1,
+    applicants: [],
     isBookmarked: false
   },
   {
@@ -199,7 +240,22 @@ export const initialJobs = [
     },
     description: 'TechCraft is sorting our delivery depot. Need help rolling patch cables, placing them in designated plastic bins, and printing QR label stickers.',
     requirements: ['Accurate attention to detail', 'Safety sneakers'],
-    applicantsCount: 3,
+    applicantsCount: 1,
+    applicants: [
+      {
+        id: 'user_jasper',
+        name: 'Jasper Klein',
+        avatarText: 'JK',
+        age: 16,
+        ageCategoryLabel: 'Youth · 14–17',
+        rating: 4.9,
+        completedJobs: 32,
+        reliability: 97,
+        hasParentConsent: true,
+        appliedAt: 'Yesterday',
+        pitch: 'Hallo TechCraft-Team! Ich interessiere mich sehr für IT-Hardware und habe bereits beim letzten Inventar geholfen.'
+      }
+    ],
     isBookmarked: false
   },
   {

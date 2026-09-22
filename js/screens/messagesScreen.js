@@ -265,11 +265,9 @@ export function attachMessagesScreenEvents() {
   const reviewBtn = document.getElementById('btn-chat-leave-review');
   if (reviewBtn) {
     reviewBtn.addEventListener('click', () => {
-      const rating = prompt('Leave a star rating for this job (1 to 5 stars):', '5');
-      if (rating) {
-        const jobId = reviewBtn.getAttribute('data-job-id');
-        store.updateJobState(jobId, JobStates.REVIEWED);
-        store.showToast(`Thank you! ★${rating} review submitted.`);
+      const jobId = reviewBtn.getAttribute('data-job-id');
+      if (jobId) {
+        store.openReviewModal(jobId);
       }
     });
   }

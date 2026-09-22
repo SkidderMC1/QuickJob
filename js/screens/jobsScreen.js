@@ -12,6 +12,15 @@ export function renderJobsScreen(state) {
 
   // Filter jobs
   let filtered = state.jobs.filter(job => {
+    // Quick Filter Logic
+    if (filters.quickFilter === 'direct' && job.applicationMode !== 'DIRECT_ACCEPT') return false;
+    if (filters.quickFilter === 'near' && job.distanceKm > 2) return false;
+    if (filters.quickFilter === 'high_pay' && job.payment < 30) return false;
+    if (filters.quickFilter === 'youth') {
+      if (job.minAge && job.minAge > 17) return false;
+      if (job.category === 'disposal') return false;
+    }
+
     // Category filter
     if (filters.category !== 'all' && job.category !== filters.category) {
       return false;
@@ -56,10 +65,12 @@ export function renderJobsScreen(state) {
     return 0;
   });
 
+  const activeQuick = filters.quickFilter || 'all';
+
   return `
     <div class="screen-container" id="screen-jobs">
       <!-- Search & Filter Controls -->
-      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+      <div style="display: flex; flex-direction: column; gap: 0.65rem;">
         <div class="search-box">
           <span style="color: #94a3b8;">🔍</span>
           <input 
@@ -69,6 +80,25 @@ export function renderJobsScreen(state) {
             value="${escapeHTML(filters.query)}"
           />
           ${filters.query ? '<button id="btn-clear-jobs-search" style="color: #94a3b8;">✕</button>' : ''}
+        </div>
+
+        <!-- 1-Tap Quick Action Filter Pills -->
+        <div class="quick-filter-pills" id="jobs-quick-pills">
+          <button class="quick-filter-pill ${activeQuick === 'all' ? 'active' : ''}" data-quick="all">
+            <span>✨</span><span>Alle</span>
+          </button>
+          <button class="quick-filter-pill ${activeQuick === 'direct' ? 'active' : ''}" data-quick="direct">
+            <span>⚡</span><span>Sofort-Zuschlag</span>
+          </button>
+          <button class="quick-filter-pill ${activeQuick === 'youth' ? 'active' : ''}" data-quick="youth">
+            <span>🛡️</span><span>Jugend-konform</span>
+          </button>
+          <button class="quick-filter-pill ${activeQuick === 'near' ? 'active' : ''}" data-quick="near">
+            <span>📍</span><span>Unter 2 km</span>
+          </button>
+          <button class="quick-filter-pill ${activeQuick === 'high_pay' ? 'active' : ''}" data-quick="high_pay">
+            <span>💰</span><span>Ab 30 €</span>
+          </button>
         </div>
 
         <!-- Filter Row -->
@@ -96,7 +126,7 @@ export function renderJobsScreen(state) {
           <div style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: var(--qj-radius-sm); padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: space-between;">
             <div style="font-size: 0.76rem; color: #5b21b6; font-weight: 600; display: flex; align-items: center; gap: 0.35rem;">
               <span>🛡️</span>
-              <span>Youth Protection Active (14–17)</span>
+              <span>Jugendschutz aktiv (14–17 Jahre)</span>
             </div>
             <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; color: #6b21a8; font-weight: 700; cursor: pointer;">
               <input type="checkbox" id="check-age-filter" ${filters.onlySuitableForMyAge ? 'checked' : ''} />
@@ -211,6 +241,15 @@ export function attachJobsScreenEvents() {
     chip.addEventListener('click', () => {
       const cat = chip.getAttribute('data-cat');
       store.setFilter('category', cat);
+    });
+  });
+
+  // Quick filter pills
+  const quickPills = document.querySelectorAll('.quick-filter-pill[data-quick]');
+  quickPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      const q = pill.getAttribute('data-quick');
+      store.setFilter('quickFilter', q === 'all' ? null : q);
     });
   });
 

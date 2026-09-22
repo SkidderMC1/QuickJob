@@ -14,6 +14,8 @@ export function renderJobDetailModal(jobId, state) {
   const categoryInfo = JobCategories.find(c => c.id === job.category) || { name: job.category, icon: '📋' };
   const isDirect = job.applicationMode === 'DIRECT_ACCEPT';
   const isAssignedToMe = job.worker && job.worker.id === user.id;
+  const isMyPostedJob = job.employer && job.employer.id === user.id;
+  const applicantsList = job.applicants || [];
 
   return `
     <div class="modal-overlay" id="job-detail-overlay">
@@ -64,7 +66,7 @@ export function renderJobDetailModal(jobId, state) {
               <div>
                 <div>${job.distanceKm} km away · ${job.approxLocation}</div>
                 <div style="font-size: 0.75rem; color: var(--qj-text-subtle); font-weight: 500; margin-top: 2px;">
-                  ${isAssignedToMe ? `🔓 Exact address: <strong>${job.exactAddress}</strong>` : '🔒 Exact street number revealed upon confirmed assignment'}
+                  ${isAssignedToMe || isMyPostedJob ? `🔓 Exact address: <strong>${job.exactAddress}</strong>` : '🔒 Exact street number revealed upon confirmed assignment'}
                 </div>
               </div>
             </div>
@@ -73,7 +75,7 @@ export function renderJobDetailModal(jobId, state) {
           <!-- Age Suitability Notice -->
           <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 0.85rem; border-radius: var(--qj-radius-sm); font-size: 0.82rem; font-weight: 600; ${isTooYoung ? 'background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;' : 'background: #f5f3ff; color: #6b21a8; border: 1px solid #ddd6fe;'}">
             <span>${isTooYoung ? '⚠️' : '🛡️'}</span>
-            <span>Age Suitability: ${job.ageSuitability}</span>
+            <span>Altersfreigabe: ${job.ageSuitability}</span>
           </div>
 
           <!-- Description -->
@@ -137,7 +139,17 @@ export function renderJobDetailModal(jobId, state) {
 
         <!-- Sticky Bottom CTA -->
         <div class="modal-footer">
-          ${isAssignedToMe ? `
+          ${isMyPostedJob ? `
+            ${job.worker ? `
+              <button class="btn btn-primary btn-block" id="btn-open-assigned-chat">
+                💬 Chat mit Helfer (${escapeHTML(job.worker.name)})
+              </button>
+            ` : `
+              <button class="btn btn-primary btn-block" id="btn-open-applicants-mgr" data-job-id="${job.id}">
+                👥 Bewerbungen prüfen (${applicantsList.length} Helfer)
+              </button>
+            `}
+          ` : isAssignedToMe ? `
             <button class="btn btn-primary btn-block" id="btn-open-assigned-chat">
               💬 Open Job Chat & Address
             </button>
@@ -198,6 +210,14 @@ export function attachJobDetailEvents() {
   if (openChatBtn) {
     openChatBtn.addEventListener('click', () => {
       store.setState({ currentScreen: 'messages', selectedJobId: null });
+    });
+  }
+
+  const applicantsBtn = document.getElementById('btn-open-applicants-mgr');
+  if (applicantsBtn) {
+    applicantsBtn.addEventListener('click', () => {
+      const jobId = applicantsBtn.getAttribute('data-job-id');
+      store.openApplicantModal(jobId);
     });
   }
 }

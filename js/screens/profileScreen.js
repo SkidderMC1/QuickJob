@@ -71,6 +71,34 @@ export function renderProfileScreen(state) {
         </div>
       </div>
 
+      <!-- QuickJob FinTech Wallet & Escrow Balance Card -->
+      <div class="wallet-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div style="font-size: 0.74rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.35rem;">
+              <span>💳</span>
+              <span>QuickJob Wallet & Treuhand</span>
+            </div>
+            <div class="wallet-balance-num" style="margin-top: 2px;">
+              €${(user.walletBalance || 0).toFixed(2)}
+            </div>
+            <div style="font-size: 0.74rem; color: #34d399; font-weight: 700; margin-top: 3px; display: flex; align-items: center; gap: 4px;">
+              <span>🛡️</span>
+              <span>€${(user.escrowBalance || 0).toFixed(2)} im Treuhandkonto hinterlegt</span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-sm" id="btn-profile-withdraw" style="padding: 0.45rem 0.85rem; font-size: 0.8rem; box-shadow: 0 2px 8px rgba(14, 167, 107, 0.4);">
+            💸 Auszahlen
+          </button>
+        </div>
+
+        <div style="border-top: 1px solid rgba(255, 255, 255, 0.12); padding-top: 0.5rem; display: flex; justify-content: space-between; font-size: 0.72rem; color: #cbd5e1;">
+          <span>Gesamt verdient: <strong>€${(user.totalEarned || 185).toFixed(2)}</strong></span>
+          <span style="color: #6ee7b7;">SEPA Instant aktiv ✓</span>
+        </div>
+      </div>
+
       <!-- Minor Protection & Parental Consent Card -->
       ${isMinor ? `
         <div style="background: #f5f3ff; border: 1.5px solid #ddd6fe; border-radius: var(--qj-radius-md); padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
@@ -170,6 +198,13 @@ export function attachProfileScreenEvents() {
   if (consentDocBtn) {
     consentDocBtn.addEventListener('click', () => {
       store.setState({ isSafetyModalOpen: true });
+    });
+  }
+
+  const withdrawBtn = document.getElementById('btn-profile-withdraw');
+  if (withdrawBtn) {
+    withdrawBtn.addEventListener('click', () => {
+      store.withdrawFunds();
     });
   }
 }

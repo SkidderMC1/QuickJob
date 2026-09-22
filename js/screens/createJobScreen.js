@@ -3,6 +3,7 @@
  */
 import { store } from '../state/store.js';
 import { JobCategories, ApplicationModes } from '../models/types.js';
+import { classifyJobSafety } from '../utils/safetyClassifier.js';
 
 let wizardState = {
   step: 1,
@@ -10,7 +11,6 @@ let wizardState = {
   title: '',
   description: '',
   requirementsText: '',
-  minAge: 14,
   payment: 25,
   estimatedDuration: '≈ 1 hour',
   dateSchedule: 'Saturday · 14:00',
@@ -21,6 +21,7 @@ let wizardState = {
 
 export function renderCreateJobScreen(state) {
   const step = wizardState.step;
+  const safety = classifyJobSafety(wizardState);
 
   return `
     <div class="screen-container" id="screen-create">
@@ -80,12 +81,12 @@ export function renderCreateJobScreen(state) {
           </div>
         ` : ''}
 
-        <!-- STEP 2: Description & Age Suitability -->
+        <!-- STEP 2: Description & Automated Age Safety Rating -->
         ${step === 2 ? `
           <div>
             <h2 style="font-size: 1.15rem; font-weight: 800;">Describe the task</h2>
             <p style="font-size: 0.85rem; color: var(--qj-text-muted); margin-top: 2px;">
-              Specify tools provided and age requirements.
+              QuickJob bewertet die Altersfreigabe und Sicherheit automatisch nach dem Jugendarbeitsschutzgesetz.
             </p>
           </div>
 
@@ -99,21 +100,24 @@ export function renderCreateJobScreen(state) {
             >${escapeHTML(wizardState.description)}</textarea>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">
-              <span>Age Suitability & Safety</span>
-            </label>
-            <select class="form-control" id="wizard-minage">
-              <option value="14" ${wizardState.minAge === 14 ? 'selected' : ''}>
-                Suitable for Youths (14+) — Light, safe tasks
-              </option>
-              <option value="16" ${wizardState.minAge === 16 ? 'selected' : ''}>
-                Suitable for 16+ — Parent consent required
-              </option>
-              <option value="18" ${wizardState.minAge === 18 ? 'selected' : ''}>
-                18+ Only — Heavy lifting / adult tasks
-              </option>
-            </select>
+          <!-- Dynamic Automatic Safety Classification Box (Read-Only AI/Rule Assessment) -->
+          <div id="wizard-safety-box" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.45rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 0.76rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; display: flex; align-items: center; gap: 0.35rem;">
+                <span>🤖</span>
+                <span>Automatische Altersfreigabe</span>
+              </span>
+              <span class="badge ${safety.badgeClass}" id="wizard-safety-badge">${safety.badgeText}</span>
+            </div>
+            
+            <p style="font-size: 0.82rem; color: #1e293b; line-height: 1.45; margin-top: 2px;" id="wizard-safety-reason">
+              ${safety.reason}
+            </p>
+
+            <div style="font-size: 0.72rem; color: #64748b; font-weight: 600; border-top: 1px dashed #cbd5e1; padding-top: 5px; margin-top: 2px; display: flex; justify-content: space-between;">
+              <span id="wizard-safety-law">⚖️ ${safety.lawRef}</span>
+              <span style="color: var(--qj-primary); font-weight: 700;">Geprüft ✓</span>
+            </div>
           </div>
 
           <div class="form-group">
@@ -301,8 +305,9 @@ export function renderCreateJobScreen(state) {
               ${escapeHTML(wizardState.description || 'No description provided.')}
             </p>
 
-            <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; font-weight: 700; color: #6b21a8;">
-              <span>🛡️ Suitable for ${wizardState.minAge}+</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.65rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 0.5rem;">
+              <span style="font-size: 0.78rem; font-weight: 700; color: #475569;">Altersfreigabe (automatisch ermittelt):</span>
+              <span class="badge ${safety.badgeClass}">${safety.badgeText}</span>
             </div>
           </div>
 
@@ -361,18 +366,26 @@ export function attachCreateJobEvents() {
     });
   }
 
+  // Live safety assessment update
+  const updateLiveSafety = () => {
+    const safety = classifyJobSafety(wizardState);
+    const badge = document.getElementById('wizard-safety-badge');
+    const reason = document.getElementById('wizard-safety-reason');
+    const law = document.getElementById('wizard-safety-law');
+    if (badge) {
+      badge.className = `badge ${safety.badgeClass}`;
+      badge.textContent = safety.badgeText;
+    }
+    if (reason) reason.textContent = safety.reason;
+    if (law) law.textContent = `⚖️ ${safety.lawRef}`;
+  };
+
   // Step 2 Description
   const descInput = document.getElementById('wizard-desc');
   if (descInput) {
     descInput.addEventListener('input', (e) => {
       wizardState.description = e.target.value;
-    });
-  }
-
-  const minAgeSelect = document.getElementById('wizard-minage');
-  if (minAgeSelect) {
-    minAgeSelect.addEventListener('change', (e) => {
-      wizardState.minAge = Number(e.target.value);
+      updateLiveSafety();
     });
   }
 
@@ -477,6 +490,8 @@ export function attachCreateJobEvents() {
         ? wizardState.requirementsText.split('\n').map(s => s.trim()).filter(Boolean)
         : ['Punctual', 'Reliable'];
 
+      const safety = classifyJobSafety(wizardState);
+
       store.createJob({
         title: wizardState.title,
         category: wizardState.category,
@@ -486,8 +501,8 @@ export function attachCreateJobEvents() {
         exactAddress: wizardState.exactAddress,
         dateSchedule: wizardState.dateSchedule,
         applicationMode: wizardState.applicationMode,
-        minAge: wizardState.minAge,
-        ageSuitability: wizardState.minAge >= 18 ? '18+ Only' : `Suitable for ${wizardState.minAge}+`,
+        minAge: safety.minAge,
+        ageSuitability: safety.ageSuitability,
         description: wizardState.description,
         requirements: requirements
       });
@@ -499,7 +514,6 @@ export function attachCreateJobEvents() {
         title: '',
         description: '',
         requirementsText: '',
-        minAge: 14,
         payment: 25,
         estimatedDuration: '≈ 1 hour',
         dateSchedule: 'Saturday · 14:00',

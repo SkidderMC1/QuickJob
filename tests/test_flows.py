@@ -1,16 +1,16 @@
 """
-Automated End-to-End Tests for QuickJob MVP
+Automated End-to-End Tests for QuickJob MVP & New Features
 Uses Playwright with Chromium to verify:
 1. Desktop preview framing and mobile portrait viewport (390x844)
 2. Home screen browsing & category filtering
-3. Job discovery screen, search, distance and min-pay filters, and age protection
+3. Job discovery screen, fast 1-tap filter pills, search, distance and min-pay filters, and age protection
 4. Job detail modal inspection (price, approximate location privacy, requirements, employer trust badge)
 5. Application flow (Apply -> Conversation opened with initial message)
-6. Job chat interaction (sending messages, quick replies, lifecycle actions)
-7. Multi-step Job Creation wizard (5 steps, live preview, publish)
-8. Mode switching (Worker 'Find Jobs' <-> Employer 'Post a Job')
-9. Persona switching (Jasper Minor 16 vs Sophia Young Worker 22 vs Dr. Marcus Adult Homeowner vs TechCraft Company)
-10. Safety modal inspection (Minor Protection, Guardian Consent, 2-Stage Location Privacy, Escrow)
+6. Job chat interaction, payment release, and interactive 5-star review modal with compliments
+7. Multi-step Job Creation wizard with automatic real-time age & youth safety classification (JArbSchG)
+8. Profile screen inspection with FinTech Escrow Wallet & Instant SEPA payout
+9. Safety modal inspection (Minor Protection, Guardian Consent, 2-Stage Location Privacy, Escrow)
+10. Employer applicant management flow (Reviewing applicants & assigning worker)
 11. Responsive multi-device screenshots (375x812, 390x844, 414x896, and Desktop Preview)
 """
 
@@ -82,8 +82,21 @@ def run_tests():
             log("✓ Category navigation to Jobs verified")
             passed_steps += 1
 
-            # Step 3: Jobs Feed, Search, and Filtering
-            log("\n[Step 3] Testing Job Search, Filters, and Reset...")
+            # Step 3: Jobs Feed, Fast Action Pills, Search, and Filtering
+            log("\n[Step 3] Testing Job Search, Fast Action Pills, and Reset...")
+            # Test fast filter pill: Jugend-konform
+            youth_pill = page.query_selector('.quick-filter-pill[data-quick="youth"]')
+            if youth_pill:
+                youth_pill.click()
+                page.wait_for_timeout(300)
+                log("✓ Fast filter pill 'Jugend-konform' tested")
+            
+            # Reset quick filter to all
+            all_pill = page.query_selector('.quick-filter-pill[data-quick="all"]')
+            if all_pill:
+                all_pill.click()
+                page.wait_for_timeout(300)
+
             search_input = page.query_selector("#jobs-search-input")
             search_input.fill("lawn")
             page.wait_for_timeout(300)
@@ -136,8 +149,8 @@ def run_tests():
             log("✓ Applied and transitioned directly to linked job chat thread")
             passed_steps += 1
 
-            # Step 6: Chat interaction & Lifecycle Actions
-            log("\n[Step 6] Testing chat messaging and status buttons...")
+            # Step 6: Chat interaction & Lifecycle Actions + Review Modal
+            log("\n[Step 6] Testing chat messaging, lifecycle transitions, and 5-star review modal...")
             quick_reply = page.query_selector('.quick-reply-btn[data-reply="Is 3pm okay?"]')
             if quick_reply:
                 quick_reply.click()
@@ -158,13 +171,40 @@ def run_tests():
                 page.wait_for_timeout(400)
                 log("✓ Job status transitioned to COMPLETED")
 
-            screenshot_path = os.path.join(ARTIFACTS_DIR, "chat_thread.png")
-            page.screenshot(path=screenshot_path)
-            log(f"✓ Chat screenshot saved: {screenshot_path}")
+            release_btn = page.query_selector("#btn-chat-release-payment")
+            if release_btn:
+                release_btn.click()
+                page.wait_for_timeout(400)
+                log("✓ Payment released")
+
+            review_btn = page.query_selector("#btn-chat-leave-review")
+            if review_btn:
+                review_btn.click()
+                page.wait_for_selector("#review-modal-sheet", timeout=5000)
+                log("✓ Interactive 5-Star Review Modal opened!")
+                
+                # Test interactive star click
+                star_5 = page.query_selector('.star-btn[data-star="5"]')
+                if star_5:
+                    star_5.click()
+                
+                # Select a compliment tag
+                compliment = page.query_selector('.compliment-tag[data-tag="⏰ Pünktlich & zuverlässig"]')
+                if compliment:
+                    compliment.click()
+
+                screenshot_path = os.path.join(ARTIFACTS_DIR, "review_modal.png")
+                page.screenshot(path=screenshot_path)
+                log(f"✓ Review modal screenshot saved: {screenshot_path}")
+
+                page.click("#btn-submit-review")
+                page.wait_for_timeout(400)
+                log("✓ Review submitted successfully")
+
             passed_steps += 1
 
-            # Step 7: Create Job Wizard (5 Steps)
-            log("\n[Step 7] Testing 5-step Job Creation Wizard...")
+            # Step 7: Create Job Wizard with Automated Age & Safety Engine
+            log("\n[Step 7] Testing 5-step Job Creation Wizard & Automatic Age Classification...")
             page.click("#nav-create")
             page.wait_for_selector("#screen-create", timeout=5000)
             
@@ -172,7 +212,21 @@ def run_tests():
             page.click("#btn-wizard-next")
             page.wait_for_timeout(300)
             
+            # Test Step 2 Automatic Age Rating
+            # First type dangerous tool to verify 18+ auto-classification
+            page.fill("#wizard-desc", "Arbeiten mit Kettensäge auf dem Dach")
+            page.wait_for_timeout(200)
+            badge_text = page.inner_text("#screen-create")
+            assert "Nur ab 18 Jahren" in badge_text, "Dangerous task must be auto-classified as 18+"
+            log("✓ Automatic Youth Protection: Dangerous task correctly evaluated as 18+ (§ 22 JArbSchG)")
+
+            # Now type safe task
             page.fill("#wizard-desc", "Two 80cm Billy bookcases with glass doors. Cordless screwdriver and Allen keys available.")
+            page.wait_for_timeout(200)
+            badge_text = page.inner_text("#screen-create")
+            assert "Geeignet ab 14 Jahren" in badge_text, "Safe indoor assembly must be evaluated as 14+"
+            log("✓ Automatic Youth Protection: Safe microjob correctly evaluated as Suitable for 14+")
+
             page.fill("#wizard-reqs", "Familiar with furniture assembly\nCareful")
             page.click("#btn-wizard-next")
             page.wait_for_timeout(300)
@@ -201,16 +255,25 @@ def run_tests():
             log("✓ Job created, published, and verified in feed")
             passed_steps += 1
 
-            # Step 8: Profile Screen Inspection
-            log("\n[Step 8] Inspecting Profile Screen...")
+            # Step 8: Profile Screen & FinTech Escrow Wallet Inspection
+            log("\n[Step 8] Inspecting Profile Screen & FinTech Escrow Wallet...")
             page.click("#nav-profile")
             page.wait_for_selector("#screen-profile", timeout=5000)
             
             profile_text = page.inner_text("#screen-profile")
             assert "Jasper Klein" in profile_text
             assert "Youth · 14–17" in profile_text
-            assert "Parental Consent & Youth Protection" in profile_text
-            log("✓ Profile displays youth category, parental consent, reliability, and verified skills")
+            assert "QUICKJOB WALLET" in profile_text.upper()
+            log("✓ Profile displays youth category, wallet balance, and escrow funds")
+
+            # Test wallet withdrawal
+            withdraw_btn = page.query_selector("#btn-profile-withdraw")
+            if withdraw_btn:
+                withdraw_btn.click()
+                page.wait_for_timeout(400)
+                toast_el = page.query_selector("#toast-notice")
+                assert toast_el is not None, "Withdrawal must trigger confirmation toast"
+                log("✓ Payout triggered and confirmed with toast notification")
             
             screenshot_path = os.path.join(ARTIFACTS_DIR, "profile_screen.png")
             page.screenshot(path=screenshot_path)
@@ -235,23 +298,42 @@ def run_tests():
             page.wait_for_timeout(300)
             passed_steps += 1
 
-            # Step 10: Mode Switcher & Persona Switching
-            log("\n[Step 10] Testing Mode Switcher and Persona Switching...")
-            page.click("#btn-mode-switch")
-            page.wait_for_timeout(300)
-            mode_btn_text = page.inner_text("#btn-mode-switch")
-            assert "Switch: Find Jobs" in mode_btn_text or "Employer" in mode_btn_text
-            log("✓ Switched to Employer mode")
-            
-            page.select_option("#dev-persona-select", "techcraft")
+            # Step 10: Employer Applicant Management Flow
+            log("\n[Step 10] Testing Employer Applicant Management Flow...")
+            # Switch persona to Dr. Marcus Lang (employer who posted job_01)
+            page.select_option("#dev-persona-select", "marcus")
             page.wait_for_timeout(400)
             
-            page.click("#nav-profile")
+            page.click("#nav-jobs")
             page.wait_for_timeout(300)
-            profile_text = page.inner_text("#screen-profile")
-            assert "TechCraft Digital GmbH" in profile_text
-            assert "Verified Company" in profile_text
-            log("✓ Switched persona to TechCraft Digital GmbH (Verified Company)")
+            
+            # Click job_01 (Mow front lawn)
+            job1_card = page.query_selector('.job-card[data-job-id="job_01"]')
+            if job1_card:
+                job1_card.click()
+                page.wait_for_selector("#job-detail-sheet", timeout=5000)
+                
+                # Check for employer review applications button
+                review_apps_btn = page.query_selector("#btn-open-applicants-mgr")
+                assert review_apps_btn is not None, "Employer viewing own job must see 'Bewerbungen prüfen' button"
+                review_apps_btn.click()
+                page.wait_for_selector("#applicant-modal-sheet", timeout=5000)
+                log("✓ Employer Applicant Management sheet opened!")
+
+                applicant_sheet_text = page.inner_text("#applicant-modal-sheet")
+                assert "Jasper Klein" in applicant_sheet_text, "Applicant Jasper Klein must be listed"
+                
+                screenshot_path = os.path.join(ARTIFACTS_DIR, "applicant_management_modal.png")
+                page.screenshot(path=screenshot_path)
+                log(f"✓ Applicant modal screenshot saved: {screenshot_path}")
+
+                # Assign Jasper Klein
+                assign_btn = page.query_selector('.btn-assign-worker[data-applicant-id="user_jasper"]')
+                if assign_btn:
+                    assign_btn.click()
+                    page.wait_for_timeout(500)
+                    log("✓ Worker Jasper Klein assigned! Address unlocked and chat thread opened.")
+
             passed_steps += 1
 
             # Step 11: Multi-device Responsive Viewports

@@ -12,6 +12,8 @@ import { renderCreateJobScreen, attachCreateJobEvents } from './screens/createJo
 import { renderMessagesScreen, attachMessagesScreenEvents } from './screens/messagesScreen.js';
 import { renderProfileScreen, attachProfileScreenEvents } from './screens/profileScreen.js';
 import { renderSafetyModal, attachSafetyModalEvents } from './screens/safetyModal.js';
+import { renderReviewModal, attachReviewModalEvents } from './screens/reviewModal.js';
+import { renderApplicantModal, attachApplicantModalEvents } from './screens/applicantModal.js';
 import { renderDebugDrawer, attachDebugDrawerEvents } from './components/debugDrawer.js';
 
 function getCurrentTimeString() {
@@ -58,6 +60,12 @@ function renderApp() {
 
         <!-- Safety & Minor Protection Modal -->
         ${renderSafetyModal(state)}
+
+        <!-- Review & Compliments Modal -->
+        ${renderReviewModal(state)}
+
+        <!-- Applicant Management & Selection Modal -->
+        ${renderApplicantModal(state)}
 
         <!-- Bottom Navigation Bar -->
         ${renderBottomNav(state)}
@@ -119,6 +127,12 @@ function renderApp() {
             <!-- Safety & Minor Protection Modal -->
             ${renderSafetyModal(state)}
 
+            <!-- Review & Compliments Modal -->
+            ${renderReviewModal(state)}
+
+            <!-- Applicant Management & Selection Modal -->
+            ${renderApplicantModal(state)}
+
             <!-- Bottom Navigation Bar -->
             ${renderBottomNav(state)}
 
@@ -147,6 +161,8 @@ function renderApp() {
 
   if (state.selectedJobId) attachJobDetailEvents();
   if (state.isSafetyModalOpen) attachSafetyModalEvents();
+  if (state.reviewJobId) attachReviewModalEvents();
+  if (state.applicantJobId) attachApplicantModalEvents();
 }
 
 function escapeHTML(str) {
