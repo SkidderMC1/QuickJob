@@ -143,8 +143,7 @@ def run_tests():
 
             # Step 4: Open Job Detail Modal & Inspect Privacy + Price
             log("\n[Step 4] Opening Job Detail Modal and verifying fields...")
-            first_card = page.query_selector(".job-card")
-            first_card.click()
+            page.click(".job-card")
             page.wait_for_selector("#job-detail-sheet", timeout=5000)
             
             price_el = page.query_selector("#job-detail-sheet .price-tag")
@@ -153,15 +152,20 @@ def run_tests():
             detail_text = page.inner_text("#job-detail-sheet")
             assert "Exact street number revealed upon confirmed assignment" in detail_text or "Exact address" in detail_text
             log("✓ Privacy-protected approximate location confirmed")
+
+            # Verify and test bookmark button in Job Detail header
+            page.wait_for_selector("#btn-detail-bookmark", timeout=5000)
+            page.click("#btn-detail-bookmark")
+            page.wait_for_timeout(300)
+            log("✓ Toggled bookmark directly from Job Detail modal header")
             
             screenshot_path = os.path.join(ARTIFACTS_DIR, "job_detail_modal.png")
             page.screenshot(path=screenshot_path)
             log(f"✓ Job detail modal screenshot saved: {screenshot_path}")
 
             # Test Safety Incident Reporting from Job Detail (TASK-002)
-            report_btn = page.query_selector("#btn-report-job")
-            assert report_btn is not None, "Report button must be present in Job Detail header"
-            report_btn.click()
+            page.wait_for_selector("#btn-report-job", timeout=5000)
+            page.click("#btn-report-job")
             page.wait_for_selector("#report-modal-sheet", timeout=5000)
             
             report_sheet_text = page.inner_text("#report-modal-sheet")
@@ -189,13 +193,11 @@ def run_tests():
             # Step 5: Apply to Job and verify state transition to Chat
             log("\n[Step 5] Applying to Job and checking state transition...")
             # Re-open job detail sheet after report modal closed
-            first_card = page.query_selector(".job-card")
-            first_card.click()
+            page.click(".job-card")
             page.wait_for_selector("#job-detail-sheet", timeout=5000)
 
-            action_btn = page.query_selector("#btn-action-apply, #btn-action-accept")
-            assert action_btn is not None, "Apply or Accept CTA must be visible in job detail"
-            action_btn.click()
+            page.wait_for_selector("#btn-action-apply, #btn-action-accept", timeout=5000)
+            page.click("#btn-action-apply, #btn-action-accept")
             page.wait_for_timeout(600)
             
             assert page.query_selector("#screen-chat-thread") is not None, "Should transition to chat thread after application"
@@ -339,6 +341,52 @@ def run_tests():
             assert "Youth · 14–17" in profile_text
             assert "QUICKJOB WALLET" in profile_text.upper()
             log("✓ Profile displays youth category, wallet balance, and escrow funds")
+
+            # Verify Gespeicherte Jobs Section in Profile
+            saved_section = page.query_selector("#profile-saved-jobs-container")
+            assert saved_section is not None, "Profile must contain 'Gespeicherte Jobs' section"
+            saved_badge = page.inner_text("#profile-saved-jobs-badge")
+            log(f"✓ Profile 'Gespeicherte Jobs' section verified with initial count: {saved_badge}")
+            
+            # If 0 saved jobs, test empty state CTA -> browse jobs -> bookmark 2 jobs -> return to profile
+            if saved_badge == "0":
+                browse_btn = page.query_selector("#btn-profile-browse-jobs")
+                assert browse_btn is not None, "Empty saved jobs state should show 'Zu den Microjobs' CTA"
+                page.click("#btn-profile-browse-jobs")
+                page.wait_for_timeout(300)
+                
+                # Bookmark 2 jobs in the feed
+                page.wait_for_selector(".job-card .bookmark-btn", timeout=5000)
+                page.click(".job-card:nth-of-type(1) .bookmark-btn")
+                page.wait_for_timeout(300)
+                page.click(".job-card:nth-of-type(2) .bookmark-btn")
+                page.wait_for_timeout(300)
+                log("✓ Bookmarked 2 jobs from feed to populate profile")
+
+                # Navigate back to Profile
+                page.click("#nav-profile")
+                page.wait_for_timeout(300)
+
+            # Re-check saved jobs in profile
+            updated_saved_badge = page.inner_text("#profile-saved-jobs-badge")
+            assert int(updated_saved_badge) >= 1, f"Expected at least 1 saved job in profile, got {updated_saved_badge}"
+            saved_items = page.query_selector_all(".profile-saved-job-item")
+            assert len(saved_items) >= 1, "Profile must render saved job items"
+            log(f"✓ Profile successfully lists {len(saved_items)} saved job card(s)")
+
+            # Test clicking a saved job in profile to open Job Detail modal
+            page.click(".profile-saved-job-item")
+            page.wait_for_selector("#job-detail-sheet", timeout=5000)
+            log("✓ Clicking saved job card in profile opened Job Detail modal successfully")
+            page.click("#btn-close-detail")
+            page.wait_for_timeout(300)
+
+            # Test removing one saved job using the quick-remove button
+            first_remove_btn = page.query_selector(".btn-remove-saved-job")
+            if first_remove_btn:
+                first_remove_btn.click()
+                page.wait_for_timeout(300)
+                log("✓ Tested quick-remove (✕) button on saved job item")
 
             # Test wallet withdrawal
             withdraw_btn = page.query_selector("#btn-profile-withdraw")

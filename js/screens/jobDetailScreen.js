@@ -33,7 +33,11 @@ export function renderJobDetailModal(jobId, state) {
             </span>
           </div>
 
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
+            <button id="btn-detail-bookmark" data-job-id="${job.id}" title="${job.isBookmarked ? 'Aus gemerkten Jobs entfernen' : 'Job für später merken'}" style="background: ${job.isBookmarked ? '#fef3c7' : '#f8fafc'}; border: 1px solid ${job.isBookmarked ? '#f59e0b' : '#e2e8f0'}; color: ${job.isBookmarked ? '#b45309' : '#475569'}; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+              <span>${job.isBookmarked ? '⭐' : '☆'}</span>
+              <span>${job.isBookmarked ? 'Gemerkt' : 'Merken'}</span>
+            </button>
             <button id="btn-report-job" data-job-id="${job.id}" title="Problem oder Verstoß melden" style="color: #ef4444; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border: 1px solid #fecaca; border-radius: 6px; background: #fef2f2; cursor: pointer; display: flex; align-items: center; gap: 3px;">
               <span>🚩</span><span>Melden</span>
             </button>
@@ -231,6 +235,16 @@ export function attachJobDetailEvents() {
     reportBtn.addEventListener('click', () => {
       const jobId = reportBtn.getAttribute('data-job-id') || store.getState().selectedJobId;
       store.openReportModal(jobId);
+    });
+  }
+
+  const detailBookmarkBtn = document.getElementById('btn-detail-bookmark');
+  if (detailBookmarkBtn) {
+    detailBookmarkBtn.addEventListener('click', () => {
+      const jobId = detailBookmarkBtn.getAttribute('data-job-id') || store.getState().selectedJobId;
+      if (jobId) {
+        store.toggleBookmark(jobId);
+      }
     });
   }
 }

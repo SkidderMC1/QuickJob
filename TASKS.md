@@ -8,6 +8,7 @@
 | **TASK-002** | Report & Safety Incident Workflow (Job/Chat Melden & Notfall-Hotline) | SECURITY / SAFETY | P0 | 9 | 3 | 9 | **DONE** |
 | **TASK-003** | Interactive Simulated Employer/Worker Auto-Replies in Chat | UX / INTERACTION | P2 | 7 | 2 | 9 | **DONE** |
 | **TASK-004** | Fair Pay & Hourly Rate Indicator in Job Creation Wizard | UX / FEATURE | P2 | 8 | 2 | 9 | **DONE** |
+| **TASK-008** | Profile Saved Jobs Section & Job Detail Bookmark Integration | USER_REQUEST | P0 | 9 | 2 | 9 | **DONE** |
 | **TASK-005** | Parent/Guardian Digital Consent Signature & Verification Portal | LEGAL / SAFETY | P1 | 9 | 3 | 9 | **READY** |
 | **TASK-006** | Microjob Completion Photo Proof & Before/After Upload Widget | TRUST / ESCROW | P1 | 8 | 3 | 9 | **BACKLOG** |
 | **TASK-007** | Live In-Job Safety Check-In & One-Tap Guardian Geoshare SOS | SAFETY / EMERGENCY | P1 | 9 | 4 | 8 | **BACKLOG** |
@@ -44,12 +45,14 @@
   - Step 5 card preview badge displaying `€X.XX/Std`.
 - **Status**: Verified in automated Playwright suite with screenshot `create_job_preview_step5.png`.
 
-### TASK-005: Parent/Guardian Digital Consent Signature & Verification Portal — READY
-- **Description**: Provide an interactive verification flow for minors under 16 with parent phone/SMS consent verification badge.
-- **Acceptance Criteria**:
-  - Minors 14–15 receive a dedicated "Eltern-Zustimmung" status widget in Profile.
-  - Generates verifiable SMS/QR consent request link.
-  - Profile and applicant modal display "Eltern-Zustimmung verifiziert ✓ (§ 5 JArbSchG)".
+### TASK-008: Profile Saved Jobs Section & Job Detail Bookmark Integration — DONE
+- **User Request**: "ich möchte die möglichkeit haben jobs zu speicheern und die gespeichersten jobs in meinem profil anzusehen"
+- **Implementation**:
+  - Added `#btn-detail-bookmark` (`⭐ Gemerkt` / `☆ Merken`) in the Job Detail modal header ([`jobDetailScreen.js`](file:///c:/Users/Einrichtung/Desktop/app/js/screens/jobDetailScreen.js)).
+  - Added `Gemerkt` count badge in Profile stats grid.
+  - Added dedicated **`⭐ Gespeicherte Jobs`** card in [`profileScreen.js`](file:///c:/Users/Einrichtung/Desktop/app/js/screens/profileScreen.js) with list of saved cards, direct detail-view on click, and 1-tap quick remove button (`✕`).
+  - Added helpful empty state with "Zu den Microjobs" action when no jobs are saved.
+- **Status**: 100% verified in automated Playwright suite with screenshot `profile_screen.png`.
 
 ---
 *Maintained by QuickJob Autonomous Product Controller*

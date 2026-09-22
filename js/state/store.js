@@ -184,14 +184,17 @@ class Store {
 
   // Job actions
   toggleBookmark(jobId) {
+    let isNowBookmarked = false;
     const jobs = this.state.jobs.map(j => {
       if (j.id === jobId) {
         const next = !j.isBookmarked;
+        isNowBookmarked = next;
         return { ...j, isBookmarked: next };
       }
       return j;
     });
     this.setState({ jobs });
+    this.showToast(isNowBookmarked ? '⭐ Job gemerkt & im Profil gespeichert!' : 'Aus gemerkten Jobs entfernt');
   }
 
   applyToJob(jobId, note = '') {
