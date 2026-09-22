@@ -51,10 +51,11 @@ export function renderJobsScreen(state) {
         return false;
       }
 
-      // Age restriction check
-      if (filters.onlySuitableForMyAge && isMinor) {
+      // Gesetzlicher Jugendschutz: Für Minderjährige IMMER zwingend aktiv (§ 22 JArbSchG - nicht deaktivierbar)
+      if (isMinor) {
         if (job.minAge && job.minAge > 17) return false;
-        if (job.category === 'disposal') return false; // hazardous heavy bulk waste restricted
+        if (job.category === 'disposal') return false; // Gefährliche Entsorgung & schwere Lasten gesperrt
+        if (job.ageSuitability && job.ageSuitability.includes('18')) return false;
       }
     }
 
@@ -151,17 +152,24 @@ export function renderJobsScreen(state) {
             </select>
           </div>
 
-          <!-- Age Filter Banner / Toggle -->
+          <!-- Gesetzlicher Jugendschutz Banner (Nicht deaktivierbar für Minderjährige) -->
           ${isMinor ? `
-            <div style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: var(--qj-radius-sm); padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: space-between;">
-              <div style="font-size: 0.76rem; color: #5b21b6; font-weight: 600; display: flex; align-items: center; gap: 0.35rem;">
-                <span>🛡️</span>
-                <span>Jugendschutz aktiv (14–17 Jahre)</span>
+            <div id="youth-protection-locked-badge" style="background: #f5f3ff; border: 1.5px solid #c4b5fd; border-radius: var(--qj-radius-sm); padding: 0.55rem 0.8rem; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(124, 58, 237, 0.08);">
+              <div style="display: flex; align-items: center; gap: 0.45rem;">
+                <span style="font-size: 1.05rem;">🛡️</span>
+                <div>
+                  <div style="font-size: 0.78rem; font-weight: 800; color: #5b21b6; display: flex; align-items: center; gap: 0.35rem;">
+                    <span>Gesetzlicher Jugendschutz aktiv</span>
+                    <span style="font-size: 0.68rem; color: #7c3aed; font-weight: 600;">(JArbSchG)</span>
+                  </div>
+                  <div style="font-size: 0.7rem; color: #6b21a8; margin-top: 1px;">
+                    Gefährliche & unzulässige 18+ Arbeiten werden automatisch gesperrt
+                  </div>
+                </div>
               </div>
-              <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; color: #6b21a8; font-weight: 700; cursor: pointer;">
-                <input type="checkbox" id="check-age-filter" ${filters.onlySuitableForMyAge ? 'checked' : ''} />
-                <span>Safe for me</span>
-              </label>
+              <span class="badge badge-purple" style="font-size: 0.72rem; font-weight: 800; background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; display: flex; align-items: center; gap: 3px; white-space: nowrap;">
+                <span>🔒</span><span>Dauerhaft aktiv</span>
+              </span>
             </div>
           ` : ''}
 
@@ -298,10 +306,10 @@ export function attachJobsScreenEvents() {
     });
   }
 
-  const ageCheck = document.getElementById('check-age-filter');
-  if (ageCheck) {
-    ageCheck.addEventListener('change', (e) => {
-      store.setFilter('onlySuitableForMyAge', e.target.checked);
+  const lockedBadge = document.getElementById('youth-protection-locked-badge');
+  if (lockedBadge) {
+    lockedBadge.addEventListener('click', () => {
+      store.showToast('🔒 Gesetzlicher Jugendschutz ist für Minderjährige dauerhaft aktiv (§ 22 JArbSchG).');
     });
   }
 

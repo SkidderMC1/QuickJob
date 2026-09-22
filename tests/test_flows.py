@@ -115,6 +115,21 @@ def run_tests():
                 reset_filters_btn.click()
                 page.wait_for_timeout(300)
 
+            # Verify Non-deactivatable Youth Protection Compliance (JArbSchG)
+            locked_badge = page.query_selector("#youth-protection-locked-badge")
+            assert locked_badge is not None, "Youth protection locked badge must be visible for minors"
+            badge_text = page.inner_text("#youth-protection-locked-badge")
+            assert "Gesetzlicher Jugendschutz aktiv" in badge_text
+            assert "Dauerhaft aktiv" in badge_text
+            assert page.query_selector("#check-age-filter") is None, "Youth protection must NOT have a deactivation checkbox"
+            
+            # Click locked badge to test explanation toast
+            page.click("#youth-protection-locked-badge")
+            page.wait_for_timeout(300)
+            toast_el = page.query_selector("#toast-notice")
+            assert toast_el is not None and "dauerhaft aktiv" in toast_el.inner_text()
+            log("✓ Verified: Youth protection filter is permanently locked on and cannot be deactivated")
+
             # Test Bookmarking & Tab Switching (TASK-001)
             first_bookmark_btn = page.query_selector(".job-card .bookmark-btn")
             assert first_bookmark_btn is not None, "Bookmark button must be present on job cards"
@@ -137,8 +152,8 @@ def run_tests():
             page.wait_for_timeout(300)
 
             total_cards = len(page.query_selector_all(".job-card"))
-            assert total_cards >= 6, f"Expected at least 6 initial jobs, found {total_cards}"
-            log(f"✓ Total {total_cards} microjobs active in feed")
+            assert total_cards >= 5, f"Expected at least 5 youth-compliant jobs, found {total_cards}"
+            log(f"✓ Total {total_cards} youth-compliant microjobs active in feed (18+ dangerous tasks filtered out)")
             passed_steps += 1
 
             # Step 4: Open Job Detail Modal & Inspect Privacy + Price

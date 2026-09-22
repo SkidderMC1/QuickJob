@@ -149,8 +149,17 @@ class Store {
     this.showToast(`Switched mode to: ${newMode === 'find' ? 'Find Jobs (Worker)' : 'Post a Job (Employer)'}`);
   }
 
+  isMinor() {
+    const user = this.state.currentUser;
+    return Boolean(user && (user.ageCategory === 'YOUTH_14_17' || (user.age && user.age < 18)));
+  }
+
   // Filter actions
   setFilter(key, value) {
+    if (key === 'onlySuitableForMyAge' && !value && this.isMinor()) {
+      this.showToast('🛡️ Gesetzlicher Jugendschutz: Kann für Minderjährige nicht deaktiviert werden (§ 22 JArbSchG).', 'error');
+      return;
+    }
     this.setState({
       filters: {
         ...this.state.filters,
