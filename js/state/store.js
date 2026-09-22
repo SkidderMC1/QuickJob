@@ -13,13 +13,19 @@ class Store {
   }
 
   loadInitialState() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true || 
+                         window.location.search.includes('mode=app') ||
+                         window.location.search.includes('mode=standalone');
+
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         return {
           ...parsed,
-          // Ensure currentUser has full properties if loaded from cache
+          displayMode: parsed.displayMode || (isStandalone ? 'native' : 'simulator'),
+          isDebugDrawerOpen: false,
           currentUser: mockUsers[parsed.currentPersonaKey || 'jasper'] || mockUsers.jasper
         };
       } catch (e) {
@@ -32,6 +38,8 @@ class Store {
       currentUser: mockUsers.jasper,
       activeMode: 'find', // 'find' (Worker) or 'post' (Employer)
       currentScreen: 'home', // 'home', 'jobs', 'create', 'messages', 'profile'
+      displayMode: isStandalone ? 'native' : 'simulator', // 'simulator' (with PC phone frame) or 'native' (full-screen PWA)
+      isDebugDrawerOpen: false,
       selectedJobId: null,
       selectedConversationId: null,
       isFilterModalOpen: false,
@@ -58,6 +66,7 @@ class Store {
         currentPersonaKey: this.state.currentPersonaKey,
         activeMode: this.state.activeMode,
         currentScreen: this.state.currentScreen,
+        displayMode: this.state.displayMode,
         selectedJobId: this.state.selectedJobId,
         selectedConversationId: this.state.selectedConversationId,
         filters: this.state.filters,

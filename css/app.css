@@ -1,5 +1,26 @@
 /* QuickJob Application Core Layout & Component Styles */
 
+/* Native PWA Fullscreen Container */
+.native-pwa-container {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+  background-color: var(--qj-bg);
+  position: relative;
+  box-shadow: 0 0 50px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+
+@media (max-width: 500px) {
+  .native-pwa-container {
+    max-width: 100%;
+    box-shadow: none;
+  }
+}
+
 /* Top Navigation Bar */
 .app-header {
   padding: 0.75rem 1rem;

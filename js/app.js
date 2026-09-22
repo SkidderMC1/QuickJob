@@ -12,6 +12,7 @@ import { renderCreateJobScreen, attachCreateJobEvents } from './screens/createJo
 import { renderMessagesScreen, attachMessagesScreenEvents } from './screens/messagesScreen.js';
 import { renderProfileScreen, attachProfileScreenEvents } from './screens/profileScreen.js';
 import { renderSafetyModal, attachSafetyModalEvents } from './screens/safetyModal.js';
+import { renderDebugDrawer, attachDebugDrawerEvents } from './components/debugDrawer.js';
 
 function getCurrentTimeString() {
   const now = new Date();
@@ -26,72 +27,117 @@ function renderApp() {
   if (!root) return;
 
   const timeStr = getCurrentTimeString();
+  const isNative = state.displayMode === 'native';
 
-  root.innerHTML = `
-    <div class="preview-container">
-      <!-- Desktop Dev Header Controls -->
-      ${renderDevBar(state)}
+  if (isNative) {
+    // 100% Native Fullscreen PWA Experience
+    root.innerHTML = `
+      <div class="native-pwa-container">
+        <!-- QuickJob Top Bar -->
+        ${renderHeader(state)}
 
-      <!-- Smartphone Chassis -->
-      <div class="phone-bezel ${state.viewportSize}" id="phone-bezel">
-        <!-- Dynamic Island / Sensor Notch -->
-        <div class="dynamic-island">
-          <div class="camera-lens"></div>
-          <div class="sensor-dot"></div>
-        </div>
+        <!-- Scrollable Main Viewport Area -->
+        <main class="app-viewport" id="app-viewport">
+          ${state.currentScreen === 'home' ? renderHomeScreen(state) : ''}
+          ${state.currentScreen === 'jobs' ? renderJobsScreen(state) : ''}
+          ${state.currentScreen === 'create' ? renderCreateJobScreen(state) : ''}
+          ${state.currentScreen === 'messages' ? renderMessagesScreen(state) : ''}
+          ${state.currentScreen === 'profile' ? renderProfileScreen(state) : ''}
+        </main>
 
-        <!-- Phone Internal Screen Canvas -->
-        <div class="phone-screen" id="phone-screen">
-          <!-- iOS-style Status Bar -->
-          <div class="phone-status-bar">
-            <span style="font-weight: 700; letter-spacing: -0.02em;">${timeStr}</span>
-            <div class="status-icons">
-              <span title="Full 5G Cellular Signal">●●●●</span>
-              <span title="High-Speed Wi-Fi">📶</span>
-              <span title="Battery 98%">🔋</span>
-            </div>
+        <!-- Toast Notification Banner -->
+        ${state.toast ? `
+          <div class="toast-notice" id="toast-notice">
+            <span>${state.toast.type === 'error' ? '⚠️' : '✓'}</span>
+            <span>${escapeHTML(state.toast.message)}</span>
+          </div>
+        ` : ''}
+
+        <!-- Job Detail Sheet Overlay -->
+        ${state.selectedJobId ? renderJobDetailModal(state.selectedJobId, state) : ''}
+
+        <!-- Safety & Minor Protection Modal -->
+        ${renderSafetyModal(state)}
+
+        <!-- Bottom Navigation Bar -->
+        ${renderBottomNav(state)}
+
+        <!-- Floating Debug Tool -->
+        ${renderDebugDrawer(state)}
+      </div>
+    `;
+  } else {
+    // Simulator Mode (Phone Bezel + Desktop Dev Bar)
+    root.innerHTML = `
+      <div class="preview-container">
+        <!-- Desktop Dev Header Controls -->
+        ${renderDevBar(state)}
+
+        <!-- Smartphone Chassis -->
+        <div class="phone-bezel ${state.viewportSize}" id="phone-bezel">
+          <!-- Dynamic Island / Sensor Notch -->
+          <div class="dynamic-island">
+            <div class="camera-lens"></div>
+            <div class="sensor-dot"></div>
           </div>
 
-          <!-- QuickJob Top Bar -->
-          ${renderHeader(state)}
-
-          <!-- Scrollable Main Viewport Area -->
-          <main class="app-viewport" id="app-viewport">
-            ${state.currentScreen === 'home' ? renderHomeScreen(state) : ''}
-            ${state.currentScreen === 'jobs' ? renderJobsScreen(state) : ''}
-            ${state.currentScreen === 'create' ? renderCreateJobScreen(state) : ''}
-            ${state.currentScreen === 'messages' ? renderMessagesScreen(state) : ''}
-            ${state.currentScreen === 'profile' ? renderProfileScreen(state) : ''}
-          </main>
-
-          <!-- Toast Notification Banner -->
-          ${state.toast ? `
-            <div class="toast-notice" id="toast-notice">
-              <span>${state.toast.type === 'error' ? '⚠️' : '✓'}</span>
-              <span>${escapeHTML(state.toast.message)}</span>
+          <!-- Phone Internal Screen Canvas -->
+          <div class="phone-screen" id="phone-screen">
+            <!-- iOS-style Status Bar -->
+            <div class="phone-status-bar">
+              <span style="font-weight: 700; letter-spacing: -0.02em;">${timeStr}</span>
+              <div class="status-icons">
+                <span title="Full 5G Cellular Signal">●●●●</span>
+                <span title="High-Speed Wi-Fi">📶</span>
+                <span title="Battery 98%">🔋</span>
+              </div>
             </div>
-          ` : ''}
 
-          <!-- Job Detail Sheet Overlay -->
-          ${state.selectedJobId ? renderJobDetailModal(state.selectedJobId, state) : ''}
+            <!-- QuickJob Top Bar -->
+            ${renderHeader(state)}
 
-          <!-- Safety & Minor Protection Modal -->
-          ${renderSafetyModal(state)}
+            <!-- Scrollable Main Viewport Area -->
+            <main class="app-viewport" id="app-viewport">
+              ${state.currentScreen === 'home' ? renderHomeScreen(state) : ''}
+              ${state.currentScreen === 'jobs' ? renderJobsScreen(state) : ''}
+              ${state.currentScreen === 'create' ? renderCreateJobScreen(state) : ''}
+              ${state.currentScreen === 'messages' ? renderMessagesScreen(state) : ''}
+              ${state.currentScreen === 'profile' ? renderProfileScreen(state) : ''}
+            </main>
 
-          <!-- Bottom Navigation Bar -->
-          ${renderBottomNav(state)}
+            <!-- Toast Notification Banner -->
+            ${state.toast ? `
+              <div class="toast-notice" id="toast-notice">
+                <span>${state.toast.type === 'error' ? '⚠️' : '✓'}</span>
+                <span>${escapeHTML(state.toast.message)}</span>
+              </div>
+            ` : ''}
 
-          <!-- iOS Home Indicator -->
-          <div class="phone-home-indicator"></div>
+            <!-- Job Detail Sheet Overlay -->
+            ${state.selectedJobId ? renderJobDetailModal(state.selectedJobId, state) : ''}
+
+            <!-- Safety & Minor Protection Modal -->
+            ${renderSafetyModal(state)}
+
+            <!-- Bottom Navigation Bar -->
+            ${renderBottomNav(state)}
+
+            <!-- iOS Home Indicator -->
+            <div class="phone-home-indicator"></div>
+          </div>
         </div>
+
+        <!-- Floating Debug Tool -->
+        ${renderDebugDrawer(state)}
       </div>
-    </div>
-  `;
+    `;
+  }
 
   // Attach interactive events
-  attachDevBarEvents();
+  if (!isNative) attachDevBarEvents();
   attachHeaderEvents();
   attachNavEvents();
+  attachDebugDrawerEvents();
 
   if (state.currentScreen === 'home') attachHomeScreenEvents();
   if (state.currentScreen === 'jobs') attachJobsScreenEvents();

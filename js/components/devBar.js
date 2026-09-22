@@ -47,6 +47,10 @@ export function renderDevBar(state) {
           </option>
         </select>
 
+        <button class="dev-pill-btn" id="btn-dev-switch-native" style="background: rgba(14, 167, 107, 0.2); color: #34d399; border-color: rgba(52, 211, 153, 0.3);">
+          📱 Vollbild-App (PWA)
+        </button>
+
         <button class="dev-pill-btn" id="btn-dev-reset" title="Reset local storage data">
           ↺ Reset Data
         </button>
@@ -56,6 +60,13 @@ export function renderDevBar(state) {
 }
 
 export function attachDevBarEvents() {
+  const switchNativeBtn = document.getElementById('btn-dev-switch-native');
+  if (switchNativeBtn) {
+    switchNativeBtn.addEventListener('click', () => {
+      store.setState({ displayMode: 'native' });
+    });
+  }
+
   const sizeBtns = document.querySelectorAll('.dev-pill-btn[data-size]');
   sizeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
