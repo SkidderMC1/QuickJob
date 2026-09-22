@@ -66,10 +66,24 @@ export function renderDebugDrawer(state) {
               </div>
               <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
                 <button 
+                  class="btn btn-sm ${currentPersona === 'felix' ? 'btn-primary' : 'btn-secondary'}" 
+                  data-debug-persona="felix"
+                  style="border-color: #ef4444;"
+                >
+                  Felix (12, Kind &lt;13)
+                </button>
+                <button 
+                  class="btn btn-sm ${currentPersona === 'lena' ? 'btn-primary' : 'btn-secondary'}" 
+                  data-debug-persona="lena"
+                  style="border-color: #8b5cf6;"
+                >
+                  Lena (14, Kind 13–14)
+                </button>
+                <button 
                   class="btn btn-sm ${currentPersona === 'jasper' ? 'btn-primary' : 'btn-secondary'}" 
                   data-debug-persona="jasper"
                 >
-                  Jasper (16, Youth 14–17)
+                  Jasper (16, Youth 15–17)
                 </button>
                 <button 
                   class="btn btn-sm ${currentPersona === 'sophia' ? 'btn-primary' : 'btn-secondary'}" 

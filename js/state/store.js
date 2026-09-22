@@ -3,6 +3,10 @@
  */
 import { mockUsers, initialJobs, initialConversations } from '../data/mockData.js';
 import { JobStates } from '../models/types.js';
+import { LegalEligibilityEngine } from '../legal/legalEngine.js';
+import { GuardianConsentManager } from '../legal/guardianConsent.js';
+import { ConsentManager } from '../legal/consentManager.js';
+import { DataSubjectRightsManager } from '../legal/dataSubjectRights.js';
 
 const STORAGE_KEY = 'quickjob_state_v1';
 
@@ -46,6 +50,15 @@ class Store {
       reviewJobId: null,
       applicantJobId: null,
       reportJobId: null,
+      activeLegalDocType: null,
+      isAgbAcceptanceRequired: false,
+      isGuardianModalOpen: false,
+      isConsentModalOpen: false,
+      agbAcceptedVersion: '1.1.0',
+      agbAcceptedAt: '2026-09-22T10:00:00.000Z',
+      agbAcceptanceHistory: [
+        { documentId: 'AGB', version: '1.1.0', acceptedAt: '2026-09-22T10:00:00.000Z', userId: 'user_jasper' }
+      ],
       isFilterModalOpen: false,
       isSafetyModalOpen: false,
       viewportSize: 'size-390',
@@ -210,9 +223,17 @@ class Store {
     const job = this.state.jobs.find(j => j.id === jobId);
     if (!job) return;
 
-    // Check age suitability
-    if (this.state.currentUser.age && job.minAge && this.state.currentUser.age < job.minAge) {
-      this.showToast(`This job requires minimum age ${job.minAge}.`, 'error');
+    // Authoritative Legal Eligibility Check (JArbSchG, KindArbSchV, BGB §§ 107, 113)
+    const eligibility = LegalEligibilityEngine.evaluateEligibility(this.state.currentUser, job);
+    if (!eligibility.isEligible) {
+      this.showToast(`⛔ Jugendarbeitsschutz: ${eligibility.reasons[0]} (${eligibility.legalBases[0]})`, 'error');
+      return;
+    }
+
+    // Guardian Consent check for minors
+    if (eligibility.requiresGuardianConsent && !GuardianConsentManager.isConsentActive(this.state.currentUser)) {
+      this.showToast('👨‍👩‍👧 Digitale Eltern-Einwilligung erforderlich (§ 113 BGB). Bitte im Profil verifizieren.', 'error');
+      this.setState({ isGuardianModalOpen: true });
       return;
     }
 
@@ -380,6 +401,10 @@ class Store {
   }
 
   createJob(jobData) {
+    const audit = LegalEligibilityEngine.auditJobPosting(jobData);
+    const effectiveMinAge = audit.recommendedMinAge > (Number(jobData.minAge) || 14) ? audit.recommendedMinAge : (Number(jobData.minAge) || 14);
+    const effectiveSuitability = audit.recommendedMinAge === 18 ? '18+ Only (Gesetzlicher Jugendschutz)' : (jobData.ageSuitability || 'Suitable for 14+');
+
     const newJob = {
       id: `job_${Date.now()}`,
       title: jobData.title,
@@ -392,9 +417,9 @@ class Store {
       dateSchedule: jobData.dateSchedule || 'This weekend',
       state: JobStates.PUBLISHED,
       applicationMode: jobData.applicationMode,
-      ageSuitability: jobData.ageSuitability || 'Suitable for 14+',
-      minAge: Number(jobData.minAge) || 14,
-      moderation: 'SAFE',
+      ageSuitability: effectiveSuitability,
+      minAge: effectiveMinAge,
+      moderation: audit.isSafeForMinors ? 'SAFE' : 'RESTRICTED_18_PLUS',
       employer: {
         id: this.state.currentUser.id,
         name: this.state.currentUser.name,
@@ -583,6 +608,101 @@ class Store {
 
     this.setState({ currentUser: updatedUser });
     this.showToast(`💸 Auszahlung von €${amount.toFixed(2)} auf dein Bankkonto veranlasst! (1–2 Werktage)`);
+  }
+
+  // Legal & Compliance Methods
+  openLegalDoc(docType, requireAcceptance = false) {
+    this.setState({ activeLegalDocType: docType, isAgbAcceptanceRequired: requireAcceptance });
+  }
+
+  recordAgbAcceptance(docType = 'AGB', version = '1.1.0') {
+    const timestamp = new Date().toISOString();
+    const entry = {
+      documentId: docType,
+      version: version,
+      acceptedAt: timestamp,
+      userId: this.state.currentUser.id
+    };
+    const history = [...(this.state.agbAcceptanceHistory || []), entry];
+    this.setState({
+      agbAcceptedVersion: version,
+      agbAcceptedAt: timestamp,
+      agbAcceptanceHistory: history,
+      isAgbAcceptanceRequired: false,
+      activeLegalDocType: null
+    });
+    this.showToast(`✓ AGB (Version ${version}) rechtsverbindlich akzeptiert.`);
+  }
+
+  openGuardianModal() {
+    this.setState({ isGuardianModalOpen: true });
+  }
+
+  closeGuardianModal() {
+    this.setState({ isGuardianModalOpen: false });
+  }
+
+  recordGuardianConsent(formData) {
+    const user = this.state.currentUser;
+    const authRecord = GuardianConsentManager.createAuthorizationRecord({
+      minorId: user.id,
+      minorName: user.name,
+      guardianName: formData.guardianName,
+      guardianEmail: formData.guardianEmail,
+      guardianPhone: formData.guardianPhone || '',
+      relationship: formData.relationship || 'Mutter'
+    });
+
+    const updatedUser = {
+      ...user,
+      hasParentConsent: true,
+      guardianConsent: authRecord
+    };
+
+    this.setState({
+      currentUser: updatedUser,
+      isGuardianModalOpen: false
+    });
+    this.showToast('✓ Digitale Eltern-Einwilligung (§ 113 BGB) erfolgreich verifiziert!');
+  }
+
+  revokeGuardianConsent() {
+    const user = this.state.currentUser;
+    const revoked = GuardianConsentManager.revokeAuthorization(user.guardianConsent);
+    const updatedUser = {
+      ...user,
+      hasParentConsent: false,
+      guardianConsent: revoked
+    };
+    this.setState({
+      currentUser: updatedUser,
+      isGuardianModalOpen: false
+    });
+    this.showToast('Eltern-Einwilligung widerrufen. Auftragsannahme für Minderjährige pausiert.', 'error');
+  }
+
+  exportUserData() {
+    const data = DataSubjectRightsManager.exportUserData(this.state, this.state.currentUser.id);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `quickjob-dsgvo-datenexport-${this.state.currentUser.id}-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    this.showToast('✓ Vollständiger DSGVO-Datenexport (Art. 15) heruntergeladen.');
+  }
+
+  deleteAccount() {
+    const result = DataSubjectRightsManager.processAccountDeletion(this.state, this.state.currentUser.id);
+    this.setState({
+      jobs: result.sanitizedJobs,
+      conversations: result.sanitizedConversations,
+      currentScreen: 'home'
+    });
+    this.showToast(result.message, result.hasFinancialRecords ? 'warning' : 'success');
   }
 
   resetAll() {

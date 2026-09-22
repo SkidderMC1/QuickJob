@@ -184,25 +184,29 @@ export function renderProfileScreen(state) {
         `}
       </div>
 
-      <!-- Minor Protection & Parental Consent Card -->
+      <!-- Minor Protection & Parental Consent Card (§ 113 BGB & JArbSchG) -->
       ${isMinor ? `
-        <div style="background: #f5f3ff; border: 1.5px solid #ddd6fe; border-radius: var(--qj-radius-md); padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+        <div style="background: #f5f3ff; border: 1.5px solid #c4b5fd; border-radius: var(--qj-radius-md); padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; box-shadow: 0 1px 3px rgba(124, 58, 237, 0.05);">
           <div style="display: flex; align-items: center; justify-content: space-between;">
             <div style="font-size: 0.85rem; font-weight: 800; color: #5b21b6; display: flex; align-items: center; gap: 0.4rem;">
               <span>🛡️</span>
-              <span>Parental Consent & Youth Protection</span>
+              <span>Eltern-Einwilligung & Jugendarbeitsschutz</span>
             </div>
-            <span class="badge badge-success">Active ✓</span>
+            <span class="badge ${user.guardianConsent?.status === 'ACTIVE' || user.hasParentConsent ? 'badge-success' : 'badge-danger'}">
+              ${user.guardianConsent?.status === 'ACTIVE' || user.hasParentConsent ? 'Verifiziert ✓' : 'Erforderlich ⚠️'}
+            </span>
           </div>
 
-          <p style="font-size: 0.78rem; color: #6b21a8; line-height: 1.4;">
-            As a 16-year-old youth worker, tasks are legally limited to max 2 hours per school day and 10 hours per week. Dangerous work, hazardous bulk disposal, and late evening shifts are restricted.
+          <p style="font-size: 0.78rem; color: #6b21a8; line-height: 1.45;">
+            Nach § 113 BGB und dem JArbSchG dürfen Minderjährige nur jugendkonforme Tätigkeiten annehmen. Der Jugendschutzfilter ist dauerhaft verankert.
           </p>
 
-          <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; font-weight: 700; color: #7c3aed; border-top: 1px solid #e9d5ff; padding-top: 0.4rem; margin-top: 0.2rem;">
-            <span>Guardian: Sandra Klein (Mother)</span>
-            <button id="btn-view-consent-doc" style="color: #6d28d9; text-decoration: underline; font-weight: 700;">
-              View Consent
+          <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; font-weight: 700; color: #7c3aed; border-top: 1px solid #e9d5ff; padding-top: 0.45rem; margin-top: 0.15rem;">
+            <span>
+              ${user.guardianConsent?.guardianName ? `Vormund: ${escapeHTML(user.guardianConsent.guardianName)} (${user.guardianConsent.relationship})` : 'Einwilligung: Sabine Klein (Mutter)'}
+            </span>
+            <button id="btn-open-guardian-portal" class="btn btn-link" style="color: #6d28d9; text-decoration: underline; font-weight: 700; font-size: 0.75rem; padding: 0;">
+              Verwalten
             </button>
           </div>
         </div>
@@ -251,13 +255,60 @@ export function renderProfileScreen(state) {
         </div>
       </div>
 
+      <!-- Legal & Privacy Center Card (Compliance & GDPR Hub) -->
+      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 1.1rem; display: flex; flex-direction: column; gap: 0.85rem;" id="profile-compliance-hub">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 0.92rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.4rem;">
+            <span>⚖️</span>
+            <span>Rechtliches & Datenschutz-Center</span>
+          </div>
+          <span class="badge badge-outline" style="font-size: 0.7rem; color: #475569;">DSGVO / DDG</span>
+        </div>
+
+        <!-- Document Links -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem;">
+          <button class="btn btn-outline btn-sm btn-open-legal-doc" data-doc="AGB" style="font-size: 0.75rem; font-weight: 700; text-align: left; padding: 0.45rem 0.6rem;">
+            📄 AGB (v1.1)
+          </button>
+          <button class="btn btn-outline btn-sm btn-open-legal-doc" data-doc="PRIVACY" style="font-size: 0.75rem; font-weight: 700; text-align: left; padding: 0.45rem 0.6rem;">
+            🔒 Datenschutz
+          </button>
+          <button class="btn btn-outline btn-sm btn-open-legal-doc" data-doc="IMPRESSUM" style="font-size: 0.75rem; font-weight: 700; text-align: left; padding: 0.45rem 0.6rem;">
+            🏛️ Impressum (§ 5 DDG)
+          </button>
+          <button class="btn btn-outline btn-sm btn-open-legal-doc" data-doc="WIDERRUF" style="font-size: 0.75rem; font-weight: 700; text-align: left; padding: 0.45rem 0.6rem;">
+            ↩️ Widerrufsbelehrung
+          </button>
+        </div>
+
+        <!-- Data Subject Rights (DSGVO Art. 15, 17) -->
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
+          <div style="font-size: 0.78rem; font-weight: 700; color: #334155;">
+            Ihre Betroffenenrechte (DSGVO):
+          </div>
+
+          <button class="btn btn-outline btn-sm" id="btn-export-data-json" style="display: flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.78rem; font-weight: 700; border-color: #cbd5e1;">
+            <span>📥</span><span>Daten-Export herunterladen (JSON · Art. 15)</span>
+          </button>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.74rem; color: #64748b; margin-top: 0.1rem;">
+            <button id="btn-open-cookie-settings" class="btn btn-link" style="font-size: 0.74rem; color: #6366f1; text-decoration: underline; padding: 0;">
+              🍪 Cookie- & Speicherpräferenzen (§ 25 TDDDG)
+            </button>
+            <button id="btn-delete-account" class="btn btn-link" style="font-size: 0.74rem; color: #dc2626; text-decoration: underline; padding: 0;">
+              🗑️ Konto löschen
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Settings & Mode Switch -->
       <div style="display: flex; flex-direction: column; gap: 0.5rem;">
         <button class="btn btn-secondary btn-block" id="btn-profile-toggle-mode">
           ${isEmployer ? 'Switch to Worker View (Find Jobs)' : 'Switch to Employer View (Post Jobs)'}
         </button>
         <button class="btn btn-outline btn-block" id="btn-profile-safety-guide">
-          🛡️ Safety, Terms & Minor Guidelines
+          🛡️ Jugendschutz-Charta & Sicherheitsleitfaden
         </button>
       </div>
     </div>
@@ -275,14 +326,49 @@ export function attachProfileScreenEvents() {
   const safetyGuideBtn = document.getElementById('btn-profile-safety-guide');
   if (safetyGuideBtn) {
     safetyGuideBtn.addEventListener('click', () => {
-      store.setState({ isSafetyModalOpen: true });
+      store.openLegalDoc('YOUTH_PROTECTION');
     });
   }
 
-  const consentDocBtn = document.getElementById('btn-view-consent-doc');
-  if (consentDocBtn) {
-    consentDocBtn.addEventListener('click', () => {
-      store.setState({ isSafetyModalOpen: true });
+  const openGuardianPortalBtn = document.getElementById('btn-open-guardian-portal');
+  if (openGuardianPortalBtn) {
+    openGuardianPortalBtn.addEventListener('click', () => {
+      store.openGuardianModal();
+    });
+  }
+
+  // Legal document viewers
+  const legalDocBtns = document.querySelectorAll('.btn-open-legal-doc');
+  legalDocBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const docType = e.currentTarget.getAttribute('data-doc');
+      if (docType) {
+        store.openLegalDoc(docType);
+      }
+    });
+  });
+
+  // GDPR Data Subject Rights
+  const exportDataBtn = document.getElementById('btn-export-data-json');
+  if (exportDataBtn) {
+    exportDataBtn.addEventListener('click', () => {
+      store.exportUserData();
+    });
+  }
+
+  const deleteAccountBtn = document.getElementById('btn-delete-account');
+  if (deleteAccountBtn) {
+    deleteAccountBtn.addEventListener('click', () => {
+      if (window.confirm('Möchten Sie Ihr QuickJob-Konto und alle zugehörigen Daten wirklich löschen? Steuerlich relevante Buchungsdaten werden gem. § 147 AO für 10 Jahre revisionssicher archiviert.')) {
+        store.deleteAccount();
+      }
+    });
+  }
+
+  const cookieSettingsBtn = document.getElementById('btn-open-cookie-settings');
+  if (cookieSettingsBtn) {
+    cookieSettingsBtn.addEventListener('click', () => {
+      store.setState({ isConsentModalOpen: true });
     });
   }
 

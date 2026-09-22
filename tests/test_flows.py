@@ -65,6 +65,13 @@ def run_tests():
             screenshot_path = os.path.join(ARTIFACTS_DIR, "desktop_preview_home.png")
             page.screenshot(path=screenshot_path)
             log(f"✓ Desktop phone chassis verified & saved to: {screenshot_path}")
+
+            # Accept TDDDG consent banner if present on initial load
+            consent_accept_btn = page.query_selector("#btn-consent-accept-all")
+            if consent_accept_btn:
+                consent_accept_btn.click()
+                page.wait_for_timeout(300)
+
             passed_steps += 1
 
             # Step 2: Home screen categories & navigation

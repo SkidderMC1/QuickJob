@@ -33,8 +33,14 @@ export function renderDevBar(state) {
       <div class="dev-group">
         <span class="dev-label">Active User:</span>
         <select class="dev-persona-select" id="dev-persona-select">
+          <option value="felix" ${currentPersona === 'felix' ? 'selected' : ''}>
+            Felix (12, Kind unter 13 · § 5 JArbSchG)
+          </option>
+          <option value="lena" ${currentPersona === 'lena' ? 'selected' : ''}>
+            Lena (14, Kind 13–14 · KindArbSchV)
+          </option>
           <option value="jasper" ${currentPersona === 'jasper' ? 'selected' : ''}>
-            Jasper (16, Youth 14–17)
+            Jasper (16, Youth 15–17 · JArbSchG)
           </option>
           <option value="sophia" ${currentPersona === 'sophia' ? 'selected' : ''}>
             Sophia (22, Young Worker 18–25)

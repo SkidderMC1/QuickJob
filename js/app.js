@@ -16,6 +16,9 @@ import { renderReviewModal, attachReviewModalEvents } from './screens/reviewModa
 import { renderApplicantModal, attachApplicantModalEvents } from './screens/applicantModal.js';
 import { renderReportModal, attachReportModalEvents } from './screens/reportModal.js';
 import { renderDebugDrawer, attachDebugDrawerEvents } from './components/debugDrawer.js';
+import { renderConsentBanner, attachConsentBannerEvents } from './components/consentBanner.js';
+import { renderLegalModal, attachLegalModalEvents } from './screens/legalModal.js';
+import { renderGuardianModal, attachGuardianModalEvents } from './screens/guardianModal.js';
 
 function getCurrentTimeString() {
   const now = new Date();
@@ -71,11 +74,20 @@ function renderApp() {
         <!-- Report Incident / Safety Violation Modal -->
         ${renderReportModal(state)}
 
+        <!-- Legal Documents & AGB Acceptance Modal -->
+        ${renderLegalModal(state)}
+
+        <!-- Guardian Authorization Modal (BGB §§ 107, 113) -->
+        ${renderGuardianModal(state)}
+
         <!-- Bottom Navigation Bar -->
         ${renderBottomNav(state)}
 
         <!-- Floating Debug Tool -->
         ${renderDebugDrawer(state)}
+
+        <!-- TDDDG § 25 Storage Consent Banner -->
+        ${renderConsentBanner(state)}
       </div>
     `;
   } else {
@@ -140,6 +152,12 @@ function renderApp() {
             <!-- Report Incident / Safety Violation Modal -->
             ${renderReportModal(state)}
 
+            <!-- Legal Documents & AGB Acceptance Modal -->
+            ${renderLegalModal(state)}
+
+            <!-- Guardian Authorization Modal (BGB §§ 107, 113) -->
+            ${renderGuardianModal(state)}
+
             <!-- Bottom Navigation Bar -->
             ${renderBottomNav(state)}
 
@@ -150,6 +168,9 @@ function renderApp() {
 
         <!-- Floating Debug Tool -->
         ${renderDebugDrawer(state)}
+
+        <!-- TDDDG § 25 Storage Consent Banner -->
+        ${renderConsentBanner(state)}
       </div>
     `;
   }
@@ -159,6 +180,7 @@ function renderApp() {
   attachHeaderEvents();
   attachNavEvents();
   attachDebugDrawerEvents();
+  attachConsentBannerEvents();
 
   if (state.currentScreen === 'home') attachHomeScreenEvents();
   if (state.currentScreen === 'jobs') attachJobsScreenEvents();
@@ -171,6 +193,8 @@ function renderApp() {
   if (state.reviewJobId) attachReviewModalEvents();
   if (state.applicantJobId) attachApplicantModalEvents();
   if (state.reportJobId) attachReportModalEvents();
+  if (state.activeLegalDocType) attachLegalModalEvents();
+  if (state.isGuardianModalOpen) attachGuardianModalEvents();
 }
 
 function escapeHTML(str) {
@@ -181,6 +205,7 @@ function escapeHTML(str) {
 }
 
 // Initial mount & store subscription
+window.store = store;
 document.addEventListener('DOMContentLoaded', () => {
   renderApp();
   store.subscribe(() => {
