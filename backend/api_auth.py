@@ -6,6 +6,7 @@ secure sessions, single-use tokens, rate limiting, and auditable AGB acceptance.
 from fastapi import APIRouter, Request, Response, HTTPException, status, Depends
 from pydantic import BaseModel, Field
 from typing import Optional, List
+import os
 import json
 import secrets
 import hashlib
@@ -29,6 +30,27 @@ router = APIRouter(prefix="/api")
 
 COOKIE_NAME = "qj_session"
 SESSION_DURATION_SECONDS = 7 * 24 * 3600  # 7 days
+DEV_API_KEY = os.environ.get("QUICKJOB_DEV_KEY", "quickjob-dev-test-secret")
+
+
+def verify_dev_access(request: Request):
+    """Ensure dev endpoints cannot be accessed in production or without secret developer key."""
+    env = os.environ.get("QUICKJOB_ENV", "development").lower()
+    if env == "production":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Entwickler-Schnittstellen sind in der Produktionsumgebung deaktiviert."
+        )
+
+    dev_key_header = request.headers.get("X-Dev-Key")
+    dev_key_query = request.query_params.get("dev_key")
+    client_key = dev_key_header or dev_key_query
+
+    if not client_key or client_key != DEV_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Zugriff verweigert: Ungültiger oder fehlender Entwicklerschlüssel (X-Dev-Key)."
+        )
 
 
 # --- Pydantic Request Models ---
@@ -156,6 +178,17 @@ def register(req: RegisterRequest, request: Request, response: Response):
     is_valid_pw, pw_msg = validate_password_strength(req.password)
     if not is_valid_pw:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=pw_msg)
+
+    # Name and parameter boundary validation
+    clean_name = req.name.strip()
+    if not clean_name or len(clean_name) > 100:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name muss zwischen 1 und 100 Zeichen lang sein.")
+
+    if req.age > 120:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültige Altersangabe (maximal 120 Jahre).")
+
+    if req.role and req.role not in ("worker", "employer"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültige Rolle. Erlaubt sind: 'worker', 'employer'.")
 
     # Statutory Age Gate (JArbSchG § 5 Abs. 1)
     if req.age < 13:
@@ -628,8 +661,8 @@ def delete_account(response: Response, user: dict = Depends(get_current_user)):
     }
 
 
-# --- 11. Dev Outbox Inspection Helper ---
-@router.get("/dev/latest-email")
+# --- 11. Dev Outbox Inspection Helper (Restricted to Authorized Dev/Test Environments) ---
+@router.get("/dev/latest-email", dependencies=[Depends(verify_dev_access)])
 def get_latest_email(recipient: Optional[str] = None, template_type: Optional[str] = None):
     email = EmailService.get_latest_email(recipient=recipient, template_type=template_type)
     if not email:
@@ -637,7 +670,7 @@ def get_latest_email(recipient: Optional[str] = None, template_type: Optional[st
     return {"found": True, "email": email}
 
 
-@router.post("/dev/reset-rate-limits")
+@router.post("/dev/reset-rate-limits", dependencies=[Depends(verify_dev_access)])
 def dev_reset_rate_limits():
     rate_limiter.clear_all()
     return {"success": True, "message": "Rate limits successfully reset."}

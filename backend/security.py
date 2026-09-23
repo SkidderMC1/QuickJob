@@ -57,8 +57,10 @@ def verify_password(plain_password: str, stored_hash: str) -> bool:
 
 def validate_password_strength(password: str) -> tuple[bool, str]:
     """Validate password against security guidelines."""
-    if len(password) < 8:
+    if not password or len(password) < 8:
         return False, "Das Passwort muss mindestens 8 Zeichen lang sein."
+    if len(password) > 128:
+        return False, "Das Passwort darf maximal 128 Zeichen lang sein."
     if not re.search(r'[A-Za-z]', password):
         return False, "Das Passwort muss mindestens einen Buchstaben enthalten."
     if not re.search(r'[\d\W_]', password):

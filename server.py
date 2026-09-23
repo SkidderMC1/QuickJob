@@ -5,9 +5,10 @@ with high-performance static file serving for the QuickJob PWA frontend.
 """
 import os
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, PlainTextResponse
 from datetime import datetime, timezone
 import json
 
@@ -22,14 +23,82 @@ app = FastAPI(
     redoc_url=None
 )
 
-# CORS middleware
+# Whitelisted CORS origins (strictly forbids wildcard origin reflection with credentials)
+ALLOWED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3000"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+BLOCKED_PATH_PREFIXES = (
+    "/.git",
+    "/data",
+    "/backend",
+    "/tests",
+    "/.gemini",
+    "/.agents",
+    "/.vscode",
+    "/.env",
+)
+
+BLOCKED_EXTENSIONS = (
+    ".py",
+    ".pyc",
+    ".db",
+    ".sqlite",
+    ".sqlite3",
+    ".log",
+    ".bak",
+    ".env",
+    ".md",
+    ".ini",
+    ".toml",
+    ".yaml",
+    ".yml"
+)
+
+
+@app.middleware("http")
+async def security_and_path_filter_middleware(request: Request, call_next):
+    raw_path = request.url.path.lower()
+
+    # Block directory traversal attempts
+    if ".." in raw_path or "%2e" in raw_path or "\\ " in raw_path or "//" in raw_path:
+        return PlainTextResponse("Forbidden: Invalid path traversal attempt.", status_code=status.HTTP_403_FORBIDDEN)
+
+    # Block direct access to internal directories or private files
+    if any(raw_path.startswith(prefix) for prefix in BLOCKED_PATH_PREFIXES):
+        return PlainTextResponse("Not Found", status_code=status.HTTP_404_NOT_FOUND)
+
+    if any(raw_path.endswith(ext) for ext in BLOCKED_EXTENSIONS):
+        return PlainTextResponse("Not Found", status_code=status.HTTP_404_NOT_FOUND)
+
+    response = await call_next(request)
+
+    # Defensive HTTP Security Headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data:; "
+        "connect-src 'self';"
+    )
+    return response
+
 
 # Mount REST API
 app.include_router(auth_router)
@@ -135,9 +204,37 @@ init_db()
 seed_default_legal_documents()
 seed_default_personas()
 
-# Serve static frontend files (must be mounted last to allow API routes precedence)
+# Serve static assets securely from whitelisted subdirectories
 STATIC_DIR = os.path.dirname(os.path.abspath(__file__))
-app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+CSS_DIR = os.path.join(STATIC_DIR, "css")
+JS_DIR = os.path.join(STATIC_DIR, "js")
+ICONS_DIR = os.path.join(STATIC_DIR, "icons")
+
+if os.path.exists(CSS_DIR):
+    app.mount("/css", StaticFiles(directory=CSS_DIR), name="css")
+if os.path.exists(JS_DIR):
+    app.mount("/js", StaticFiles(directory=JS_DIR), name="js")
+if os.path.exists(ICONS_DIR):
+    app.mount("/icons", StaticFiles(directory=ICONS_DIR), name="icons")
+
+
+@app.get("/", include_in_schema=False)
+@app.get("/index.html", include_in_schema=False)
+async def serve_index():
+    index_path = os.path.join(STATIC_DIR, "index.html")
+    return FileResponse(index_path, media_type="text/html")
+
+
+@app.get("/manifest.json", include_in_schema=False)
+async def serve_manifest():
+    manifest_path = os.path.join(STATIC_DIR, "manifest.json")
+    return FileResponse(manifest_path, media_type="application/manifest+json")
+
+
+@app.get("/sw.js", include_in_schema=False)
+async def serve_service_worker():
+    sw_path = os.path.join(STATIC_DIR, "sw.js")
+    return FileResponse(sw_path, media_type="application/javascript")
 
 
 if __name__ == "__main__":

@@ -16,3 +16,7 @@ Thumbs.db
 # Application runtime database & outbox
 data/*.db
 data/outbox/
+*.sqlite
+*.sqlite3
+.env
+.env.*

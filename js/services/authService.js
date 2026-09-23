@@ -132,6 +132,9 @@ export class AuthService {
     if (recipient) params.push(`recipient=${encodeURIComponent(recipient)}`);
     if (templateType) params.push(`template_type=${encodeURIComponent(templateType)}`);
     if (params.length) url += `?${params.join('&')}`;
-    return this.request(url, { method: 'GET' });
+    return this.request(url, {
+      method: 'GET',
+      headers: { 'X-Dev-Key': 'quickjob-dev-test-secret' }
+    });
   }
 }

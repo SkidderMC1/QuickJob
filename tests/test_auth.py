@@ -34,6 +34,8 @@ def log(msg):
 def api_request(method, path, data=None, cookie_header=None):
     url = f"{BASE_URL}{path}"
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
+    if path.startswith("/api/dev/"):
+        headers["X-Dev-Key"] = "quickjob-dev-test-secret"
     if cookie_header:
         headers["Cookie"] = cookie_header
     body = json.dumps(data).encode("utf-8") if data is not None else None
