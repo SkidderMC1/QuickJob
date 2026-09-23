@@ -35,6 +35,7 @@ function renderApp() {
 
   const timeStr = getCurrentTimeString();
   const isNative = state.displayMode === 'native';
+  const isAuth = state.isAuthenticated;
 
   if (isNative) {
     // 100% Native Fullscreen PWA Experience
@@ -45,12 +46,14 @@ function renderApp() {
 
         <!-- Scrollable Main Viewport Area -->
         <main class="app-viewport" id="app-viewport">
-          ${state.currentScreen === 'home' ? renderHomeScreen(state) : ''}
-          ${state.currentScreen === 'jobs' ? renderJobsScreen(state) : ''}
-          ${state.currentScreen === 'create' ? renderCreateJobScreen(state) : ''}
-          ${state.currentScreen === 'messages' ? renderMessagesScreen(state) : ''}
-          ${state.currentScreen === 'profile' ? renderProfileScreen(state) : ''}
-          ${state.currentScreen === 'auth' ? renderAuthScreen(state) : ''}
+          ${!isAuth ? renderAuthScreen(state) : `
+            ${state.currentScreen === 'home' ? renderHomeScreen(state) : ''}
+            ${state.currentScreen === 'jobs' ? renderJobsScreen(state) : ''}
+            ${state.currentScreen === 'create' ? renderCreateJobScreen(state) : ''}
+            ${state.currentScreen === 'messages' ? renderMessagesScreen(state) : ''}
+            ${state.currentScreen === 'profile' ? renderProfileScreen(state) : ''}
+            ${state.currentScreen === 'auth' ? renderAuthScreen(state) : ''}
+          `}
         </main>
 
         <!-- Toast Notification Banner -->
@@ -62,28 +65,28 @@ function renderApp() {
         ` : ''}
 
         <!-- Job Detail Sheet Overlay -->
-        ${state.selectedJobId ? renderJobDetailModal(state.selectedJobId, state) : ''}
+        ${isAuth && state.selectedJobId ? renderJobDetailModal(state.selectedJobId, state) : ''}
 
         <!-- Safety & Minor Protection Modal -->
         ${renderSafetyModal(state)}
 
         <!-- Review & Compliments Modal -->
-        ${renderReviewModal(state)}
+        ${isAuth ? renderReviewModal(state) : ''}
 
         <!-- Applicant Management & Selection Modal -->
-        ${renderApplicantModal(state)}
+        ${isAuth ? renderApplicantModal(state) : ''}
 
         <!-- Report Incident / Safety Violation Modal -->
-        ${renderReportModal(state)}
+        ${isAuth ? renderReportModal(state) : ''}
 
         <!-- Legal Documents & AGB Acceptance Modal -->
         ${renderLegalModal(state)}
 
         <!-- Guardian Authorization Modal (BGB §§ 107, 113) -->
-        ${renderGuardianModal(state)}
+        ${isAuth ? renderGuardianModal(state) : ''}
 
-        <!-- Bottom Navigation Bar -->
-        ${renderBottomNav(state)}
+        <!-- Bottom Navigation Bar (Visible only when authenticated) -->
+        ${isAuth ? renderBottomNav(state) : ''}
 
         <!-- Floating Debug Tool -->
         ${renderDebugDrawer(state)}
@@ -124,12 +127,14 @@ function renderApp() {
 
             <!-- Scrollable Main Viewport Area -->
             <main class="app-viewport" id="app-viewport">
-              ${state.currentScreen === 'home' ? renderHomeScreen(state) : ''}
-              ${state.currentScreen === 'jobs' ? renderJobsScreen(state) : ''}
-              ${state.currentScreen === 'create' ? renderCreateJobScreen(state) : ''}
-              ${state.currentScreen === 'messages' ? renderMessagesScreen(state) : ''}
-              ${state.currentScreen === 'profile' ? renderProfileScreen(state) : ''}
-              ${state.currentScreen === 'auth' ? renderAuthScreen(state) : ''}
+              ${!isAuth ? renderAuthScreen(state) : `
+                ${state.currentScreen === 'home' ? renderHomeScreen(state) : ''}
+                ${state.currentScreen === 'jobs' ? renderJobsScreen(state) : ''}
+                ${state.currentScreen === 'create' ? renderCreateJobScreen(state) : ''}
+                ${state.currentScreen === 'messages' ? renderMessagesScreen(state) : ''}
+                ${state.currentScreen === 'profile' ? renderProfileScreen(state) : ''}
+                ${state.currentScreen === 'auth' ? renderAuthScreen(state) : ''}
+              `}
             </main>
 
             <!-- Toast Notification Banner -->
@@ -141,28 +146,28 @@ function renderApp() {
             ` : ''}
 
             <!-- Job Detail Sheet Overlay -->
-            ${state.selectedJobId ? renderJobDetailModal(state.selectedJobId, state) : ''}
+            ${isAuth && state.selectedJobId ? renderJobDetailModal(state.selectedJobId, state) : ''}
 
             <!-- Safety & Minor Protection Modal -->
             ${renderSafetyModal(state)}
 
             <!-- Review & Compliments Modal -->
-            ${renderReviewModal(state)}
+            ${isAuth ? renderReviewModal(state) : ''}
 
             <!-- Applicant Management & Selection Modal -->
-            ${renderApplicantModal(state)}
+            ${isAuth ? renderApplicantModal(state) : ''}
 
             <!-- Report Incident / Safety Violation Modal -->
-            ${renderReportModal(state)}
+            ${isAuth ? renderReportModal(state) : ''}
 
             <!-- Legal Documents & AGB Acceptance Modal -->
             ${renderLegalModal(state)}
 
             <!-- Guardian Authorization Modal (BGB §§ 107, 113) -->
-            ${renderGuardianModal(state)}
+            ${isAuth ? renderGuardianModal(state) : ''}
 
-            <!-- Bottom Navigation Bar -->
-            ${renderBottomNav(state)}
+            <!-- Bottom Navigation Bar (Visible only when authenticated) -->
+            ${isAuth ? renderBottomNav(state) : ''}
 
             <!-- iOS Home Indicator -->
             <div class="phone-home-indicator"></div>
@@ -181,24 +186,28 @@ function renderApp() {
   // Attach interactive events
   if (!isNative) attachDevBarEvents();
   attachHeaderEvents();
-  attachNavEvents();
+  if (isAuth) attachNavEvents();
   attachDebugDrawerEvents();
   attachConsentBannerEvents();
 
-  if (state.currentScreen === 'home') attachHomeScreenEvents();
-  if (state.currentScreen === 'jobs') attachJobsScreenEvents();
-  if (state.currentScreen === 'create') attachCreateJobEvents();
-  if (state.currentScreen === 'messages') attachMessagesScreenEvents();
-  if (state.currentScreen === 'profile') attachProfileScreenEvents();
-  if (state.currentScreen === 'auth') attachAuthScreenEvents();
+  if (!isAuth) {
+    attachAuthScreenEvents();
+  } else {
+    if (state.currentScreen === 'home') attachHomeScreenEvents();
+    if (state.currentScreen === 'jobs') attachJobsScreenEvents();
+    if (state.currentScreen === 'create') attachCreateJobEvents();
+    if (state.currentScreen === 'messages') attachMessagesScreenEvents();
+    if (state.currentScreen === 'profile') attachProfileScreenEvents();
+    if (state.currentScreen === 'auth') attachAuthScreenEvents();
+  }
 
-  if (state.selectedJobId) attachJobDetailEvents();
+  if (isAuth && state.selectedJobId) attachJobDetailEvents();
   if (state.isSafetyModalOpen) attachSafetyModalEvents();
-  if (state.reviewJobId) attachReviewModalEvents();
-  if (state.applicantJobId) attachApplicantModalEvents();
-  if (state.reportJobId) attachReportModalEvents();
+  if (isAuth && state.reviewJobId) attachReviewModalEvents();
+  if (isAuth && state.applicantJobId) attachApplicantModalEvents();
+  if (isAuth && state.reportJobId) attachReportModalEvents();
   if (state.activeLegalDocType) attachLegalModalEvents();
-  if (state.isGuardianModalOpen) attachGuardianModalEvents();
+  if (isAuth && state.isGuardianModalOpen) attachGuardianModalEvents();
 }
 
 function escapeHTML(str) {

@@ -255,73 +255,91 @@ export function renderProfileScreen(state) {
         </div>
       </div>
 
-      <!-- Account Authentication & Security Card -->
-      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-auth-card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div style="display: flex; align-items: center; gap: 0.45rem;">
-            <span style="font-size: 1.1rem;">🔐</span>
-            <h3 style="font-size: 1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
-              Konto & Sicherheit
-            </h3>
+      <!-- Account Authentication & Security Card (Redesigned) -->
+      <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 18px; padding: 1.35rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 1rem;" id="profile-auth-card">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.85rem;">
+          <div style="display: flex; align-items: center; gap: 0.55rem;">
+            <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(14, 167, 107, 0.1); color: #0ea76b; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 800;">
+              🛡️
+            </div>
+            <div>
+              <h3 style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0; line-height: 1.2;">
+                Konto & Sicherheit
+              </h3>
+              <span style="font-size: 0.72rem; color: #64748b;">NIST & OWASP abgesichert</span>
+            </div>
           </div>
-          ${state.isAuthenticated ? `
-            <span class="badge ${user.emailVerified ? 'badge-success' : 'badge-warning'}" style="font-size: 0.72rem;">
-              ${user.emailVerified ? '✓ E-Mail verifiziert' : '⚠️ E-Mail ausstehend'}
-            </span>
-          ` : `
-            <span class="badge badge-muted" style="font-size: 0.72rem;">Gast-Modus</span>
-          `}
+          <span class="badge ${user.emailVerified ? 'badge-success' : 'badge-warning'}" style="font-size: 0.74rem; font-weight: 700; padding: 0.3rem 0.6rem; border-radius: 12px;">
+            ${user.emailVerified ? '✓ E-Mail verifiziert' : '⚠️ Verifizierung ausstehend'}
+          </span>
         </div>
 
-        ${state.isAuthenticated ? `
-          <div style="font-size: 0.8rem; color: #475569; display: flex; flex-direction: column; gap: 0.35rem;">
-            <div>
-              <strong>Angemeldet als:</strong> ${escapeHTML(user.email || 'konto@quickjob.local')}
-            </div>
-            ${!user.emailVerified ? `
-              <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 0.6rem; display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
-                <span style="font-size: 0.75rem; color: #b45309;">Bestätigung erforderlich</span>
-                <button class="btn btn-outline btn-sm" id="btn-profile-to-verify" style="font-size: 0.72rem; padding: 0.25rem 0.5rem;">
-                  Jetzt verifizieren
-                </button>
-              </div>
-            ` : ''}
+        <!-- Account Info Block -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
+            <span style="color: #64748b; font-weight: 600;">E-Mail-Adresse:</span>
+            <span style="font-weight: 700; color: #0f172a;">${escapeHTML(user.email || 'konto@quickjob.local')}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
+            <span style="color: #64748b; font-weight: 600;">Konto-Rolle:</span>
+            <span class="badge badge-outline" style="font-size: 0.72rem; font-weight: 700;">
+              ${user.role === 'employer' ? '🏢 Auftraggeber' : '🔍 Helfer (Worker)'}
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
+            <span style="color: #64748b; font-weight: 600;">Sitzungs-Status:</span>
+            <span style="color: #0ea76b; font-weight: 700; display: flex; align-items: center; gap: 0.3rem;">
+              <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #0ea76b;"></span>
+              Aktiv (HttpOnly Cookie)
+            </span>
           </div>
 
-          <!-- Change Password Toggle / Form -->
-          <details style="border-top: 1px solid #f1f5f9; padding-top: 0.6rem;">
-            <summary style="font-size: 0.8rem; font-weight: 700; color: #6366f1; cursor: pointer; user-select: none;">
-              🔑 Passwort ändern
-            </summary>
-            <form id="form-profile-change-password" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.6rem;">
-              <input type="password" id="change-current-pw" placeholder="Aktuelles Passwort" required class="form-input" style="width: 100%; padding: 0.5rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid #cbd5e1;" />
-              <input type="password" id="change-new-pw" placeholder="Neues Passwort (mind. 8 Zeichen)" required class="form-input" style="width: 100%; padding: 0.5rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid #cbd5e1;" />
-              <input type="password" id="change-confirm-pw" placeholder="Neues Passwort wiederholen" required class="form-input" style="width: 100%; padding: 0.5rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid #cbd5e1;" />
-              <button type="submit" class="btn btn-secondary btn-sm" id="btn-submit-change-password" style="font-weight: 700;">
-                Passwort jetzt aktualisieren
+          ${!user.emailVerified ? `
+            <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 0.65rem; display: flex; justify-content: space-between; align-items: center; margin-top: 0.35rem;">
+              <span style="font-size: 0.76rem; color: #b45309; font-weight: 600;">E-Mail noch nicht bestätigt</span>
+              <button class="btn btn-warning btn-sm" id="btn-profile-to-verify" style="font-size: 0.74rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 8px;">
+                Jetzt bestätigen
               </button>
-            </form>
-          </details>
+            </div>
+          ` : ''}
+        </div>
 
-          <!-- Logout Button -->
-          <div style="border-top: 1px solid #f1f5f9; padding-top: 0.6rem; display: flex; justify-content: flex-end;">
-            <button class="btn btn-outline btn-sm" id="btn-profile-logout" style="color: #dc2626; border-color: #fecaca; font-weight: 700;">
-              🚪 Abmelden
+        <!-- Password Change Section (Collapsible Accordion) -->
+        <details style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.9rem;">
+          <summary style="font-size: 0.84rem; font-weight: 700; color: #4338ca; cursor: pointer; user-select: none; display: flex; align-items: center; gap: 0.45rem;">
+            <span>🔑</span>
+            <span>Passwort ändern</span>
+          </summary>
+          <form id="form-profile-change-password" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 0.65rem; margin-top: 0.85rem; border-top: 1px solid #f1f5f9; padding-top: 0.75rem;">
+            <div>
+              <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 0.25rem;">Aktuelles Passwort</label>
+              <input type="password" id="change-current-pw" placeholder="••••••••" required class="form-input" style="width: 100%; padding: 0.55rem; font-size: 0.84rem; border-radius: 8px; border: 1px solid #cbd5e1;" />
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 0.25rem;">Neues Passwort</label>
+              <input type="password" id="change-new-pw" placeholder="Mind. 8 Zeichen, Buchstabe & Ziffer" required class="form-input" style="width: 100%; padding: 0.55rem; font-size: 0.84rem; border-radius: 8px; border: 1px solid #cbd5e1;" />
+            </div>
+            <div>
+              <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 0.25rem;">Neues Passwort bestätigen</label>
+              <input type="password" id="change-confirm-pw" placeholder="Passwort wiederholen" required class="form-input" style="width: 100%; padding: 0.55rem; font-size: 0.84rem; border-radius: 8px; border: 1px solid #cbd5e1;" />
+            </div>
+            <button type="submit" class="btn btn-secondary btn-sm" id="btn-submit-change-password" style="font-weight: 700; padding: 0.65rem; margin-top: 0.2rem; border-radius: 8px;">
+              Passwort jetzt aktualisieren
             </button>
-          </div>
-        ` : `
-          <div style="font-size: 0.82rem; color: #64748b; line-height: 1.45;">
-            Sie nutzen QuickJob aktuell mit einem lokalen Profil. Melden Sie sich an oder registrieren Sie sich, um Ihre Daten geräteübergreifend zu sichern.
-          </div>
-          <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
-            <button class="btn btn-primary btn-sm" id="btn-profile-login" style="flex: 1; font-weight: 700;">
-              Anmelden
-            </button>
-            <button class="btn btn-outline btn-sm" id="btn-profile-register" style="flex: 1; font-weight: 700;">
-              Registrieren
-            </button>
-          </div>
-        `}
+          </form>
+        </details>
+
+        <!-- Big Solid Red Logout Button -->
+        <div style="margin-top: 0.25rem;">
+          <button 
+            id="btn-profile-logout" 
+            style="width: 100%; padding: 0.95rem 1.25rem; font-size: 1rem; font-weight: 800; color: #ffffff; background-color: #dc2626; background: #dc2626; border: none; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 0.6rem; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.35); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;"
+          >
+            <span style="font-size: 1.15rem;">🚪</span>
+            <span>Abmelden</span>
+          </button>
+        </div>
       </div>
 
       <!-- Legal & Privacy Center Card (Compliance & GDPR Hub) -->
@@ -371,12 +389,9 @@ export function renderProfileScreen(state) {
         </div>
       </div>
 
-      <!-- Settings & Mode Switch -->
-      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-        <button class="btn btn-secondary btn-block" id="btn-profile-toggle-mode">
-          ${isEmployer ? 'Switch to Worker View (Find Jobs)' : 'Switch to Employer View (Post Jobs)'}
-        </button>
-        <button class="btn btn-outline btn-block" id="btn-profile-safety-guide">
+      <!-- Youth Protection Safety Guide -->
+      <div style="margin-top: 0.25rem;">
+        <button class="btn btn-outline btn-block" id="btn-profile-safety-guide" style="font-weight: 700; padding: 0.75rem;">
           🛡️ Jugendschutz-Charta & Sicherheitsleitfaden
         </button>
       </div>
@@ -385,13 +400,6 @@ export function renderProfileScreen(state) {
 }
 
 export function attachProfileScreenEvents() {
-  const toggleModeBtn = document.getElementById('btn-profile-toggle-mode');
-  if (toggleModeBtn) {
-    toggleModeBtn.addEventListener('click', () => {
-      store.toggleMode();
-    });
-  }
-
   const safetyGuideBtn = document.getElementById('btn-profile-safety-guide');
   if (safetyGuideBtn) {
     safetyGuideBtn.addEventListener('click', () => {

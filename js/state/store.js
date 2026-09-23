@@ -37,7 +37,8 @@ class Store {
           isAuthenticated: false,
           authSession: null,
           authViewMode: 'login',
-          authPendingToken: ''
+          authPendingToken: '',
+          currentScreen: 'auth' // Mandatory Auth Gate: Must be logged in to access app
         };
       } catch (e) {
         console.warn('Failed to parse cached state, reverting to initial mock data', e);
@@ -52,7 +53,7 @@ class Store {
       authViewMode: 'login',
       authPendingToken: '',
       activeMode: 'find', // 'find' (Worker) or 'post' (Employer)
-      currentScreen: 'home', // 'home', 'jobs', 'create', 'messages', 'profile'
+      currentScreen: 'auth', // Mandatory Auth Gate: App defaults to login screen
       displayMode: isStandalone ? 'native' : 'simulator', // 'simulator' (with PC phone frame) or 'native' (full-screen PWA)
       isDebugDrawerOpen: false,
       selectedJobId: null,
@@ -142,8 +143,16 @@ class Store {
     }, 3000);
   }
 
-  // Navigation
+  // Navigation (Guarded by Mandatory Authentication Gate)
   setScreen(screen, payload = {}) {
+    if (!this.state.isAuthenticated && screen !== 'auth') {
+      this.setState({
+        currentScreen: 'auth',
+        authViewMode: 'login',
+        ...payload
+      });
+      return;
+    }
     this.setState({
       currentScreen: screen,
       ...payload
@@ -161,6 +170,8 @@ class Store {
     this.setState({
       currentPersonaKey: personaKey,
       currentUser: user,
+      isAuthenticated: true,
+      currentScreen: this.state.currentScreen === 'auth' ? 'home' : this.state.currentScreen,
       activeMode: isEmployerPersona ? 'post' : 'find'
     });
     this.showToast(`Switched active persona to ${user.name}`);
@@ -713,6 +724,7 @@ class Store {
         this.setState({
           isAuthenticated: true,
           authSession: res.user,
+          currentScreen: this.state.currentScreen === 'auth' ? 'home' : this.state.currentScreen,
           currentUser: {
             ...this.state.currentUser,
             id: res.user.id,
@@ -726,10 +738,22 @@ class Store {
             escrowBalance: res.user.escrow_balance !== undefined ? res.user.escrow_balance : this.state.currentUser.escrowBalance
           }
         });
+      } else {
+        this.setState({
+          isAuthenticated: false,
+          authSession: null,
+          currentScreen: 'auth',
+          authViewMode: 'login'
+        });
       }
     } catch (e) {
-      // Not logged in or session expired
-      this.setState({ isAuthenticated: false, authSession: null });
+      // Not logged in or session expired - strictly route to login screen
+      this.setState({
+        isAuthenticated: false,
+        authSession: null,
+        currentScreen: 'auth',
+        authViewMode: 'login'
+      });
     }
   }
 
@@ -809,7 +833,11 @@ class Store {
     this.setState({
       isAuthenticated: false,
       authSession: null,
-      currentScreen: 'home'
+      currentUser: null,
+      currentScreen: 'auth',
+      authViewMode: 'login',
+      selectedJobId: null,
+      selectedConversationId: null
     });
     this.showToast('✓ Erfolgreich abgemeldet.');
   }
@@ -893,9 +921,13 @@ class Store {
     this.setState({
       isAuthenticated: false,
       authSession: null,
+      currentUser: null,
       jobs: result.sanitizedJobs,
       conversations: result.sanitizedConversations,
-      currentScreen: 'home'
+      currentScreen: 'auth',
+      authViewMode: 'login',
+      selectedJobId: null,
+      selectedConversationId: null
     });
     this.showToast(result.message, result.hasFinancialRecords ? 'warning' : 'success');
   }

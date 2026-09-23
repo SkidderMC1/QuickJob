@@ -72,6 +72,19 @@ def run_tests():
                 consent_accept_btn.click()
                 page.wait_for_timeout(300)
 
+            # Mandatory Authentication Gate: Log in to unlock app features
+            login_form = page.query_selector("#form-auth-login")
+            if login_form:
+                quick_login = page.query_selector(".btn-quick-login[data-email='jasper@quickjob.local']")
+                if quick_login:
+                    quick_login.click()
+                else:
+                    page.fill("#login-email", "jasper@quickjob.local")
+                    page.fill("#login-password", "Password123!")
+                page.click("#btn-auth-submit-login")
+                page.wait_for_timeout(600)
+                log("✓ Mandatory login gate passed: logged in as Jasper Klein")
+
             passed_steps += 1
 
             # Step 2: Home screen categories & navigation
