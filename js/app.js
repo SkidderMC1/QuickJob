@@ -19,6 +19,7 @@ import { renderDebugDrawer, attachDebugDrawerEvents } from './components/debugDr
 import { renderConsentBanner, attachConsentBannerEvents } from './components/consentBanner.js';
 import { renderLegalModal, attachLegalModalEvents } from './screens/legalModal.js';
 import { renderGuardianModal, attachGuardianModalEvents } from './screens/guardianModal.js';
+import { renderAuthScreen, attachAuthScreenEvents } from './screens/authScreen.js';
 
 function getCurrentTimeString() {
   const now = new Date();
@@ -49,6 +50,7 @@ function renderApp() {
           ${state.currentScreen === 'create' ? renderCreateJobScreen(state) : ''}
           ${state.currentScreen === 'messages' ? renderMessagesScreen(state) : ''}
           ${state.currentScreen === 'profile' ? renderProfileScreen(state) : ''}
+          ${state.currentScreen === 'auth' ? renderAuthScreen(state) : ''}
         </main>
 
         <!-- Toast Notification Banner -->
@@ -127,6 +129,7 @@ function renderApp() {
               ${state.currentScreen === 'create' ? renderCreateJobScreen(state) : ''}
               ${state.currentScreen === 'messages' ? renderMessagesScreen(state) : ''}
               ${state.currentScreen === 'profile' ? renderProfileScreen(state) : ''}
+              ${state.currentScreen === 'auth' ? renderAuthScreen(state) : ''}
             </main>
 
             <!-- Toast Notification Banner -->
@@ -187,6 +190,7 @@ function renderApp() {
   if (state.currentScreen === 'create') attachCreateJobEvents();
   if (state.currentScreen === 'messages') attachMessagesScreenEvents();
   if (state.currentScreen === 'profile') attachProfileScreenEvents();
+  if (state.currentScreen === 'auth') attachAuthScreenEvents();
 
   if (state.selectedJobId) attachJobDetailEvents();
   if (state.isSafetyModalOpen) attachSafetyModalEvents();
@@ -207,6 +211,23 @@ function escapeHTML(str) {
 // Initial mount & store subscription
 window.store = store;
 document.addEventListener('DOMContentLoaded', () => {
+  // Check URL query parameters for verification or reset tokens
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const verifyToken = params.get('verify_token');
+    const resetToken = params.get('reset_token');
+
+    if (verifyToken) {
+      store.setAuthMode('verify_email', verifyToken);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (resetToken) {
+      store.setAuthMode('reset_password', resetToken);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  } catch (e) {
+    console.warn('URL param parse error', e);
+  }
+
   renderApp();
   store.subscribe(() => {
     renderApp();

@@ -7,6 +7,7 @@ import { LegalEligibilityEngine } from '../legal/legalEngine.js';
 import { GuardianConsentManager } from '../legal/guardianConsent.js';
 import { ConsentManager } from '../legal/consentManager.js';
 import { DataSubjectRightsManager } from '../legal/dataSubjectRights.js';
+import { AuthService } from '../services/authService.js';
 
 const STORAGE_KEY = 'quickjob_state_v1';
 
@@ -15,6 +16,7 @@ class Store {
     this.listeners = [];
     this._replyTimeouts = {};
     this.state = this.loadInitialState();
+    this.checkSession();
   }
 
   loadInitialState() {
@@ -31,7 +33,11 @@ class Store {
           ...parsed,
           displayMode: parsed.displayMode || (isStandalone ? 'native' : 'simulator'),
           isDebugDrawerOpen: false,
-          currentUser: mockUsers[parsed.currentPersonaKey || 'jasper'] || mockUsers.jasper
+          currentUser: mockUsers[parsed.currentPersonaKey || 'jasper'] || mockUsers.jasper,
+          isAuthenticated: false,
+          authSession: null,
+          authViewMode: 'login',
+          authPendingToken: ''
         };
       } catch (e) {
         console.warn('Failed to parse cached state, reverting to initial mock data', e);
@@ -41,6 +47,10 @@ class Store {
     return {
       currentPersonaKey: 'jasper',
       currentUser: mockUsers.jasper,
+      isAuthenticated: false,
+      authSession: null,
+      authViewMode: 'login',
+      authPendingToken: '',
       activeMode: 'find', // 'find' (Worker) or 'post' (Employer)
       currentScreen: 'home', // 'home', 'jobs', 'create', 'messages', 'profile'
       displayMode: isStandalone ? 'native' : 'simulator', // 'simulator' (with PC phone frame) or 'native' (full-screen PWA)
@@ -695,9 +705,194 @@ class Store {
     this.showToast('✓ Vollständiger DSGVO-Datenexport (Art. 15) heruntergeladen.');
   }
 
-  deleteAccount() {
+  // Authentication & Session Management Methods
+  async checkSession() {
+    try {
+      const res = await AuthService.getSession();
+      if (res && res.authenticated && res.user) {
+        this.setState({
+          isAuthenticated: true,
+          authSession: res.user,
+          currentUser: {
+            ...this.state.currentUser,
+            id: res.user.id,
+            name: res.user.name,
+            email: res.user.email,
+            age: res.user.age,
+            role: res.user.role,
+            emailVerified: res.user.email_verified,
+            isIdentityVerified: res.user.email_verified,
+            walletBalance: res.user.wallet_balance !== undefined ? res.user.wallet_balance : this.state.currentUser.walletBalance,
+            escrowBalance: res.user.escrow_balance !== undefined ? res.user.escrow_balance : this.state.currentUser.escrowBalance
+          }
+        });
+      }
+    } catch (e) {
+      // Not logged in or session expired
+      this.setState({ isAuthenticated: false, authSession: null });
+    }
+  }
+
+  setAuthMode(mode, token = '') {
+    this.setState({
+      currentScreen: 'auth',
+      authViewMode: mode,
+      authPendingToken: token
+    });
+  }
+
+  async loginUser(email, password, remember = true) {
+    try {
+      const res = await AuthService.login({ email, password, remember_me: remember });
+      if (res && res.success && res.user) {
+        this.setState({
+          isAuthenticated: true,
+          authSession: res.user,
+          currentScreen: 'home',
+          currentUser: {
+            ...this.state.currentUser,
+            id: res.user.id,
+            name: res.user.name,
+            email: res.user.email,
+            age: res.user.age,
+            role: res.user.role,
+            emailVerified: res.user.email_verified,
+            isIdentityVerified: res.user.email_verified,
+            walletBalance: res.user.wallet_balance !== undefined ? res.user.wallet_balance : this.state.currentUser.walletBalance,
+            escrowBalance: res.user.escrow_balance !== undefined ? res.user.escrow_balance : this.state.currentUser.escrowBalance
+          }
+        });
+        this.showToast(`✓ Willkommen zurück, ${res.user.name}!`);
+        return { success: true, user: res.user };
+      }
+    } catch (err) {
+      this.showToast(err.message || 'Anmeldung fehlgeschlagen.', 'error');
+      return { success: false, error: err.message };
+    }
+  }
+
+  async registerUser(regData) {
+    try {
+      const res = await AuthService.register(regData);
+      if (res && res.success && res.user) {
+        this.setState({
+          isAuthenticated: true,
+          authSession: res.user,
+          currentScreen: 'auth',
+          authViewMode: 'verify_email',
+          currentUser: {
+            ...this.state.currentUser,
+            id: res.user.id,
+            name: res.user.name,
+            email: res.user.email,
+            age: res.user.age,
+            role: res.user.role,
+            emailVerified: false,
+            isIdentityVerified: false
+          }
+        });
+        this.showToast('✓ Konto erfolgreich registriert! Bitte E-Mail bestätigen.');
+        return { success: true, user: res.user, token: res.verification_token_dev };
+      }
+    } catch (err) {
+      this.showToast(err.message || 'Registrierung fehlgeschlagen.', 'error');
+      return { success: false, error: err.message };
+    }
+  }
+
+  async logoutUser() {
+    try {
+      await AuthService.logout();
+    } catch (e) {
+      console.warn('Logout warning', e);
+    }
+    this.setState({
+      isAuthenticated: false,
+      authSession: null,
+      currentScreen: 'home'
+    });
+    this.showToast('✓ Erfolgreich abgemeldet.');
+  }
+
+  async verifyEmail(token) {
+    try {
+      const res = await AuthService.verifyEmail(token);
+      if (res && res.success) {
+        this.setState(prev => ({
+          currentScreen: 'home',
+          currentUser: {
+            ...prev.currentUser,
+            emailVerified: true,
+            isIdentityVerified: true
+          }
+        }));
+        this.showToast('✓ E-Mail erfolgreich verifiziert! Konto ist uneingeschränkt aktiv.');
+        return { success: true };
+      }
+    } catch (err) {
+      this.showToast(err.message || 'Ungültiger oder abgelaufener Bestätigungs-Token.', 'error');
+      return { success: false, error: err.message };
+    }
+  }
+
+  async resendVerification(email) {
+    try {
+      const res = await AuthService.resendVerification(email);
+      this.showToast(res.message || '✓ Neuer Bestätigungs-Link wurde versendet.');
+      return { success: true };
+    } catch (err) {
+      this.showToast(err.message || 'Fehler beim Senden des Bestätigungslinks.', 'error');
+      return { success: false, error: err.message };
+    }
+  }
+
+  async forgotPassword(email) {
+    try {
+      const res = await AuthService.forgotPassword(email);
+      this.setState({ authViewMode: 'reset_password' });
+      this.showToast(res.message || 'Falls ein Konto existiert, wurde eine E-Mail gesendet.');
+      return { success: true };
+    } catch (err) {
+      this.showToast(err.message || 'Fehler beim Anfordern des Reset-Links.', 'error');
+      return { success: false, error: err.message };
+    }
+  }
+
+  async resetPassword(token, new_password, new_password_confirmation) {
+    try {
+      const res = await AuthService.resetPassword({ token, new_password, new_password_confirmation });
+      this.setState({ authViewMode: 'login', authPendingToken: '' });
+      this.showToast(res.message || '✓ Passwort geändert. Bitte neu anmelden.');
+      return { success: true };
+    } catch (err) {
+      this.showToast(err.message || 'Passwort-Reset fehlgeschlagen.', 'error');
+      return { success: false, error: err.message };
+    }
+  }
+
+  async changePassword(current_password, new_password, new_password_confirmation) {
+    try {
+      const res = await AuthService.changePassword({ current_password, new_password, new_password_confirmation });
+      this.showToast(res.message || '✓ Passwort erfolgreich geändert.');
+      return { success: true };
+    } catch (err) {
+      this.showToast(err.message || 'Passwortänderung fehlgeschlagen.', 'error');
+      return { success: false, error: err.message };
+    }
+  }
+
+  async deleteAccount() {
+    try {
+      if (this.state.isAuthenticated) {
+        await AuthService.deleteAccount();
+      }
+    } catch (e) {
+      console.warn('Backend deleteAccount notice', e);
+    }
     const result = DataSubjectRightsManager.processAccountDeletion(this.state, this.state.currentUser.id);
     this.setState({
+      isAuthenticated: false,
+      authSession: null,
       jobs: result.sanitizedJobs,
       conversations: result.sanitizedConversations,
       currentScreen: 'home'

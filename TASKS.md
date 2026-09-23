@@ -16,6 +16,7 @@
 | **TASK-012** | TDDDG § 25 Terminal Storage Consent Manager without Dark Patterns | PRIVACY / TDDDG | P0 | 9 | 2 | 9 | **DONE** |
 | **TASK-013** | GDPR Art. 15-21 Data Subject Rights Portal & Fiscal Retention Hold (§ 147 AO) | PRIVACY / GDPR | P0 | 9 | 3 | 9 | **DONE** |
 | **TASK-014** | Adversarial Legal Compliance Automated Playwright Test Suite (8/8 Scenarios) | QA / COMPLIANCE | P0 | 10 | 3 | 9 | **DONE** |
+| **TASK-015** | Production Authentication, Accounts, Auditable AGB & TDDDG Cookies | AUTH / SECURITY | P0 | 10 | 4 | 10 | **DONE** |
 | **TASK-006** | Microjob Completion Photo Proof & Before/After Upload Widget | TRUST / ESCROW | P1 | 8 | 3 | 9 | **BACKLOG** |
 | **TASK-007** | Live In-Job Safety Check-In & One-Tap Guardian Geoshare SOS | SAFETY / EMERGENCY | P1 | 9 | 4 | 8 | **BACKLOG** |
 
@@ -111,6 +112,20 @@
 - **Description**: 8 automated adversarial tests actively attempting to bypass statutory child labor bans, duration limits, hazardous tasks, and un-preselected checkboxes.
 - **Implementation**: `tests/test_compliance.py` covering all 8 legal scenarios with 100% pass rate.
 - **Status**: 100% verified (8/8 passed).
+
+### TASK-015: Production Authentication, Accounts, Auditable AGB & TDDDG Cookies — DONE
+- **Description**: Implement complete production-quality authentication system with persistent SQLite database, NIST/OWASP PBKDF2-HMAC-SHA256 password hashing (600,000 iterations), single-use cryptographic tokens, rate limiting, and auditable versioned AGB acceptance.
+- **Implementation**:
+  - `backend/database.py`: Persistent SQLite schema (`data/quickjob.db`) with 7 tables (`users`, `sessions`, `verification_tokens`, `legal_documents`, `legal_acceptances`, `email_logs`, `fiscal_ledger_retention`).
+  - `backend/security.py`: NIST/OWASP PBKDF2-HMAC-SHA256 (600,000 iterations, 32-byte salt), constant-time verification, SHA-256 token hashing, password policy enforcement.
+  - `backend/rate_limiter.py`: Sliding-window rate limiter on login, register, forgot-password, and resend endpoints.
+  - `backend/email_service.py`: Transactional email outbox with verification and password reset dispatch.
+  - `backend/api_auth.py`: REST router with all 12 auth and legal endpoints.
+  - `server.py`: Integrated FastAPI + static PWA server on port 8000.
+  - `js/services/authService.js`: Frontend API client supporting HttpOnly session cookies.
+  - `js/screens/authScreen.js`: UI for login, register (un-preselected AGB § 305 Abs. 2 BGB), forgot password, reset password, and email verification.
+  - `js/state/store.js` & `js/screens/profileScreen.js`: Session persistence across reloads, in-session password change, logout, and GDPR Art. 17 account deletion with § 147 AO retention hold.
+- **Status**: 100% verified in `tests/test_auth.py` (10/10 tests passed).
 
 ---
 *Maintained by QuickJob Autonomous Product Controller*

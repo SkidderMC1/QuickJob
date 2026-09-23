@@ -12,3 +12,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 .tempmediaStorage/
+
+# Application runtime database & outbox
+data/*.db
+data/outbox/

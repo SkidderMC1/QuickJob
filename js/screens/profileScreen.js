@@ -255,6 +255,75 @@ export function renderProfileScreen(state) {
         </div>
       </div>
 
+      <!-- Account Authentication & Security Card -->
+      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-auth-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 0.45rem;">
+            <span style="font-size: 1.1rem;">🔐</span>
+            <h3 style="font-size: 1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
+              Konto & Sicherheit
+            </h3>
+          </div>
+          ${state.isAuthenticated ? `
+            <span class="badge ${user.emailVerified ? 'badge-success' : 'badge-warning'}" style="font-size: 0.72rem;">
+              ${user.emailVerified ? '✓ E-Mail verifiziert' : '⚠️ E-Mail ausstehend'}
+            </span>
+          ` : `
+            <span class="badge badge-muted" style="font-size: 0.72rem;">Gast-Modus</span>
+          `}
+        </div>
+
+        ${state.isAuthenticated ? `
+          <div style="font-size: 0.8rem; color: #475569; display: flex; flex-direction: column; gap: 0.35rem;">
+            <div>
+              <strong>Angemeldet als:</strong> ${escapeHTML(user.email || 'konto@quickjob.local')}
+            </div>
+            ${!user.emailVerified ? `
+              <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 0.6rem; display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                <span style="font-size: 0.75rem; color: #b45309;">Bestätigung erforderlich</span>
+                <button class="btn btn-outline btn-sm" id="btn-profile-to-verify" style="font-size: 0.72rem; padding: 0.25rem 0.5rem;">
+                  Jetzt verifizieren
+                </button>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Change Password Toggle / Form -->
+          <details style="border-top: 1px solid #f1f5f9; padding-top: 0.6rem;">
+            <summary style="font-size: 0.8rem; font-weight: 700; color: #6366f1; cursor: pointer; user-select: none;">
+              🔑 Passwort ändern
+            </summary>
+            <form id="form-profile-change-password" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.6rem;">
+              <input type="password" id="change-current-pw" placeholder="Aktuelles Passwort" required class="form-input" style="width: 100%; padding: 0.5rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid #cbd5e1;" />
+              <input type="password" id="change-new-pw" placeholder="Neues Passwort (mind. 8 Zeichen)" required class="form-input" style="width: 100%; padding: 0.5rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid #cbd5e1;" />
+              <input type="password" id="change-confirm-pw" placeholder="Neues Passwort wiederholen" required class="form-input" style="width: 100%; padding: 0.5rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid #cbd5e1;" />
+              <button type="submit" class="btn btn-secondary btn-sm" id="btn-submit-change-password" style="font-weight: 700;">
+                Passwort jetzt aktualisieren
+              </button>
+            </form>
+          </details>
+
+          <!-- Logout Button -->
+          <div style="border-top: 1px solid #f1f5f9; padding-top: 0.6rem; display: flex; justify-content: flex-end;">
+            <button class="btn btn-outline btn-sm" id="btn-profile-logout" style="color: #dc2626; border-color: #fecaca; font-weight: 700;">
+              🚪 Abmelden
+            </button>
+          </div>
+        ` : `
+          <div style="font-size: 0.82rem; color: #64748b; line-height: 1.45;">
+            Sie nutzen QuickJob aktuell mit einem lokalen Profil. Melden Sie sich an oder registrieren Sie sich, um Ihre Daten geräteübergreifend zu sichern.
+          </div>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+            <button class="btn btn-primary btn-sm" id="btn-profile-login" style="flex: 1; font-weight: 700;">
+              Anmelden
+            </button>
+            <button class="btn btn-outline btn-sm" id="btn-profile-register" style="flex: 1; font-weight: 700;">
+              Registrieren
+            </button>
+          </div>
+        `}
+      </div>
+
       <!-- Legal & Privacy Center Card (Compliance & GDPR Hub) -->
       <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 1.1rem; display: flex; flex-direction: column; gap: 0.85rem;" id="profile-compliance-hub">
         <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -407,6 +476,51 @@ export function attachProfileScreenEvents() {
     browseJobsBtn.addEventListener('click', () => {
       store.setState({ currentScreen: 'jobs' });
       store.setFeedTab('all');
+    });
+  }
+
+  // Account Authentication & Security events
+  const profileLogoutBtn = document.getElementById('btn-profile-logout');
+  if (profileLogoutBtn) {
+    profileLogoutBtn.addEventListener('click', async () => {
+      await store.logoutUser();
+    });
+  }
+
+  const profileLoginBtn = document.getElementById('btn-profile-login');
+  if (profileLoginBtn) {
+    profileLoginBtn.addEventListener('click', () => {
+      store.setAuthMode('login');
+    });
+  }
+
+  const profileRegisterBtn = document.getElementById('btn-profile-register');
+  if (profileRegisterBtn) {
+    profileRegisterBtn.addEventListener('click', () => {
+      store.setAuthMode('register');
+    });
+  }
+
+  const profileToVerifyBtn = document.getElementById('btn-profile-to-verify');
+  if (profileToVerifyBtn) {
+    profileToVerifyBtn.addEventListener('click', () => {
+      store.setAuthMode('verify_email');
+    });
+  }
+
+  const changePwForm = document.getElementById('form-profile-change-password');
+  if (changePwForm) {
+    changePwForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const current_pw = document.getElementById('change-current-pw')?.value;
+      const new_pw = document.getElementById('change-new-pw')?.value;
+      const confirm_pw = document.getElementById('change-confirm-pw')?.value;
+      if (!current_pw || !new_pw || !confirm_pw) {
+        store.showToast('Bitte alle Passwort-Felder ausfüllen.', 'error');
+        return;
+      }
+      await store.changePassword(current_pw, new_pw, confirm_pw);
+      changePwForm.reset();
     });
   }
 }
