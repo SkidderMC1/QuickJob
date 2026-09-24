@@ -96,6 +96,7 @@ def test_mandatory_auth_and_redesign():
         # 3. TEST REDESIGNED KONTO & SICHERHEIT SECTION IN PROFILE
         # ---------------------------------------------------------------------
         log("\n[Test 3] Inspecting redesigned 'Konto & Sicherheit' card in profile...")
+        page.wait_for_selector("#nav-profile", timeout=8000)
         page.click("#nav-profile")
         page.wait_for_timeout(400)
 

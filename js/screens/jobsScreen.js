@@ -88,30 +88,33 @@ export function renderJobsScreen(state) {
 
   return `
     <div class="screen-container" id="screen-jobs">
-      <!-- 3-Segment Feed Navigation -->
+      <!-- Feed & Map Segment Navigation -->
       <div class="segmented-control" id="jobs-segment-control">
-        <button class="segment-btn ${currentTab === 'all' ? 'active' : ''}" data-feed-tab="all" id="tab-feed-all">
+        <button class="segment-btn ${currentTab === 'all' && viewMode !== 'map' ? 'active' : ''}" data-feed-tab="all" id="tab-feed-all">
           <span>🌐</span><span>Entdecken</span>
         </button>
-        <button class="segment-btn ${currentTab === 'saved' ? 'active' : ''}" data-feed-tab="saved" id="tab-feed-saved">
+        <button class="segment-btn ${viewMode === 'map' ? 'active' : ''}" data-feed-tab="map" id="tab-feed-map">
+          <span>🗺️</span><span>Karte (${filtered.length})</span>
+        </button>
+        <button class="segment-btn ${currentTab === 'saved' && viewMode !== 'map' ? 'active' : ''}" data-feed-tab="saved" id="tab-feed-saved">
           <span>⭐</span><span>Gemerkt (${bookmarkedJobsCount})</span>
         </button>
-        <button class="segment-btn ${currentTab === 'my_jobs' ? 'active' : ''}" data-feed-tab="my_jobs" id="tab-feed-myjobs">
-          <span>📋</span><span>Meine Aufträge (${myJobsCount})</span>
+        <button class="segment-btn ${currentTab === 'my_jobs' && viewMode !== 'map' ? 'active' : ''}" data-feed-tab="my_jobs" id="tab-feed-myjobs">
+          <span>📋</span><span>Aufträge (${myJobsCount})</span>
         </button>
       </div>
 
       <!-- View Mode Switcher: List vs Neighborhood Map -->
-      <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.45rem 0.65rem; border-radius: var(--qj-radius-md); border: 1px solid var(--qj-border); box-shadow: var(--qj-shadow-xs);" id="jobs-view-mode-bar">
-        <div style="font-size: 0.78rem; font-weight: 700; color: var(--qj-text-muted); display: flex; align-items: center; gap: 0.35rem;">
-          <span>📍</span>
+      <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.55rem 0.8rem; border-radius: var(--qj-radius-md); border: 1.5px solid var(--qj-border); box-shadow: var(--qj-shadow-xs);" id="jobs-view-mode-bar">
+        <div style="font-size: 0.82rem; font-weight: 800; color: var(--qj-text-main); display: flex; align-items: center; gap: 0.4rem;">
+          <span style="font-size: 1.05rem;">📍</span>
           <span>Darstellung:</span>
         </div>
-        <div style="display: flex; gap: 0.35rem;">
-          <button class="btn btn-sm ${viewMode === 'list' ? 'btn-primary' : 'btn-outline'}" id="btn-view-list" style="font-size: 0.75rem; padding: 0.3rem 0.65rem; border-radius: 8px;">
+        <div style="display: flex; gap: 0.45rem;">
+          <button class="btn btn-sm ${viewMode === 'list' ? 'btn-primary' : 'btn-outline'}" id="btn-view-list" style="font-size: 0.78rem; font-weight: 800; padding: 0.38rem 0.8rem; border-radius: 8px;">
             📋 Liste
           </button>
-          <button class="btn btn-sm ${viewMode === 'map' ? 'btn-primary' : 'btn-outline'}" id="btn-view-map" style="font-size: 0.75rem; padding: 0.3rem 0.65rem; border-radius: 8px;">
+          <button class="btn btn-sm ${viewMode === 'map' ? 'btn-primary' : 'btn-outline'}" id="btn-view-map" style="font-size: 0.78rem; font-weight: 800; padding: 0.38rem 0.8rem; border-radius: 8px;">
             🗺️ Umkreis-Karte
           </button>
         </div>
@@ -368,6 +371,17 @@ export function renderJobsScreen(state) {
           </button>
         </div>
       `}
+
+      <!-- Floating Map / List Toggle Button (Airbnb Style) -->
+      <div style="position: sticky; bottom: 76px; left: 0; right: 0; display: flex; justify-content: center; z-index: 150; pointer-events: none; margin-top: 1rem; margin-bottom: 0.5rem;">
+        <button 
+          id="btn-floating-map-toggle" 
+          class="btn btn-primary"
+          style="pointer-events: auto; background: #0f172a; color: #ffffff; border-radius: 30px; padding: 0.55rem 1.25rem; font-size: 0.82rem; font-weight: 800; display: flex; align-items: center; gap: 0.45rem; box-shadow: 0 6px 20px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.25); cursor: pointer;"
+        >
+          ${viewMode === 'map' ? '<span>📋</span><span>Liste anzeigen</span>' : '<span>🗺️</span><span>Karte anzeigen</span>'}
+        </button>
+      </div>
     </div>
   `;
 }
@@ -446,18 +460,36 @@ export function attachJobsScreenEvents() {
     });
   });
 
-  // Segmented Feed Tab switcher
+  // Floating Map / List Toggle
+  const btnFloating = document.getElementById('btn-floating-map-toggle');
+  if (btnFloating) {
+    btnFloating.addEventListener('click', () => {
+      const currentMode = store.getState().jobsViewMode || 'list';
+      const targetMode = currentMode === 'map' ? 'list' : 'map';
+      store.setJobsViewMode(targetMode);
+    });
+  }
+
+  // Segmented Feed & Map Tab switcher
   const tabBtns = document.querySelectorAll('.segment-btn[data-feed-tab]');
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = btn.getAttribute('data-feed-tab');
-      store.setFeedTab(tab);
+      if (tab === 'map') {
+        store.setJobsViewMode('map');
+      } else {
+        if (store.getState().jobsViewMode === 'map') {
+          store.setJobsViewMode('list');
+        }
+        store.setFeedTab(tab);
+      }
     });
   });
 
   const browseFromSaved = document.getElementById('btn-browse-from-saved');
   if (browseFromSaved) {
     browseFromSaved.addEventListener('click', () => {
+      store.setJobsViewMode('list');
       store.setFeedTab('all');
     });
   }
@@ -465,6 +497,7 @@ export function attachJobsScreenEvents() {
   const browseFromMyJobs = document.getElementById('btn-browse-from-myjobs');
   if (browseFromMyJobs) {
     browseFromMyJobs.addEventListener('click', () => {
+      store.setJobsViewMode('list');
       store.setFeedTab('all');
     });
   }

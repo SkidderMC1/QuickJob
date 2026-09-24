@@ -5,7 +5,9 @@ import { store } from '../state/store.js';
 
 export function renderBottomNav(state) {
   const currentScreen = state.currentScreen;
-  const unreadMessages = state.conversations.length; // Active threads count
+  const unreadMessages = state.conversations ? state.conversations.length : 0;
+  const isMapActive = currentScreen === 'jobs' && state.jobsViewMode === 'map';
+  const isJobsActive = currentScreen === 'jobs' && state.jobsViewMode !== 'map';
 
   return `
     <nav class="bottom-nav" id="bottom-nav">
@@ -17,12 +19,21 @@ export function renderBottomNav(state) {
         <span>Home</span>
       </button>
 
-      <button class="nav-item ${currentScreen === 'jobs' ? 'active' : ''}" data-screen="jobs" id="nav-jobs">
+      <button class="nav-item ${isJobsActive ? 'active' : ''}" data-screen="jobs" id="nav-jobs">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
           <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
         </svg>
         <span>Jobs</span>
+      </button>
+
+      <button class="nav-item ${isMapActive ? 'active' : ''}" data-screen="map" id="nav-map" title="Umkreis-Karte">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+          <line x1="8" y1="2" x2="8" y2="18"></line>
+          <line x1="16" y1="6" x2="16" y2="22"></line>
+        </svg>
+        <span>Karte</span>
       </button>
 
       <button class="nav-item ${currentScreen === 'create' ? 'active' : ''}" data-screen="create" id="nav-create">
@@ -58,7 +69,14 @@ export function attachNavEvents() {
   navItems.forEach(item => {
     item.addEventListener('click', () => {
       const screen = item.getAttribute('data-screen');
-      if (screen) {
+      if (screen === 'map') {
+        store.setScreen('jobs', { selectedJobId: null, selectedConversationId: null, jobsViewMode: 'map' });
+        if (store.getState().locationPermissionGranted === null) {
+          store.setState({ isLocationModalOpen: true });
+        }
+      } else if (screen === 'jobs') {
+        store.setScreen('jobs', { selectedJobId: null, selectedConversationId: null, jobsViewMode: 'list' });
+      } else if (screen) {
         store.setScreen(screen, { selectedJobId: null, selectedConversationId: null });
       }
     });

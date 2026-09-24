@@ -219,7 +219,8 @@ def run_tests():
         print(f"✓ Found {len(quick_pills)} German quick-replies in chat")
 
         # Click a quick reply
-        quick_pills[0].click()
+        page.wait_for_selector(".quick-reply-btn", timeout=3000)
+        page.click(".quick-reply-btn")
         page.wait_for_timeout(500)
         print("✓ Clicked quick-reply pill, message successfully sent into chat")
 
@@ -244,14 +245,14 @@ def run_tests():
         print("✓ 1-Tap SOS Emergency sheet opened with 110, 112 & Parent call")
 
         # Close emergency modal
-        page.click("#btn-close-emergency")
+        page.click("#btn-close-emergency", force=True)
+        page.wait_for_selector("#emergency-modal-overlay", state="hidden", timeout=5000)
         page.wait_for_timeout(300)
 
         # 9. Vorher/Nachher-Bild (Proof of Work) & Gemini Vision AI Verification
         print("\n--- TEST 9: Vorher/Nachher-Bildnachweis & Gemini Vision AI ---")
-        proof_btn = page.query_selector("#btn-chat-open-proof")
-        assert proof_btn, "Upload proof button must exist in chat"
-        proof_btn.click()
+        page.wait_for_selector("#btn-chat-open-proof", timeout=5000)
+        page.click("#btn-chat-open-proof")
         page.wait_for_selector("#proof-photo-modal-overlay", timeout=5000)
 
         # Check Before and After photo slots

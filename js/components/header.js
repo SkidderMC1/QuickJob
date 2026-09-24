@@ -30,6 +30,16 @@ export function renderHeader(state) {
           </button>
         ` : ''}
 
+        ${isAuth ? `
+          <button 
+            id="btn-header-map"
+            style="width: 34px; height: 34px; border-radius: 50%; background: #f1f5f9; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; cursor: pointer;"
+            title="Umkreis-Karte öffnen"
+          >
+            🗺️
+          </button>
+        ` : ''}
+
         <button 
           id="btn-safety-modal"
           style="width: 34px; height: 34px; border-radius: 50%; background: #f1f5f9; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer;"
@@ -58,6 +68,16 @@ export function attachHeaderEvents() {
   if (headerProfileBtn) {
     headerProfileBtn.addEventListener('click', () => {
       store.setScreen('profile');
+    });
+  }
+
+  const headerMapBtn = document.getElementById('btn-header-map');
+  if (headerMapBtn) {
+    headerMapBtn.addEventListener('click', () => {
+      store.setScreen('jobs', { selectedJobId: null, selectedConversationId: null, jobsViewMode: 'map' });
+      if (store.getState().locationPermissionGranted === null) {
+        store.setState({ isLocationModalOpen: true });
+      }
     });
   }
 

@@ -20,7 +20,7 @@ export function renderEmergencyModal(state) {
         <!-- Header -->
         <div class="modal-header" style="border-bottom: 1px solid #fee2e2;">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <div style="width: 38px; height: 38px; border-radius: 12px; background: #dc2626; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; animation: pulse 1.5s infinite;">
+            <div style="width: 38px; height: 38px; border-radius: 12px; background: #dc2626; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
               🚨
             </div>
             <div>
