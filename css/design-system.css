@@ -279,6 +279,23 @@ body.dark-mode .sheet-content {
   color: var(--qj-text-main) !important;
 }
 
+[data-theme="dark"] .home-compact-map-card,
+body.dark-mode .home-compact-map-card {
+  background: #19243c !important;
+  border-color: #2e3e5e !important;
+}
+
+[data-theme="dark"] .job-card-travel-row,
+body.dark-mode .job-card-travel-row {
+  background: #131b2e !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .employer-name-line,
+body.dark-mode .employer-name-line {
+  color: #f1f5f9 !important;
+}
+
 [data-theme="dark"] input:not([type="checkbox"]),
 [data-theme="dark"] select,
 [data-theme="dark"] textarea,

@@ -1,36 +1,42 @@
 /**
- * QuickJob Home Screen View
+ * QuickJob Mobile Home Screen View
+ * Redesigned for mobile-first visual excellence, rapid scannability, and clear information hierarchy.
  */
 import { store } from '../state/store.js';
 import { JobCategories } from '../models/types.js';
 import { renderJobCard } from '../components/jobCard.js';
 
 export function renderHomeScreen(state) {
-  const user = state.currentUser;
+  const user = state.currentUser || {};
   const isMinor = user.ageCategory === 'YOUTH_14_17';
-  const nearbyJobs = state.jobs
-    .filter(j => !isMinor || (j.minAge <= 17 && j.category !== 'disposal'))
-    .slice(0, 3);
-  const recommendedJobs = state.jobs.slice(3, 6);
+  
+  // Filter jobs safe for minors
+  const availableJobs = state.jobs.filter(j => 
+    !isMinor || (j.minAge <= 17 && j.category !== 'disposal')
+  );
+  
+  const nearbyJobs = availableJobs.slice(0, 3);
+  const recommendedJobs = availableJobs.slice(3, 6);
+  const totalCount = availableJobs.length;
 
   return `
-    <div class="screen-container" id="screen-home">
-      <!-- Greeting & Hero -->
-      <section class="home-hero">
+    <div class="screen-container home-screen-container" id="screen-home">
+      <!-- 1. Compact Header / Hero Greeting -->
+      <section class="home-greeting-section">
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <div>
-            <div class="home-subtitle">Welcome back,</div>
-            <h1 class="home-greeting">${escapeHTML(user.name)} 👋</h1>
+            <span class="home-greeting-sub">Welcome back,</span>
+            <h1 class="home-greeting">${escapeHTML(user.name || 'Member')} 👋</h1>
           </div>
-          <div class="badge ${isMinor ? 'badge-purple' : 'badge-info'}">
+          <div class="badge ${isMinor ? 'badge-purple' : 'badge-info'}" style="font-size: 0.72rem; padding: 0.25rem 0.6rem;">
             ${user.ageCategoryLabel || 'Member'}
           </div>
         </div>
       </section>
 
-      <!-- Search Input -->
-      <div class="search-box" id="home-search-box">
-        <span style="font-size: 1.1rem; color: #94a3b8;">🔍</span>
+      <!-- 2. Search Input Box -->
+      <div class="search-box" id="home-search-box" style="margin-top: -0.25rem;">
+        <span style="font-size: 1.05rem; color: #94a3b8;">🔍</span>
         <input 
           type="text" 
           id="home-search-input" 
@@ -40,72 +46,63 @@ export function renderHomeScreen(state) {
         ${state.filters.query ? '<button id="btn-clear-home-search" style="color: #94a3b8; font-size: 0.9rem;">✕</button>' : ''}
       </div>
 
-      <!-- Quick Action Banner -->
-      ${state.activeMode === 'find' ? `
-        <div style="background: linear-gradient(135deg, #0ea76b 0%, #059669 100%); color: white; border-radius: var(--qj-radius-md); padding: 1rem; box-shadow: 0 4px 14px rgba(14, 167, 107, 0.28); display: flex; align-items: center; justify-content: space-between;">
-          <div>
-            <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.9;">Safe & Protected</div>
-            <div style="font-size: 1.05rem; font-weight: 800; margin-top: 2px;">Earn money locally</div>
-            <div style="font-size: 0.8rem; opacity: 0.9; margin-top: 2px;">Protected payment escrow on every job</div>
+      <!-- 3. Compact Nearby Map Card (35-45% Shorter, Native Product Feature) -->
+      <section class="home-compact-map-card" id="home-map-card">
+        <div class="map-card-text">
+          <div class="map-card-heading">
+            <span class="map-pin-icon">📍</span>
+            <span class="map-heading-text">${totalCount} jobs near you</span>
+            <span class="map-privacy-tag">DSGVO</span>
           </div>
-          <button class="btn btn-secondary btn-sm" id="btn-home-browse-all" style="background: white; color: #065f46; border: none; font-weight: 700;">
-            Browse
-          </button>
+          <p class="map-card-subtext">
+            See available jobs around your location.
+          </p>
         </div>
-      ` : `
-        <div style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: white; border-radius: var(--qj-radius-md); padding: 1rem; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.28); display: flex; align-items: center; justify-content: space-between;">
-          <div>
-            <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.9;">Employer Mode</div>
-            <div style="font-size: 1.05rem; font-weight: 800; margin-top: 2px;">Need help with a task?</div>
-            <div style="font-size: 0.8rem; opacity: 0.9; margin-top: 2px;">Post a microjob in under 2 minutes</div>
-          </div>
-          <button class="btn btn-secondary btn-sm" id="btn-home-create-job" style="background: white; color: #3730a3; border: none; font-weight: 700;">
-            + Post Job
-          </button>
-        </div>
-      `}
+        <button class="btn btn-primary btn-sm btn-open-map-cta" id="btn-home-open-map">
+          Open map →
+        </button>
+      </section>
 
-      <!-- Category Pills -->
-      <section>
+      <!-- 4. Categories: Horizontally Scrollable Chips -->
+      <section class="home-categories-section">
         <div class="section-header">
           <h2 class="section-title">Categories</h2>
-          <span class="section-link" id="link-view-all-cats">All Jobs →</span>
+          <span class="section-link" id="link-view-all-cats">See all →</span>
         </div>
-        <div class="category-scroll" style="margin-top: 0.6rem;">
+        <div class="category-scroll" id="home-category-chips">
           <div class="category-chip ${state.filters.category === 'all' ? 'active' : ''}" data-cat="all">
-            <span>✨</span>
-            <span>All (${state.jobs.length})</span>
+            <span>✨ All ${totalCount}</span>
           </div>
           ${JobCategories.map(cat => {
-            const count = state.jobs.filter(j => j.category === cat.id).length;
+            const count = availableJobs.filter(j => j.category === cat.id).length;
             return `
               <div class="category-chip ${state.filters.category === cat.id ? 'active' : ''}" data-cat="${cat.id}">
-                <span>${cat.icon}</span>
-                <span>${cat.name} ${count > 0 ? `(${count})` : ''}</span>
+                <span>${cat.icon} ${cat.name} ${count}</span>
               </div>
             `;
           }).join('')}
         </div>
       </section>
 
-      <!-- Nearby Microjobs -->
-      <section>
+      <!-- 5. Nearby Jobs Section -->
+      <section class="home-nearby-section">
         <div class="section-header">
-          <h2 class="section-title">📍 Nearby Microjobs</h2>
-          <span class="section-link" id="link-see-nearby">View All (${state.jobs.length})</span>
+          <h2 class="section-title">Nearby jobs · ${totalCount}</h2>
+          <span class="section-link" id="link-see-nearby">See all →</span>
         </div>
-        <div class="jobs-list" style="margin-top: 0.6rem;">
+        <div class="jobs-list" style="margin-top: 0.5rem;">
           ${nearbyJobs.map(job => renderJobCard(job)).join('')}
         </div>
       </section>
 
-      <!-- Recommended Jobs -->
+      <!-- 6. Recommended for You (if available) -->
       ${recommendedJobs.length > 0 ? `
-        <section>
+        <section class="home-recommended-section">
           <div class="section-header">
-            <h2 class="section-title">⚡ Recommended for You</h2>
+            <h2 class="section-title">Recommended for you</h2>
+            <span class="section-link" id="link-see-recommended">See all →</span>
           </div>
-          <div class="jobs-list" style="margin-top: 0.6rem;">
+          <div class="jobs-list" style="margin-top: 0.5rem;">
             ${recommendedJobs.map(job => renderJobCard(job)).join('')}
           </div>
         </section>
@@ -134,62 +131,77 @@ export function attachHomeScreenEvents() {
     });
   }
 
-  const browseAllBtn = document.getElementById('btn-home-browse-all');
-  if (browseAllBtn) {
-    browseAllBtn.addEventListener('click', () => {
-      store.setScreen('jobs');
-    });
-  }
+  // Compact Map Card CTA & Card click
+  const btnHomeOpenMap = document.getElementById('btn-home-open-map');
+  const homeMapCard = document.getElementById('home-map-card');
+  const handleOpenMap = (e) => {
+    if (e) e.stopPropagation();
+    store.setScreen('jobs', { jobsViewMode: 'map' });
+    if (store.getState().locationPermissionGranted === null) {
+      store.setState({ isLocationModalOpen: true });
+    }
+  };
 
-  const createJobBtn = document.getElementById('btn-home-create-job');
-  if (createJobBtn) {
-    createJobBtn.addEventListener('click', () => {
-      store.setScreen('create');
-    });
-  }
+  if (btnHomeOpenMap) btnHomeOpenMap.addEventListener('click', handleOpenMap);
+  if (homeMapCard) homeMapCard.addEventListener('click', handleOpenMap);
 
+  // Categories "See all →"
   const viewAllCats = document.getElementById('link-view-all-cats');
   if (viewAllCats) {
     viewAllCats.addEventListener('click', () => {
       store.setFilter('category', 'all');
-      store.setScreen('jobs');
+      store.setScreen('jobs', { jobsViewMode: 'list' });
     });
   }
 
+  // Nearby jobs "See all →"
   const seeNearby = document.getElementById('link-see-nearby');
   if (seeNearby) {
     seeNearby.addEventListener('click', () => {
-      store.setScreen('jobs');
+      store.setScreen('jobs', { jobsViewMode: 'list' });
     });
   }
 
+  const seeRecommended = document.getElementById('link-see-recommended');
+  if (seeRecommended) {
+    seeRecommended.addEventListener('click', () => {
+      store.setScreen('jobs', { jobsViewMode: 'list' });
+    });
+  }
+
+  // Category chip clicks
   const catChips = document.querySelectorAll('.category-chip[data-cat]');
   catChips.forEach(chip => {
     chip.addEventListener('click', () => {
       const cat = chip.getAttribute('data-cat');
       store.setFilter('category', cat);
-      store.setScreen('jobs');
+      store.setScreen('jobs', { jobsViewMode: 'list' });
     });
   });
 
-  // Attach card click handlers
+  // Entire Job Card is tappable -> Opens details modal
   const jobCards = document.querySelectorAll('.job-card[data-job-id]');
   jobCards.forEach(card => {
     card.addEventListener('click', (e) => {
-      // Don't trigger if bookmark was clicked
+      // Don't trigger modal if bookmark button was clicked
       if (e.target.closest('.bookmark-btn')) return;
+      if (e.target.closest('.job-card-route-link')) return;
       const jobId = card.getAttribute('data-job-id');
-      store.setState({ selectedJobId: jobId });
+      if (jobId) {
+        store.setState({ selectedJobId: jobId });
+      }
     });
   });
 
-  // Bookmark buttons
+  // Bookmark star clicks
   const bookmarkBtns = document.querySelectorAll('.bookmark-btn[data-bookmark-id]');
   bookmarkBtns.forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const id = btn.getAttribute('data-bookmark-id');
-      store.toggleBookmark(id);
+      if (id) {
+        store.toggleBookmark(id);
+      }
     });
   });
 }

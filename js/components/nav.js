@@ -36,12 +36,13 @@ export function renderBottomNav(state) {
         <span>Karte</span>
       </button>
 
-      <button class="nav-item ${currentScreen === 'create' ? 'active' : ''}" data-screen="create" id="nav-create">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="16"></line>
-          <line x1="8" y1="12" x2="16" y2="12"></line>
-        </svg>
+      <button class="nav-item ${currentScreen === 'create' ? 'active' : ''} nav-item-create" data-screen="create" id="nav-create">
+        <div class="create-icon-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </div>
         <span>Create</span>
       </button>
 

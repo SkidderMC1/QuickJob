@@ -1,97 +1,97 @@
 /**
  * QuickJob Reusable Job Card Component
+ * Redesigned for fast 1-2s scannability: Category label & Price -> Strong Title -> Location/Time -> Employer Trust -> Apply
  */
 import { JobCategories } from '../models/types.js';
 
 export function renderJobCard(job) {
   const categoryInfo = JobCategories.find(c => c.id === job.category) || { name: job.category, icon: '📋' };
-  const isDirect = job.applicationMode === 'DIRECT_ACCEPT';
+  const employer = job.employer || {};
+  const isVerified = Boolean(employer.isIdentityVerified);
+  const reviewsCount = employer.completedJobs ?? employer.ratingCount ?? 0;
+  const ratingVal = employer.rating ? Number(employer.rating).toFixed(1) : '5.0';
+  const approxLoc = job.approxLocation || 'Wuppertal-Elberfeld';
 
   return `
     <article class="job-card" data-job-id="${job.id}" id="card-${job.id}">
-      <div class="job-card-top">
-        <div style="flex: 1;">
-          <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 2px;">
-            <span class="job-card-category">${categoryInfo.icon} ${categoryInfo.name}</span>
-            <span class="badge ${isDirect ? 'badge-success' : 'badge-purple'}">
-              ${isDirect ? '⚡ Direct Accept' : '📝 Apply'}
-            </span>
-          </div>
-          <h3 class="job-card-title">${escapeHTML(job.title)}</h3>
-        </div>
-
-        <div style="text-align: right; flex-shrink: 0;">
-          <div class="price-tag">
-            <span class="currency">€</span>${job.payment}
-          </div>
-          <div style="font-size: 0.72rem; color: var(--qj-text-subtle); font-weight: 600;">
-            ${job.estimatedDuration}
-          </div>
+      <!-- Top Row: Category Label (left) and Price (right) -->
+      <div class="job-card-top-row">
+        <span class="job-card-category-label">
+          <span class="cat-icon">${categoryInfo.icon}</span>
+          <span class="cat-name">${categoryInfo.name.toUpperCase()}</span>
+        </span>
+        <div class="job-card-price-prominent">
+          <span class="currency">€</span>${job.payment}
         </div>
       </div>
 
-      <div class="job-card-meta">
-        <div class="meta-item">
-          <span>📍</span>
-          <span>${job.distanceKm} km · ${job.approxLocation}</span>
+      <!-- Job Title: Strongest textual element -->
+      <h3 class="job-card-title">${escapeHTML(job.title)}</h3>
+
+      <!-- Compact Secondary Metadata -->
+      <div class="job-card-meta-compact">
+        <div class="meta-item-pill">
+          <span class="meta-icon">📍</span>
+          <span class="meta-val">${job.distanceKm} km · ${escapeHTML(approxLoc)}</span>
         </div>
-        <div class="meta-item">
-          <span>🕒</span>
-          <span>${job.dateSchedule}</span>
+        <div class="meta-item-pill">
+          <span class="meta-icon">🕐</span>
+          <span class="meta-val">${escapeHTML(job.dateSchedule || 'Flexibel')}</span>
+        </div>
+        <div class="meta-item-pill">
+          <span class="meta-icon">⏱</span>
+          <span class="meta-val">${escapeHTML(job.estimatedDuration || '≈ 1h')}</span>
         </div>
       </div>
 
+      <!-- Travel Times Row (Compact & Useful) -->
       ${job.travelTimes ? `
-        <div class="travel-times-row" style="display: flex; align-items: center; justify-content: space-between; background: var(--qj-surface-muted); border-radius: 8px; padding: 0.35rem 0.6rem; font-size: 0.72rem; color: var(--qj-text-muted); margin-top: 0.45rem;">
-          <div style="display: flex; align-items: center; gap: 0.6rem; font-weight: 600;">
+        <div class="job-card-travel-row">
+          <div class="travel-badges">
             <span title="Fahrrad">🚲 ${job.travelTimes.bike}</span>
+            <span class="dot">·</span>
             <span title="Zu Fuß">🚶 ${job.travelTimes.walk}</span>
-            <span title="ÖPNV (Bus/Bahn)">🚌 ${job.travelTimes.transit}</span>
+            <span class="dot">·</span>
+            <span title="ÖPNV">🚌 ${job.travelTimes.transit}</span>
           </div>
           <a 
             href="${job.googleMapsUrl || `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.approxLocation)}`}" 
             target="_blank" 
             rel="noopener noreferrer" 
-            class="link-gmaps" 
+            class="job-card-route-link" 
             onclick="event.stopPropagation();" 
-            title="In Google Maps Navigation öffnen"
-            style="color: #4338ca; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 2px;"
+            title="In Google Maps öffnen"
           >
-            <span>🗺️ Route</span>
+            <span>Route ↗</span>
           </a>
         </div>
       ` : ''}
 
-      <div class="job-card-bottom">
-        <div class="employer-compact">
-          <div class="employer-avatar">
-            ${job.employer.avatarText || 'EM'}
+      <!-- Bottom Row: Poster Trust Info (left) & Actions (right) -->
+      <div class="job-card-bottom-row">
+        <div class="job-card-employer-trust">
+          <div class="employer-name-line">
+            <span class="employer-name">${escapeHTML(employer.name || 'Auftraggeber')}</span>
+            ${isVerified ? '<span class="verified-badge-check" title="Ausweis verifiziert">✓</span>' : ''}
           </div>
-          <div>
-            <div class="employer-name">
-              ${escapeHTML(job.employer.name)}
-              ${job.employer.isCompany ? '<span title="Verified Company">🏢</span>' : ''}
-              ${job.employer.isIdentityVerified ? '<span style="color: #0ea76b;" title="Identity Verified">✓</span>' : ''}
-            </div>
-            <div class="employer-rating">
-              <span>★</span>
-              <span>${job.employer.rating || '5.0'}</span>
-              <span style="color: var(--qj-text-subtle); font-weight: 500;">(${job.employer.completedJobs || 0})</span>
-            </div>
+          <div class="employer-rating-line">
+            <span class="rating-star">★</span>
+            <span class="rating-number">${ratingVal}</span>
+            <span class="reviews-count">· ${reviewsCount} reviews</span>
           </div>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 0.4rem;">
+        <div class="job-card-actions-group">
           <button 
             class="bookmark-btn" 
             data-bookmark-id="${job.id}" 
             title="${job.isBookmarked ? 'Remove bookmark' : 'Bookmark job'}"
-            style="color: ${job.isBookmarked ? '#eab308' : '#94a3b8'}; font-size: 1.1rem; padding: 4px;"
+            aria-label="Bookmark"
           >
             ${job.isBookmarked ? '★' : '☆'}
           </button>
-          <span style="font-size: 0.8rem; font-weight: 700; color: var(--qj-primary);">
-            View →
+          <span class="job-card-apply-cta">
+            Apply →
           </span>
         </div>
       </div>

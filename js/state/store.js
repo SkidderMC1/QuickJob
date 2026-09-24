@@ -547,6 +547,39 @@ class Store {
   }
 
   grantLocationPermission() {
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      try {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const coords = {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude
+            };
+            this.setState({
+              locationPermissionGranted: true,
+              userCoordinates: coords,
+              isLocationModalOpen: false,
+              jobsViewMode: 'map'
+            });
+            this.showToast('📍 Live-Standort erfolgreich freigegeben!');
+          },
+          (err) => {
+            console.warn('Geolocation error / browser prompt dismissed:', err);
+            this.setState({
+              locationPermissionGranted: true,
+              isLocationModalOpen: false,
+              jobsViewMode: 'map'
+            });
+            this.showToast('📍 Standort freigegeben (Wuppertal-Zentrum).');
+          },
+          { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
+        );
+        return;
+      } catch (e) {
+        console.warn('Geolocation invocation failed:', e);
+      }
+    }
+
     this.setState({
       locationPermissionGranted: true,
       isLocationModalOpen: false,
