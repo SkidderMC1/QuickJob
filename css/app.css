@@ -881,5 +881,28 @@
   accent-color: #6366f1;
 }
 
+/* Map Job Pins */
+.map-job-pin:hover {
+  transform: translate(-50%, -115%) scale(1.12) !important;
+  z-index: 50 !important;
+}
 
+/* Quick Replies in Chat */
+.quick-reply-pill {
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--qj-radius-full);
+  background: var(--qj-surface-muted);
+  border: 1px solid var(--qj-border);
+  color: var(--qj-text-main);
+  cursor: pointer;
+  transition: var(--qj-transition);
+}
 
+.quick-reply-pill:hover {
+  background: var(--qj-primary-light);
+  border-color: var(--qj-primary);
+  color: var(--qj-primary-dark);
+}

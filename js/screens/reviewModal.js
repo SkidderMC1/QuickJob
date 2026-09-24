@@ -6,6 +6,7 @@ import { store } from '../state/store.js';
 let selectedRating = 5;
 let selectedTags = new Set(['Pünktlich & zuverlässig']);
 let reviewComment = '';
+let selectedTip = 0;
 
 const complimentOptions = [
   '⏰ Pünktlich & zuverlässig',
@@ -94,6 +95,27 @@ export function renderReviewModal(state) {
             >${escapeHTML(reviewComment)}</textarea>
           </div>
 
+          <!-- Trinkgeld (Tip) Feature -->
+          <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;" id="review-tip-container">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label class="form-label" style="margin: 0; font-weight: 800; font-size: 0.85rem; color: #0f172a;">
+                <span>☕ Trinkgeld geben (Tip)</span>
+              </label>
+              <span id="selected-tip-display" style="font-size: 0.82rem; font-weight: 800; color: #0ea76b;">
+                ${selectedTip > 0 ? `+ €${selectedTip.toFixed(2)}` : 'Kein Trinkgeld'}
+              </span>
+            </div>
+            <div class="tip-options-row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem;">
+              <button type="button" class="btn btn-sm tip-btn ${selectedTip === 0 ? 'btn-primary' : 'btn-outline'}" data-tip="0">0 €</button>
+              <button type="button" class="btn btn-sm tip-btn ${selectedTip === 2 ? 'btn-primary' : 'btn-outline'}" data-tip="2">+ 2 €</button>
+              <button type="button" class="btn btn-sm tip-btn ${selectedTip === 5 ? 'btn-primary' : 'btn-outline'}" data-tip="5">+ 5 €</button>
+              <button type="button" class="btn btn-sm tip-btn ${selectedTip === 10 ? 'btn-primary' : 'btn-outline'}" data-tip="10">+ 10 €</button>
+            </div>
+            <div style="font-size: 0.7rem; color: #64748b;">
+              Das Trinkgeld geht zu 100 % an den Helfer und wird auf der Quittung ausgewiesen.
+            </div>
+          </div>
+
           <!-- Reputation Shield Note -->
           <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--qj-radius-sm); padding: 0.65rem 0.75rem; font-size: 0.76rem; color: #166534; display: flex; gap: 0.4rem;">
             <span>🛡️</span>
@@ -107,7 +129,7 @@ export function renderReviewModal(state) {
             Abbrechen
           </button>
           <button class="btn btn-primary" id="btn-submit-review" style="flex: 2;">
-            ⭐ Bewertung veröffentlichen
+            ⭐ Bewertung & Trinkgeld absenden
           </button>
         </div>
       </div>
@@ -174,6 +196,22 @@ export function attachReviewModalEvents() {
     });
   }
 
+  // Tip buttons
+  const tipBtns = document.querySelectorAll('.tip-btn[data-tip]');
+  const tipDisplay = document.getElementById('selected-tip-display');
+  tipBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedTip = Number(btn.getAttribute('data-tip')) || 0;
+      tipBtns.forEach(b => {
+        const val = Number(b.getAttribute('data-tip')) || 0;
+        b.className = `btn btn-sm tip-btn ${val === selectedTip ? 'btn-primary' : 'btn-outline'}`;
+      });
+      if (tipDisplay) {
+        tipDisplay.textContent = selectedTip > 0 ? `+ €${selectedTip.toFixed(2)}` : 'Kein Trinkgeld';
+      }
+    });
+  });
+
   // Submit button
   const submitBtn = document.getElementById('btn-submit-review');
   if (submitBtn) {
@@ -181,11 +219,12 @@ export function attachReviewModalEvents() {
       const state = store.getState();
       const jobId = state.reviewJobId;
       if (jobId) {
-        store.submitReview(jobId, selectedRating, Array.from(selectedTags), reviewComment);
+        store.submitReview(jobId, selectedRating, Array.from(selectedTags), reviewComment, selectedTip);
         // Reset local state
         selectedRating = 5;
         selectedTags = new Set(['Pünktlich & zuverlässig']);
         reviewComment = '';
+        selectedTip = 0;
       }
     });
   }

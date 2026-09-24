@@ -1,7 +1,7 @@
 /**
  * QuickJob Realistic Mock Data
  */
-import { JobStates, ApplicationModes } from '../models/types.js';
+import { JobStates, ApplicationModes, DefaultAchievements } from '../models/types.js';
 
 export const mockUsers = {
   jasper: {
@@ -20,6 +20,24 @@ export const mockUsers = {
     escrowBalance: 28.0,
     totalEarned: 185.0,
     isIdentityVerified: true,
+    idCardType: 'Schülerausweis (Gymnasium Bayreuther Str.)',
+    idCardVerifiedAt: '10.09.2026',
+    achievements: [...DefaultAchievements],
+    parentPortal: {
+      isActive: false, // Default is disabled as requested by user
+      parentCode: '482910',
+      parentEmail: 'sabine.klein@familie-klein.de'
+    },
+    settings: {
+      theme: 'light',
+      notifications: {
+        newJobs: true,
+        messages: true,
+        payments: true,
+        parentAlerts: true,
+        pushEnabled: false
+      }
+    },
     hasParentConsent: true,
     guardianConsent: {
       id: 'gdr_jasper_01',
@@ -180,6 +198,21 @@ export const initialJobs = [
     distanceKm: 1.4,
     approxLocation: 'Wuppertal-Elberfeld (near Luisenviertel)',
     exactAddress: 'Luisenstraße 42, 42103 Wuppertal', // Revealed only after assignment
+    lat: 51.2562,
+    lng: 7.1508,
+    travelTimes: {
+      bike: '5 Min.',
+      walk: '14 Min.',
+      transit: '7 Min.'
+    },
+    googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Luisenstra%C3%9Fe+42,+42103+Wuppertal',
+    checkInStatus: 'NOT_ARRIVED',
+    checkInTime: null,
+    proofPhotoBefore: 'https://images.unsplash.com/photo-1558904541-efa8c4a08931?auto=format&fit=crop&w=400&q=80',
+    proofPhotoAfter: 'https://images.unsplash.com/photo-1592417817098-8f3d69102657?auto=format&fit=crop&w=400&q=80',
+    aiVisionVerified: true,
+    aiVisionSummary: '🤖 KI-Bildprüfung (Gemini Vision): Rasenfläche sauber gemäht, Rasenkanten getrimmt, Schnittgut ordnungsgemäß in Grüngutsäcke verpackt. Plausibilität: 98%.',
+    tipAmount: 5,
     dateSchedule: 'Saturday · 14:00',
     state: JobStates.APPLICATIONS_OPEN,
     applicationMode: ApplicationModes.APPLICATION_REQUIRED,
@@ -235,6 +268,20 @@ export const initialJobs = [
     distanceKm: 2.1,
     approxLocation: 'Wuppertal-Barmen',
     exactAddress: 'Wormser Str. 18, 42285 Wuppertal',
+    lat: 51.2715,
+    lng: 7.1982,
+    travelTimes: {
+      bike: '9 Min.',
+      walk: '24 Min.',
+      transit: '11 Min.'
+    },
+    googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Wormser+Str.+18,+42285+Wuppertal',
+    checkInStatus: 'NOT_ARRIVED',
+    checkInTime: null,
+    proofPhotoBefore: null,
+    proofPhotoAfter: null,
+    aiVisionVerified: false,
+    tipAmount: 0,
     dateSchedule: 'Friday · 16:30',
     state: JobStates.APPLICATIONS_OPEN,
     applicationMode: ApplicationModes.DIRECT_ACCEPT,
@@ -264,6 +311,20 @@ export const initialJobs = [
     distanceKm: 0.9,
     approxLocation: 'Wuppertal-Hardt',
     exactAddress: 'Reichsallee 7, 42107 Wuppertal',
+    lat: 51.2618,
+    lng: 7.1645,
+    travelTimes: {
+      bike: '4 Min.',
+      walk: '11 Min.',
+      transit: '6 Min.'
+    },
+    googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Reichsallee+7,+42107+Wuppertal',
+    checkInStatus: 'NOT_ARRIVED',
+    checkInTime: null,
+    proofPhotoBefore: null,
+    proofPhotoAfter: null,
+    aiVisionVerified: false,
+    tipAmount: 3,
     dateSchedule: 'Tomorrow · 15:00',
     state: JobStates.APPLICATIONS_OPEN,
     applicationMode: ApplicationModes.DIRECT_ACCEPT,
@@ -293,6 +354,20 @@ export const initialJobs = [
     distanceKm: 3.2,
     approxLocation: 'Wuppertal-Unterbarmen',
     exactAddress: 'Friedrich-Engels-Allee 112, 42285 Wuppertal',
+    lat: 51.2650,
+    lng: 7.1820,
+    travelTimes: {
+      bike: '12 Min.',
+      walk: '32 Min.',
+      transit: '14 Min.'
+    },
+    googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Friedrich-Engels-Allee+112,+42285+Wuppertal',
+    checkInStatus: 'NOT_ARRIVED',
+    checkInTime: null,
+    proofPhotoBefore: null,
+    proofPhotoAfter: null,
+    aiVisionVerified: false,
+    tipAmount: 0,
     dateSchedule: 'Next Monday · 10:00',
     state: JobStates.APPLICATIONS_OPEN,
     applicationMode: ApplicationModes.APPLICATION_REQUIRED,
@@ -337,6 +412,20 @@ export const initialJobs = [
     distanceKm: 1.8,
     approxLocation: 'Wuppertal-Elberfeld West',
     exactAddress: 'Nützenberger Str. 90, 42115 Wuppertal',
+    lat: 51.2480,
+    lng: 7.1390,
+    travelTimes: {
+      bike: '7 Min.',
+      walk: '20 Min.',
+      transit: '9 Min.'
+    },
+    googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=N%C3%BCtzenberger+Str.+90,+42115+Wuppertal',
+    checkInStatus: 'NOT_ARRIVED',
+    checkInTime: null,
+    proofPhotoBefore: null,
+    proofPhotoAfter: null,
+    aiVisionVerified: false,
+    tipAmount: 0,
     dateSchedule: 'Thursday · 17:00',
     state: JobStates.APPLICATIONS_OPEN,
     applicationMode: ApplicationModes.APPLICATION_REQUIRED,
@@ -365,6 +454,20 @@ export const initialJobs = [
     distanceKm: 2.5,
     approxLocation: 'Wuppertal-Vohwinkel',
     exactAddress: 'Kaiserstraße 33, 42329 Wuppertal',
+    lat: 51.2320,
+    lng: 7.0850,
+    travelTimes: {
+      bike: '14 Min.',
+      walk: '38 Min.',
+      transit: '15 Min.'
+    },
+    googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Kaiserstra%C3%9Fe+33,+42329+Wuppertal',
+    checkInStatus: 'NOT_ARRIVED',
+    checkInTime: null,
+    proofPhotoBefore: null,
+    proofPhotoAfter: null,
+    aiVisionVerified: false,
+    tipAmount: 0,
     dateSchedule: 'Saturday · 11:30',
     state: JobStates.APPLICATIONS_OPEN,
     applicationMode: ApplicationModes.APPLICATION_REQUIRED,
@@ -393,6 +496,20 @@ export const initialJobs = [
     distanceKm: 0.8,
     approxLocation: 'Wuppertal-Elberfeld Herzogstraße',
     exactAddress: 'Herzogstraße 14, 42103 Wuppertal',
+    lat: 51.2580,
+    lng: 7.1470,
+    travelTimes: {
+      bike: '3 Min.',
+      walk: '8 Min.',
+      transit: '4 Min.'
+    },
+    googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Herzogstra%C3%9Fe+14,+42103+Wuppertal',
+    checkInStatus: 'NOT_ARRIVED',
+    checkInTime: null,
+    proofPhotoBefore: null,
+    proofPhotoAfter: null,
+    aiVisionVerified: false,
+    tipAmount: 2,
     dateSchedule: 'Friday · 10:00',
     state: JobStates.APPLICATIONS_OPEN,
     applicationMode: ApplicationModes.DIRECT_ACCEPT,
@@ -421,6 +538,20 @@ export const initialJobs = [
     distanceKm: 3.5,
     approxLocation: 'Wuppertal-Ronsdorf',
     exactAddress: 'Lüttringhauser Str. 55, 42369 Wuppertal',
+    lat: 51.2290,
+    lng: 7.1950,
+    travelTimes: {
+      bike: '16 Min.',
+      walk: '45 Min.',
+      transit: '18 Min.'
+    },
+    googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=L%C3%BCttringhauser+Str.+55,+42369+Wuppertal',
+    checkInStatus: 'NOT_ARRIVED',
+    checkInTime: null,
+    proofPhotoBefore: null,
+    proofPhotoAfter: null,
+    aiVisionVerified: false,
+    tipAmount: 0,
     dateSchedule: 'Sunday · 13:00',
     state: JobStates.APPLICATIONS_OPEN,
     applicationMode: ApplicationModes.APPLICATION_REQUIRED,

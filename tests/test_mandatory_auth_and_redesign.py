@@ -70,10 +70,10 @@ def test_mandatory_auth_and_redesign():
         # 2. TEST LOGIN & FEATURE UNLOCK
         # ---------------------------------------------------------------------
         log("\n[Test 2] Logging in as Jasper Klein...")
-        page.click(".btn-quick-login[data-email='jasper@quickjob.local']")
-        page.wait_for_timeout(100)
+        page.fill("#login-email", "jasper@quickjob.local")
+        page.fill("#login-password", "Password123!")
         page.click("#btn-auth-submit-login")
-        page.wait_for_timeout(600)
+        page.wait_for_function("() => window.store && window.store.getState().isAuthenticated === true", timeout=8000)
 
         # Verify app features unlocked: Home screen and Bottom Navigation appear
         is_auth = page.evaluate("() => store.getState().isAuthenticated")

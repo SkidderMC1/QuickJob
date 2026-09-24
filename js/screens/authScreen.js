@@ -34,7 +34,7 @@ export function renderAuthScreen(state) {
 
         <!-- MODE 1: LOGIN -->
         ${mode === 'login' ? `
-          <form id="form-auth-login" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <form id="form-auth-login" style="display: flex; flex-direction: column; gap: 0.85rem;">
             <div>
               <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                 E-Mail-Adresse
@@ -142,6 +142,39 @@ export function renderAuthScreen(state) {
                 Passwort bestätigen *
               </label>
               <input type="password" id="reg-password-confirm" class="form-input" placeholder="Passwort wiederholen" required style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
+            </div>
+
+            <!-- Ausweis-Verifikation (ID/KYC) Block -->
+            <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem;" id="reg-id-card-section">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label style="font-size: 0.78rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 0.35rem;">
+                  <span>🪪</span>
+                  <span id="reg-id-title">Ausweis-Verifikation</span>
+                </label>
+                <span class="badge badge-info" id="reg-id-badge" style="font-size: 0.68rem;">
+                  Pflicht für Helfer
+                </span>
+              </div>
+
+              <!-- Required Notice Text -->
+              <div id="reg-id-notice" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.65rem; font-size: 0.73rem; color: #1e40af; line-height: 1.45;">
+                <strong>Als Helfer (Arbeitnehmer) ist eine Ausweisprüfung nach deutschem Recht erforderlich.</strong> Du kannst deinen Ausweis direkt hier hochladen oder die Registrierung abschließen und deinen Ausweis jederzeit später in den Profileinstellungen hinzufügen.
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem;">
+                <select id="reg-id-type" class="form-input" style="padding: 0.5rem; font-size: 0.78rem; border-radius: 6px; border: 1px solid #cbd5e1;">
+                  <option value="personalausweis">Personalausweis</option>
+                  <option value="schuelerausweis">Schülerausweis</option>
+                  <option value="reisepass">Reisepass</option>
+                </select>
+                <input 
+                  type="text" 
+                  id="reg-id-number" 
+                  placeholder="Ausweis- / Schülernummer (optional)" 
+                  class="form-input" 
+                  style="padding: 0.5rem; font-size: 0.78rem; border-radius: 6px; border: 1px solid #cbd5e1;" 
+                />
+              </div>
             </div>
 
             <!-- Mandatory Un-preselected AGB Checkbox (§ 305 Abs. 2 BGB) -->
@@ -350,16 +383,45 @@ export function attachAuthScreenEvents() {
     });
   }
 
+  // Dynamic role-based ID notice
+  const roleSelect = document.getElementById('reg-role');
+  const idBadge = document.getElementById('reg-id-badge');
+  const idNotice = document.getElementById('reg-id-notice');
+  if (roleSelect && idBadge && idNotice) {
+    roleSelect.addEventListener('change', (e) => {
+      if (e.target.value === 'employer') {
+        idBadge.className = 'badge badge-muted';
+        idBadge.innerText = 'Optional für Auftraggeber';
+        idNotice.style.background = '#f8fafc';
+        idNotice.style.borderColor = '#e2e8f0';
+        idNotice.style.color = '#475569';
+        idNotice.innerHTML = '<strong>Ausweis-Upload (optional für Auftraggeber):</strong> Für Auftraggeber ist der Ausweis freiwillig. Verifizierte Profile erhalten ein Vertrauensabzeichen. Du kannst deinen Ausweis jederzeit in den Einstellungen hinzufügen.';
+      } else {
+        idBadge.className = 'badge badge-info';
+        idBadge.innerText = 'Pflicht für Helfer';
+        idNotice.style.background = '#eff6ff';
+        idNotice.style.borderColor = '#bfdbfe';
+        idNotice.style.color = '#1e40af';
+        idNotice.innerHTML = '<strong>Als Helfer (Arbeitnehmer) ist eine Ausweisprüfung nach deutschem Recht erforderlich.</strong> Du kannst deinen Ausweis direkt hier hochladen oder die Registrierung abschließen und deinen Ausweis jederzeit später in den Profileinstellungen hinzufügen.';
+      }
+    });
+  }
+
   // Handle Login submission
   const loginForm = document.getElementById('form-auth-login');
+  const loginBtn = document.getElementById('btn-auth-submit-login');
+  const handleLoginSubmit = async (e) => {
+    if (e) e.preventDefault();
+    const email = document.getElementById('login-email')?.value;
+    const password = document.getElementById('login-password')?.value;
+    const remember = document.getElementById('login-remember')?.checked;
+    await store.loginUser(email, password, remember);
+  };
   if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('login-email')?.value;
-      const password = document.getElementById('login-password')?.value;
-      const remember = document.getElementById('login-remember')?.checked;
-      await store.loginUser(email, password, remember);
-    });
+    loginForm.addEventListener('submit', handleLoginSubmit);
+  }
+  if (loginBtn) {
+    loginBtn.addEventListener('click', handleLoginSubmit);
   }
 
   // Handle Register submission

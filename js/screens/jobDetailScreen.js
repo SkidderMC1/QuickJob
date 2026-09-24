@@ -72,10 +72,44 @@ export function renderJobDetailModal(jobId, state) {
             </div>
             <div style="display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.88rem; font-weight: 600;">
               <span style="margin-top: 1px;">📍</span>
-              <div>
+              <div style="flex: 1;">
                 <div>${job.distanceKm} km away · ${job.approxLocation}</div>
                 <div style="font-size: 0.75rem; color: var(--qj-text-subtle); font-weight: 500; margin-top: 2px;">
                   ${isAssignedToMe || isMyPostedJob ? `🔓 Exact address: <strong>${job.exactAddress}</strong>` : '🔒 Exact street number revealed upon confirmed assignment'}
+                </div>
+              </div>
+            </div>
+
+            <!-- Google Maps Anreise & Fahrzeiten (Fahrrad, Fuß, ÖPNV) -->
+            <div style="border-top: 1px solid var(--qj-border); padding-top: 0.55rem; margin-top: 0.15rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+                <span style="font-size: 0.74rem; font-weight: 700; color: var(--qj-text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
+                  🗺️ Google Maps Anreisezeit
+                </span>
+                <a 
+                  href="${job.googleMapsUrl || `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.approxLocation)}`}" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  style="font-size: 0.74rem; font-weight: 700; color: #4338ca; text-decoration: none; display: flex; align-items: center; gap: 3px;"
+                >
+                  <span>Route in Maps öffnen ↗</span>
+                </a>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; text-align: center;">
+                <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.4rem 0.2rem;">
+                  <div style="font-size: 1.05rem;">🚲</div>
+                  <div style="font-size: 0.72rem; font-weight: 700; color: var(--qj-text-main);">${job.travelTimes?.bike || '6 Min.'}</div>
+                  <div style="font-size: 0.65rem; color: var(--qj-text-subtle);">Fahrrad</div>
+                </div>
+                <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.4rem 0.2rem;">
+                  <div style="font-size: 1.05rem;">🚶</div>
+                  <div style="font-size: 0.72rem; font-weight: 700; color: var(--qj-text-main);">${job.travelTimes?.walk || '16 Min.'}</div>
+                  <div style="font-size: 0.65rem; color: var(--qj-text-subtle);">Zu Fuß</div>
+                </div>
+                <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.4rem 0.2rem;">
+                  <div style="font-size: 1.05rem;">🚌</div>
+                  <div style="font-size: 0.72rem; font-weight: 700; color: var(--qj-text-main);">${job.travelTimes?.transit || '9 Min.'}</div>
+                  <div style="font-size: 0.65rem; color: var(--qj-text-subtle);">ÖPNV / Bus</div>
                 </div>
               </div>
             </div>

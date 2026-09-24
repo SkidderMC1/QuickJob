@@ -98,6 +98,18 @@ export function renderMessagesScreen(state) {
 function renderChatThread(conv, state) {
   const isEmployer = state.activeMode === 'post';
   const status = conv.status || 'IN_PROGRESS';
+  const job = state.jobs.find(j => j.id === conv.jobId) || {
+    id: conv.jobId,
+    title: conv.jobTitle,
+    payment: conv.jobPayment,
+    checkInStatus: 'NOT_ARRIVED',
+    travelTimes: { bike: '5 Min.', walk: '14 Min.', transit: '7 Min.' },
+    googleMapsUrl: '#'
+  };
+
+  const isCheckedIn = job.checkInStatus === 'ARRIVED';
+  const hasProof = !!job.proofPhotoAfter;
+  const isDone = status === 'COMPLETED' || status === 'PAYMENT_RELEASED' || status === 'REVIEWED';
 
   return `
     <div class="screen-container" id="screen-chat-thread" style="padding-bottom: 5.5rem;">
@@ -129,10 +141,20 @@ function renderChatThread(conv, state) {
       <!-- Linked Job Banner & Status Action -->
       <div class="chat-job-banner">
         <div>
-          <div style="font-size: 0.75rem; color: var(--qj-text-muted); font-weight: 600;">Linked Microjob</div>
+          <div style="font-size: 0.75rem; color: var(--qj-text-muted); font-weight: 600;">Verknüpfter Microjob</div>
           <div style="font-size: 0.85rem; font-weight: 700; color: var(--qj-text-main); line-height: 1.25;">
             ${escapeHTML(conv.jobTitle)}
           </div>
+          ${job.travelTimes ? `
+            <div style="font-size: 0.7rem; color: #4338ca; font-weight: 700; margin-top: 3px; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+              <span>🚲 ${job.travelTimes.bike}</span>
+              <span>🚶 ${job.travelTimes.walk}</span>
+              <span>🚌 ${job.travelTimes.transit}</span>
+              <a href="${job.googleMapsUrl || '#'}" target="_blank" rel="noopener noreferrer" style="color: #4338ca; text-decoration: underline;">
+                Google Maps ↗
+              </a>
+            </div>
+          ` : ''}
           <div style="font-size: 0.72rem; color: var(--qj-primary); font-weight: 700; margin-top: 2px;">
             Status: ${status}
           </div>
@@ -142,38 +164,111 @@ function renderChatThread(conv, state) {
         <div>
           ${status === 'WORKER_SELECTED' || status === 'IN_PROGRESS' ? `
             <button class="btn btn-primary btn-sm" id="btn-chat-complete-job" data-job-id="${conv.jobId}">
-              ✓ Mark Complete
+              ✓ Als erledigt markieren
             </button>
           ` : status === 'COMPLETED' ? `
             <button class="btn btn-primary btn-sm" id="btn-chat-release-payment" data-job-id="${conv.jobId}">
-              💸 Release €${conv.jobPayment}
+              💸 Auszahlung €${conv.jobPayment} freigeben
             </button>
           ` : status === 'PAYMENT_RELEASED' ? `
             <button class="btn btn-outline btn-sm" id="btn-chat-leave-review" data-job-id="${conv.jobId}">
-              ⭐ Review
+              ⭐ Bewerten & Trinkgeld
             </button>
           ` : `
-            <span class="badge badge-success">✓ Reviewed</span>
+            <span class="badge badge-success">✓ Bewertet</span>
           `}
         </div>
       </div>
 
+      <!-- Live Action & Safety Strip (Check-In, Foto-Beweis, Notfall SOS, Quittung) -->
+      <div style="display: flex; gap: 0.4rem; overflow-x: auto; padding: 0.4rem 0; align-items: center;" id="chat-live-action-strip">
+        ${isCheckedIn ? `
+          <span class="badge badge-success" style="font-size: 0.74rem; padding: 0.4rem 0.65rem; white-space: nowrap;">
+            📍 Vor Ort (${job.checkInTime || '14:02 Uhr'})
+          </span>
+        ` : `
+          <button 
+            class="btn btn-outline btn-sm" 
+            id="btn-chat-live-checkin" 
+            data-job-id="${conv.jobId}"
+            style="font-size: 0.74rem; font-weight: 800; color: #0ea76b; border-color: #a7f3d0; background: #ecfdf5; white-space: nowrap;"
+          >
+            📍 Ich bin da (Check-In)
+          </button>
+        `}
+
+        <button 
+          class="btn btn-outline btn-sm" 
+          id="btn-chat-open-proof" 
+          data-job-id="${conv.jobId}"
+          style="font-size: 0.74rem; font-weight: 800; color: #4338ca; border-color: #c7d2fe; background: #eef2ff; white-space: nowrap;"
+        >
+          📸 Vorher-/Nachher Foto
+        </button>
+
+        ${isDone ? `
+          <button 
+            class="btn btn-outline btn-sm" 
+            id="btn-chat-view-receipt" 
+            data-job-id="${conv.jobId}"
+            style="font-size: 0.74rem; font-weight: 800; color: #0f172a; border-color: #cbd5e1; background: #f8fafc; white-space: nowrap;"
+          >
+            📄 Quittung (§ 368 BGB)
+          </button>
+        ` : ''}
+
+        <button 
+          class="btn btn-danger btn-sm" 
+          id="btn-chat-sos" 
+          data-job-id="${conv.jobId}"
+          style="font-size: 0.74rem; font-weight: 800; background: #dc2626; color: #ffffff; border: none; border-radius: 8px; padding: 0.35rem 0.7rem; white-space: nowrap; margin-left: auto;"
+        >
+          🚨 Notfall SOS
+        </button>
+      </div>
+
       <!-- Messages History Container -->
-      <div class="chat-messages" id="chat-messages-scroll" style="height: 360px; overflow-y: auto;">
+      <div class="chat-messages" id="chat-messages-scroll" style="height: 330px; overflow-y: auto;">
         ${conv.messages.map(msg => `
           <div class="chat-bubble ${msg.isMine ? 'mine' : 'theirs'}">
             <div>${escapeHTML(msg.text)}</div>
             <div class="chat-time">${msg.timestamp}</div>
           </div>
         `).join('')}
+
+        <!-- Inline Before & After Photo Proof Card (if available) -->
+        ${hasProof ? `
+          <div style="background: #f8fafc; border: 1.5px solid #86efac; border-radius: 12px; padding: 0.75rem; margin: 0.5rem 0; display: flex; flex-direction: column; gap: 0.45rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.78rem; font-weight: 800; color: #15803d; display: flex; align-items: center; gap: 0.3rem;">
+                <span>📸</span><span>Vorher-/Nachher-Beweis hochgeladen</span>
+              </span>
+              <span class="badge badge-success" style="font-size: 0.68rem;">✓ KI-Geprüft (98%)</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem;">
+              <div style="height: 90px; border-radius: 8px; overflow: hidden; position: relative;">
+                <img src="${job.proofPhotoBefore || 'https://images.unsplash.com/photo-1558904541-efa8c4a08931?auto=format&fit=crop&w=400&q=80'}" style="width: 100%; height: 100%; object-fit: cover;" alt="Vorher" />
+                <span style="position: absolute; bottom: 3px; left: 3px; font-size: 0.6rem; background: rgba(0,0,0,0.7); color: white; padding: 1px 4px; border-radius: 4px;">Vorher</span>
+              </div>
+              <div style="height: 90px; border-radius: 8px; overflow: hidden; position: relative; border: 2px solid #10b981;">
+                <img src="${job.proofPhotoAfter}" style="width: 100%; height: 100%; object-fit: cover;" alt="Nachher" />
+                <span style="position: absolute; bottom: 3px; left: 3px; font-size: 0.6rem; background: #10b981; color: white; padding: 1px 4px; border-radius: 4px;">Nachher ✓</span>
+              </div>
+            </div>
+            <div style="font-size: 0.7rem; color: #166534; line-height: 1.35;">
+              ${job.aiVisionSummary || '🤖 KI-Prüfung: Arbeitsergebnis stimmt mit Aufgabenbeschreibung überein.'}
+            </div>
+          </div>
+        ` : ''}
       </div>
 
-      <!-- Quick Reply Suggestions -->
-      <div class="chat-quick-replies">
-        <button class="quick-reply-btn" data-reply="Is 3pm okay?">"Is 3pm okay?"</button>
-        <button class="quick-reply-btn" data-reply="Yes, perfect! See you then.">"Yes, perfect!"</button>
-        <button class="quick-reply-btn" data-reply="I have arrived at the location.">"I have arrived!"</button>
-        <button class="quick-reply-btn" data-reply="All done! Completed the task.">"Task completed!"</button>
+      <!-- Quick Reply Suggestions (German) -->
+      <div class="chat-quick-replies" style="display: flex; gap: 0.4rem; overflow-x: auto; padding: 0.35rem 0;">
+        <button class="quick-reply-btn" data-reply="Bin auf dem Weg! 🚲">🚲 Bin auf dem Weg!</button>
+        <button class="quick-reply-btn" data-reply="Bin an der Haustür 🔔">🔔 Bin an der Haustür</button>
+        <button class="quick-reply-btn" data-reply="Verzögert sich um 5 Minuten ⏳">⏳ +5 Min.</button>
+        <button class="quick-reply-btn" data-reply="Habe eine kurze Frage zum Job ❓">❓ Kurze Frage</button>
+        <button class="quick-reply-btn" data-reply="Aufgabe ist fertig! Foto hochgeladen ✅">✅ Aufgabe fertig!</button>
       </div>
 
       <!-- Message Input Bar -->
@@ -182,11 +277,11 @@ function renderChatThread(conv, state) {
           type="text" 
           id="chat-input-field" 
           class="form-control" 
-          placeholder="Type a message..." 
+          placeholder="Nachricht schreiben..." 
           style="flex: 1; border-radius: var(--qj-radius-full);"
         />
         <button class="btn btn-primary" id="btn-send-message" style="border-radius: var(--qj-radius-full); padding: 0.65rem 1rem;">
-          Send
+          Senden
         </button>
       </div>
     </div>
@@ -249,12 +344,54 @@ export function attachMessagesScreenEvents() {
     });
   });
 
+  // Live Check-In button
+  const checkInBtn = document.getElementById('btn-chat-live-checkin');
+  if (checkInBtn) {
+    checkInBtn.addEventListener('click', () => {
+      const jobId = checkInBtn.getAttribute('data-job-id');
+      if (jobId) {
+        store.checkInToJob(jobId);
+      }
+    });
+  }
+
+  // Open Proof Modal
+  const openProofBtn = document.getElementById('btn-chat-open-proof');
+  if (openProofBtn) {
+    openProofBtn.addEventListener('click', () => {
+      const jobId = openProofBtn.getAttribute('data-job-id');
+      if (jobId) {
+        store.openProofModal(jobId);
+      }
+    });
+  }
+
+  // Emergency SOS button
+  const sosBtn = document.getElementById('btn-chat-sos');
+  if (sosBtn) {
+    sosBtn.addEventListener('click', () => {
+      const jobId = sosBtn.getAttribute('data-job-id');
+      store.openEmergencyModal(jobId);
+    });
+  }
+
+  // View Receipt button
+  const viewReceiptBtn = document.getElementById('btn-chat-view-receipt');
+  if (viewReceiptBtn) {
+    viewReceiptBtn.addEventListener('click', () => {
+      const jobId = viewReceiptBtn.getAttribute('data-job-id');
+      if (jobId) {
+        store.openReceiptModal(jobId);
+      }
+    });
+  }
+
   // Job lifecycle action buttons
   const completeBtn = document.getElementById('btn-chat-complete-job');
   if (completeBtn) {
     completeBtn.addEventListener('click', () => {
       const jobId = completeBtn.getAttribute('data-job-id');
-      store.updateJobState(jobId, JobStates.COMPLETED);
+      store.openProofModal(jobId);
     });
   }
 

@@ -78,3 +78,66 @@ export const ModerationStates = {
   REVIEW_REQUIRED: 'REVIEW_REQUIRED',
   BLOCKED: 'BLOCKED'
 };
+
+export const CheckInStates = {
+  NOT_ARRIVED: 'NOT_ARRIVED',
+  ARRIVED: 'ARRIVED',
+  COMPLETED: 'COMPLETED'
+};
+
+export const DefaultAchievements = [
+  {
+    id: 'tierfreund',
+    title: 'Tierfreund',
+    icon: '🐾',
+    description: 'Erfolgreich Gassigeh- & Haustier-Jobs abgeschlossen.',
+    unlocked: true,
+    unlockedDate: '12.09.2026',
+    category: 'animals'
+  },
+  {
+    id: 'gartenprofi',
+    title: 'Garten-Profi',
+    icon: '🌿',
+    description: 'Rasenpflege & Gartenarbeiten mit 5 Sternen gemeistert.',
+    unlocked: true,
+    unlockedDate: '16.09.2026',
+    category: 'garden'
+  },
+  {
+    id: 'einkaufsheld',
+    title: 'Einkaufs-Held',
+    icon: '🛒',
+    description: 'Zuverlässig Senioren beim Wocheneinkauf unterstützt.',
+    unlocked: true,
+    unlockedDate: '18.09.2026',
+    category: 'shopping'
+  },
+  {
+    id: 'blitzschnell',
+    title: 'Blitzschnell',
+    icon: '⚡',
+    description: 'Auftrag in Rekordzeit innerhalb von 24h erledigt.',
+    unlocked: true,
+    unlockedDate: '20.09.2026',
+    category: 'speed'
+  },
+  {
+    id: 'fivestar',
+    title: '5-Sterne-Liebling',
+    icon: '⭐',
+    description: '3 hervorragende 5,0-Sterne-Bewertungen in Folge.',
+    unlocked: true,
+    unlockedDate: '22.09.2026',
+    category: 'quality'
+  },
+  {
+    id: 'sicherheit',
+    title: 'Sicherheits-Pionier',
+    icon: '🛡️',
+    description: 'Ausweis verifiziert & Eltern-Portal erfolgreich aktiv.',
+    unlocked: true,
+    unlockedDate: '23.09.2026',
+    category: 'safety'
+  }
+];

@@ -20,6 +20,11 @@ import { renderConsentBanner, attachConsentBannerEvents } from './components/con
 import { renderLegalModal, attachLegalModalEvents } from './screens/legalModal.js';
 import { renderGuardianModal, attachGuardianModalEvents } from './screens/guardianModal.js';
 import { renderAuthScreen, attachAuthScreenEvents } from './screens/authScreen.js';
+import { renderLocationModal, attachLocationModalEvents } from './screens/locationModal.js';
+import { renderEmergencyModal, attachEmergencyModalEvents } from './screens/emergencyModal.js';
+import { renderReceiptModal, attachReceiptModalEvents } from './screens/receiptModal.js';
+import { renderProofPhotoModal, attachProofPhotoModalEvents } from './screens/proofPhotoModal.js';
+import { renderParentModal, attachParentModalEvents } from './screens/parentModal.js';
 
 function getCurrentTimeString() {
   const now = new Date();
@@ -32,6 +37,16 @@ function renderApp() {
   const state = store.getState();
   const root = document.getElementById('app-root');
   if (!root) return;
+
+  // Sync theme
+  const theme = state.activeTheme || state.currentUser?.settings?.theme || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.body.classList.add('dark-mode');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    document.body.classList.remove('dark-mode');
+  }
 
   const timeStr = getCurrentTimeString();
   const isNative = state.displayMode === 'native';
@@ -84,6 +99,13 @@ function renderApp() {
 
         <!-- Guardian Authorization Modal (BGB §§ 107, 113) -->
         ${isAuth ? renderGuardianModal(state) : ''}
+
+        <!-- Advanced Modals -->
+        ${state.isLocationModalOpen ? renderLocationModal(state) : ''}
+        ${state.isEmergencyModalOpen ? renderEmergencyModal(state) : ''}
+        ${state.receiptModalJobId ? renderReceiptModal(state) : ''}
+        ${state.isProofModalOpen ? renderProofPhotoModal(state) : ''}
+        ${state.isParentModalOpen ? renderParentModal(state) : ''}
 
         <!-- Bottom Navigation Bar (Visible only when authenticated) -->
         ${isAuth ? renderBottomNav(state) : ''}
@@ -166,6 +188,13 @@ function renderApp() {
             <!-- Guardian Authorization Modal (BGB §§ 107, 113) -->
             ${isAuth ? renderGuardianModal(state) : ''}
 
+            <!-- Advanced Modals -->
+            ${state.isLocationModalOpen ? renderLocationModal(state) : ''}
+            ${state.isEmergencyModalOpen ? renderEmergencyModal(state) : ''}
+            ${state.receiptModalJobId ? renderReceiptModal(state) : ''}
+            ${state.isProofModalOpen ? renderProofPhotoModal(state) : ''}
+            ${state.isParentModalOpen ? renderParentModal(state) : ''}
+
             <!-- Bottom Navigation Bar (Visible only when authenticated) -->
             ${isAuth ? renderBottomNav(state) : ''}
 
@@ -208,6 +237,13 @@ function renderApp() {
   if (isAuth && state.reportJobId) attachReportModalEvents();
   if (state.activeLegalDocType) attachLegalModalEvents();
   if (isAuth && state.isGuardianModalOpen) attachGuardianModalEvents();
+
+  // Advanced modal event listeners
+  if (state.isLocationModalOpen) attachLocationModalEvents();
+  if (state.isEmergencyModalOpen) attachEmergencyModalEvents();
+  if (state.receiptModalJobId) attachReceiptModalEvents();
+  if (state.isProofModalOpen) attachProofPhotoModalEvents();
+  if (state.isParentModalOpen) attachParentModalEvents();
 }
 
 function escapeHTML(str) {

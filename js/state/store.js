@@ -74,6 +74,21 @@ class Store {
       isSafetyModalOpen: false,
       viewportSize: 'size-390',
       toast: null,
+
+      // New Features State
+      jobsViewMode: 'list', // 'list' or 'map'
+      locationPermissionGranted: null, // null (not asked), true, or false
+      isLocationModalOpen: false,
+      isEmergencyModalOpen: false,
+      emergencyJobId: null,
+      isParentModalOpen: false,
+      isParentUnlocked: false,
+      isProofModalOpen: false,
+      proofModalJobId: null,
+      tempAiVerified: false,
+      receiptModalJobId: null,
+      activeTheme: 'light',
+
       filters: {
         feedTab: 'all', // 'all', 'saved', 'my_jobs'
         category: 'all',
@@ -255,6 +270,14 @@ class Store {
     if (eligibility.requiresGuardianConsent && !GuardianConsentManager.isConsentActive(this.state.currentUser)) {
       this.showToast('👨‍👩‍👧 Digitale Eltern-Einwilligung erforderlich (§ 113 BGB). Bitte im Profil verifizieren.', 'error');
       this.setState({ isGuardianModalOpen: true });
+      return;
+    }
+
+    // Mandatory ID Verification check for Workers (Arbeitnehmer)
+    const isWorker = !this.state.currentUser.role || this.state.currentUser.role === 'worker' || this.state.activeMode === 'find';
+    if (isWorker && !this.state.currentUser.isIdentityVerified) {
+      this.showToast('⚠️ Ausweispflicht für Helfer: Bitte verifiziere zuerst deinen Ausweis in den Profileinstellungen.', 'error');
+      this.setState({ currentScreen: 'profile', selectedJobId: null });
       return;
     }
 
@@ -474,10 +497,15 @@ class Store {
     this.setState({ reviewJobId: null });
   }
 
-  submitReview(jobId, rating, tags = [], comment = '') {
+  submitReview(jobId, rating, tags = [], comment = '', tipAmount = 0) {
+    const parsedTip = Number(tipAmount) || 0;
     const jobs = this.state.jobs.map(j => {
       if (j.id === jobId) {
-        return { ...j, state: JobStates.REVIEWED };
+        return { 
+          ...j, 
+          state: JobStates.REVIEWED,
+          tipAmount: parsedTip
+        };
       }
       return j;
     });
@@ -489,12 +517,232 @@ class Store {
       return c;
     });
 
+    // If tip given, update wallet of worker
+    let currentUser = this.state.currentUser;
+    if (parsedTip > 0 && currentUser.role === 'worker') {
+      currentUser = {
+        ...currentUser,
+        walletBalance: (currentUser.walletBalance || 0) + parsedTip,
+        totalEarned: (currentUser.totalEarned || 0) + parsedTip
+      };
+    }
+
     this.setState({
       jobs,
       conversations: convs,
+      currentUser,
       reviewJobId: null
     });
-    this.showToast(`⭐ Danke! Deine ★${rating}-Bewertung wurde veröffentlicht.`);
+    this.showToast(`⭐ Danke! ★${rating}-Bewertung ${parsedTip > 0 ? `inkl. €${parsedTip} Trinkgeld ` : ''}veröffentlicht.`);
+  }
+
+  // --- NEW ADVANCED FEATURE STORE METHODS ---
+
+  setJobsViewMode(mode) {
+    if (mode === 'map' && this.state.locationPermissionGranted === null) {
+      this.setState({ isLocationModalOpen: true });
+    } else {
+      this.setState({ jobsViewMode: mode });
+    }
+  }
+
+  grantLocationPermission() {
+    this.setState({
+      locationPermissionGranted: true,
+      isLocationModalOpen: false,
+      jobsViewMode: 'map'
+    });
+    this.showToast('📍 Standort für Umgebungskarte freigegeben!');
+  }
+
+  denyLocationPermission() {
+    this.setState({
+      locationPermissionGranted: false,
+      isLocationModalOpen: false,
+      jobsViewMode: 'map'
+    });
+    this.showToast('📍 Umgebungskarte auf Wuppertal-Zentrum zentriert.');
+  }
+
+  checkInToJob(jobId) {
+    const timeStr = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    const updatedJobs = this.state.jobs.map(j => {
+      if (j.id === jobId) {
+        return {
+          ...j,
+          checkInStatus: 'ARRIVED',
+          checkInTime: `${timeStr} Uhr`
+        };
+      }
+      return j;
+    });
+
+    const conv = this.state.conversations.find(c => c.jobId === jobId);
+    let updatedConvs = this.state.conversations;
+    if (conv) {
+      const checkInMsg = {
+        id: `msg_checkin_${Date.now()}`,
+        senderId: this.state.currentUser.id,
+        senderName: this.state.currentUser.name,
+        text: `📍 Live Check-In: Ich bin pünktlich um ${timeStr} Uhr am Einsatzort eingetroffen!`,
+        timestamp: 'Gerade eben',
+        isMine: true
+      };
+      updatedConvs = this.state.conversations.map(c => {
+        if (c.jobId === jobId) {
+          return { ...c, messages: [...c.messages, checkInMsg] };
+        }
+        return c;
+      });
+    }
+
+    this.setState({ jobs: updatedJobs, conversations: updatedConvs });
+    this.showToast(`✓ Live Check-In um ${timeStr} Uhr erfasst!`);
+  }
+
+  openEmergencyModal(jobId = null) {
+    this.setState({ isEmergencyModalOpen: true, emergencyJobId: jobId });
+  }
+
+  closeEmergencyModal() {
+    this.setState({ isEmergencyModalOpen: false, emergencyJobId: null });
+  }
+
+  openProofModal(jobId) {
+    this.setState({ isProofModalOpen: true, proofModalJobId: jobId, tempAiVerified: false });
+  }
+
+  closeProofModal() {
+    this.setState({ isProofModalOpen: false, proofModalJobId: null });
+  }
+
+  submitJobProofPhotos(jobId) {
+    const job = this.state.jobs.find(j => j.id === jobId);
+    if (!job) return;
+
+    const updatedJobs = this.state.jobs.map(j => {
+      if (j.id === jobId) {
+        return {
+          ...j,
+          state: JobStates.COMPLETED,
+          checkInStatus: 'COMPLETED',
+          aiVisionVerified: true,
+          aiVisionSummary: '🤖 KI-Bildprüfung (Gemini Vision): Arbeitsergebnis erfolgreich und plausibel verifiziert (98% Übereinstimmung).'
+        };
+      }
+      return j;
+    });
+
+    const conv = this.state.conversations.find(c => c.jobId === jobId);
+    let updatedConvs = this.state.conversations;
+    if (conv) {
+      const proofMsg = {
+        id: `msg_proof_${Date.now()}`,
+        senderId: this.state.currentUser.id,
+        senderName: this.state.currentUser.name,
+        text: `📸 Vorher-/Nachher-Beweis hochgeladen. KI-Prüfung: ✓ 98% Plausibilität bestätigt. Bitte Arbeit abnehmen!`,
+        timestamp: 'Gerade eben',
+        isMine: true
+      };
+      updatedConvs = this.state.conversations.map(c => {
+        if (c.jobId === jobId) {
+          return { ...c, status: JobStates.COMPLETED, messages: [...c.messages, proofMsg] };
+        }
+        return c;
+      });
+    }
+
+    this.setState({
+      jobs: updatedJobs,
+      conversations: updatedConvs,
+      isProofModalOpen: false
+    });
+    this.showToast('✓ Foto-Beweis & KI-Zertifikat im Chat eingereicht!');
+  }
+
+  openReceiptModal(jobId) {
+    this.setState({ receiptModalJobId: jobId });
+  }
+
+  closeReceiptModal() {
+    this.setState({ receiptModalJobId: null });
+  }
+
+  openParentModal() {
+    this.setState({ isParentModalOpen: true, isParentUnlocked: false });
+  }
+
+  closeParentModal() {
+    this.setState({ isParentModalOpen: false, isParentUnlocked: false });
+  }
+
+  updateUserParentPortal(isActive) {
+    const current = this.state.currentUser;
+    const updatedPortal = {
+      ...(current.parentPortal || {}),
+      isActive: !!isActive,
+      parentCode: current.parentPortal?.parentCode || '482910'
+    };
+    this.setState({
+      currentUser: {
+        ...current,
+        parentPortal: updatedPortal
+      }
+    });
+  }
+
+  setTheme(theme) {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+      document.body.classList.add('dark-mode');
+    } else {
+      root.removeAttribute('data-theme');
+      document.body.classList.remove('dark-mode');
+    }
+    const current = this.state.currentUser;
+    this.setState({
+      activeTheme: theme,
+      currentUser: {
+        ...current,
+        settings: {
+          ...(current.settings || {}),
+          theme
+        }
+      }
+    });
+    this.showToast(theme === 'dark' ? '🌙 Dark Mode aktiviert' : '☀️ Light Mode aktiviert');
+  }
+
+  updateNotificationSettings(key, value) {
+    const current = this.state.currentUser;
+    const notifications = {
+      ...(current.settings?.notifications || {}),
+      [key]: value
+    };
+    this.setState({
+      currentUser: {
+        ...current,
+        settings: {
+          ...(current.settings || {}),
+          notifications
+        }
+      }
+    });
+    this.showToast('✓ Benachrichtigungseinstellungen gespeichert.');
+  }
+
+  verifyIdentity(idCardType = 'Personalausweis') {
+    const current = this.state.currentUser;
+    this.setState({
+      currentUser: {
+        ...current,
+        isIdentityVerified: true,
+        idCardType: idCardType,
+        idCardVerifiedAt: new Date().toLocaleDateString('de-DE')
+      }
+    });
+    this.showToast(`✓ ${idCardType} erfolgreich verifiziert!`);
   }
 
   // Applicant Management actions

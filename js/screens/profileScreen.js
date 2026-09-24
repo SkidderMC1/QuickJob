@@ -2,12 +2,20 @@
  * QuickJob Profile Screen Component
  */
 import { store } from '../state/store.js';
+import { DefaultAchievements } from '../models/types.js';
 
 export function renderProfileScreen(state) {
   const user = state.currentUser;
   const isMinor = user.ageCategory === 'YOUTH_14_17';
   const isEmployer = state.activeMode === 'post';
   const savedJobs = state.jobs.filter(j => j.isBookmarked);
+  const achievements = user.achievements || DefaultAchievements;
+  const isParentActive = user.parentPortal?.isActive || false;
+  const parentCode = user.parentPortal?.parentCode || '482910';
+  const parentLink = `https://quickjob.app/eltern/${user.id || 'jasper'}`;
+  const completedJobs = state.jobs.filter(j => j.state === 'COMPLETED' || j.state === 'REVIEWED');
+  const activeTheme = state.activeTheme || user.settings?.theme || 'light';
+  const notifs = user.settings?.notifications || { newJobsNearMe: true, chatMessages: true, payouts: true };
 
   return `
     <div class="screen-container" id="screen-profile">
@@ -19,9 +27,10 @@ export function renderProfileScreen(state) {
           </div>
           <div>
             <div style="display: flex; align-items: center; gap: 0.4rem;">
-              <h2 style="font-size: 1.2rem; font-weight: 800; color: var(--qj-text-main);">
+              <h2 style="font-size: 1.2rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
                 ${escapeHTML(user.name)}
               </h2>
+              ${user.isIdentityVerified ? '<span title="Ausweis verifiziert" style="color: #0ea76b; font-weight: 800; font-size: 1.15rem;">✓</span>' : ''}
               ${user.isCompany ? '<span title="Verified Company">🏢</span>' : ''}
             </div>
             <div style="font-size: 0.78rem; color: var(--qj-text-muted);">
@@ -31,7 +40,7 @@ export function renderProfileScreen(state) {
               <span class="badge ${isMinor ? 'badge-purple' : 'badge-info'}">
                 ${user.ageCategoryLabel}
               </span>
-              ${user.isIdentityVerified ? '<span class="badge badge-success">✓ ID Verified</span>' : ''}
+              ${user.isIdentityVerified ? '<span class="badge badge-success" id="profile-id-verified-badge" style="font-weight: 800; font-size: 0.74rem; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; display: inline-flex; align-items: center; gap: 3px;"><span>✓</span> Ausweis verifiziert</span>' : '<span class="badge badge-warning" id="profile-id-unverified-badge">Ausweis ausstehend</span>'}
               ${user.isCompany ? '<span class="badge badge-info">🏢 Registered</span>' : ''}
             </div>
           </div>
@@ -252,6 +261,271 @@ export function renderProfileScreen(state) {
               No written reviews yet. Complete your first microjob to collect reviews!
             </div>
           `}
+        </div>
+      </div>
+
+      <!-- Badges & Achievements Card -->
+      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-achievements-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.25rem;">🏆</span>
+            <div>
+              <h3 style="font-size: 1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
+                Badges & Achievements
+              </h3>
+              <div style="font-size: 0.72rem; color: var(--qj-text-muted);">
+                Freigeschaltete Auszeichnungen für zuverlässige Helfer
+              </div>
+            </div>
+          </div>
+          <span class="badge badge-primary" style="font-weight: 800;">
+            ${achievements.filter(a => a.unlocked).length} / ${achievements.length}
+          </span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;" id="achievements-grid">
+          ${achievements.map(ach => `
+            <div style="background: ${ach.unlocked ? '#f8fafc' : '#f1f5f9'}; border: 1px solid ${ach.unlocked ? '#e2e8f0' : '#cbd5e1'}; border-radius: 10px; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.3rem; opacity: ${ach.unlocked ? '1' : '0.6'};">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 1.4rem;">${ach.icon}</span>
+                <span class="badge ${ach.unlocked ? 'badge-success' : 'badge-muted'}" style="font-size: 0.65rem;">
+                  ${ach.unlocked ? '✓ Aktiv' : 'Gesperrt'}
+                </span>
+              </div>
+              <div style="font-weight: 800; font-size: 0.85rem; color: var(--qj-text-main);">
+                ${escapeHTML(ach.title)}
+              </div>
+              <div style="font-size: 0.72rem; color: var(--qj-text-muted); line-height: 1.3;">
+                ${escapeHTML(ach.description)}
+              </div>
+              ${ach.unlocked && ach.unlockedDate ? `
+                <div style="font-size: 0.65rem; color: #0ea76b; font-weight: 600; margin-top: 2px;">
+                  Freigeschaltet: ${ach.unlockedDate}
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Ausweis-Verifikation (KYC) Card -->
+      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-id-verification-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.25rem;">🆔</span>
+            <div>
+              <h3 style="font-size: 1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
+                Ausweis-Verifikation (KYC)
+              </h3>
+              <div style="font-size: 0.72rem; color: var(--qj-text-muted);">
+                Identitätsnachweis & Sicherheit in der Nachbarschaft
+              </div>
+            </div>
+          </div>
+          ${user.isIdentityVerified ? `
+            <span class="badge badge-success" style="font-weight: 800; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">
+              ✓ Verifiziert
+            </span>
+          ` : `
+            <span class="badge badge-warning" style="font-weight: 700;">
+              Ausstehend ⚠️
+            </span>
+          `}
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem 0.85rem; font-size: 0.78rem; color: var(--qj-text-muted); line-height: 1.45;">
+          <strong style="color: var(--qj-text-main);">Gesetzliche Regelung:</strong>
+          Für <strong>Helfer (Arbeitnehmer)</strong> ist die Ausweisverifikation vor Annahme von bezahlten Aufträgen verpflichtend. Für <strong>Auftraggeber</strong> ist sie freiwillig.
+        </div>
+
+        ${user.isIdentityVerified ? `
+          <div style="display: flex; justify-content: space-between; align-items: center; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 0.75rem 0.85rem;">
+            <div>
+              <div style="font-size: 0.84rem; font-weight: 800; color: #065f46;">
+                ✓ ${user.idCardType || 'Personalausweis'} geprüft
+              </div>
+              <div style="font-size: 0.72rem; color: #047857;">
+                Geprüft am ${user.idCardVerifiedAt || '23.09.2026'} · Profil trägt das verifizierte Häkchen
+              </div>
+            </div>
+            <span style="font-size: 1.4rem; color: #059669;">🛡️</span>
+          </div>
+        ` : `
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="display: flex; gap: 0.5rem;">
+              <select id="select-id-type" class="form-input" style="flex: 1; padding: 0.5rem; font-size: 0.82rem; border-radius: 8px;">
+                <option value="Personalausweis">Personalausweis</option>
+                <option value="Reisepass">Reisepass</option>
+                <option value="Schülerausweis">Schülerausweis (mit Foto)</option>
+              </select>
+              <button class="btn btn-primary btn-sm" id="btn-profile-verify-id" style="font-weight: 700; white-space: nowrap; padding: 0.5rem 0.85rem;">
+                ✓ Jetzt verifizieren
+              </button>
+            </div>
+            <div style="font-size: 0.72rem; color: var(--qj-text-muted);">
+              Hinweis: Du kannst deinen Ausweis jederzeit auch hier in den Einstellungen hochladen und aktualisieren.
+            </div>
+          </div>
+        `}
+      </div>
+
+      <!-- Eltern-Dashboard & Eltern-Code Card -->
+      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-parent-portal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.25rem;">👨‍👩‍👧</span>
+            <div>
+              <h3 style="font-size: 1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
+                Eltern-Dashboard & Eltern-Link
+              </h3>
+              <div style="font-size: 0.72rem; color: var(--qj-text-muted);">
+                Einsicht für Erziehungsberechtigte nach § 113 BGB & JArbSchG
+              </div>
+            </div>
+          </div>
+          <span class="badge ${isParentActive ? 'badge-success' : 'badge-muted'}" id="badge-parent-code-status">
+            ${isParentActive ? 'PIN-Schutz Aktiv 🔒' : 'PIN-Schutz Inaktiv 🔓'}
+          </span>
+        </div>
+
+        <p style="font-size: 0.8rem; color: var(--qj-text-muted); line-height: 1.4; margin: 0;">
+          Über diesen Link können deine Eltern deine Arbeitszeiten (max. 2h/Tag gem. KindArbSchV), Verdienste und Sicherheitsnachweise einsehen.
+        </p>
+
+        <!-- Shareable Link Box -->
+        <div style="background: var(--qj-surface-muted); border: 1px solid var(--qj-border); border-radius: 10px; padding: 0.65rem 0.8rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+          <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.78rem; font-family: monospace; color: var(--qj-text-main); font-weight: 600;" id="parent-link-text">
+            ${parentLink}
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-copy-parent-link" style="font-size: 0.74rem; font-weight: 700; white-space: nowrap; padding: 0.35rem 0.65rem;">
+            📋 Link kopieren
+          </button>
+        </div>
+
+        <!-- 6-digit Code Protection Setting -->
+        <div style="border-top: 1px solid var(--qj-border-light); padding-top: 0.75rem; display: flex; flex-direction: column; gap: 0.6rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 0.82rem; font-weight: 700; color: var(--qj-text-main);">
+                6-stelliger Eltern-Code (PIN)
+              </div>
+              <div style="font-size: 0.72rem; color: var(--qj-text-muted);">
+                Standardmäßig aus. Wenn aktiv, muss beim Aufrufen des Links der Code eingegeben werden.
+              </div>
+            </div>
+            <label style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer;">
+              <input type="checkbox" id="toggle-parent-code" ${isParentActive ? 'checked' : ''} style="cursor: pointer;" />
+            </label>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; background: ${isParentActive ? '#ecfdf5' : '#f8fafc'}; border: 1px solid ${isParentActive ? '#a7f3d0' : '#e2e8f0'}; border-radius: 8px; padding: 0.6rem 0.8rem;">
+            <span style="font-size: 0.78rem; font-weight: 600; color: var(--qj-text-muted);">
+              Aktueller Eltern-Code:
+            </span>
+            <span style="font-family: monospace; font-size: 1rem; font-weight: 800; color: ${isParentActive ? '#059669' : '#64748b'}; letter-spacing: 0.15em;" id="display-parent-code">
+              ${parentCode}
+            </span>
+          </div>
+
+          <button class="btn btn-primary btn-sm" id="btn-open-parent-dashboard" style="font-weight: 700; padding: 0.65rem; border-radius: 10px; margin-top: 0.2rem;">
+            👨‍👩‍👧 Eltern-Dashboard jetzt öffnen
+          </button>
+        </div>
+      </div>
+
+      <!-- Erledigte Aufträge & Rechtssichere Quittungen (§ 368 BGB) -->
+      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-receipts-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.25rem;">🧾</span>
+            <div>
+              <h3 style="font-size: 1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
+                Quittungen (§ 368 BGB / § 147 AO)
+              </h3>
+              <div style="font-size: 0.72rem; color: var(--qj-text-muted);">
+                Offizielle Nachweise für abgeschlossene Taschengeldarbeiten
+              </div>
+            </div>
+          </div>
+          <span class="badge badge-info" style="font-size: 0.72rem;">
+            ${completedJobs.length} Belege
+          </span>
+        </div>
+
+        ${completedJobs.length > 0 ? `
+          <div style="display: flex; flex-direction: column; gap: 0.55rem;">
+            ${completedJobs.map(job => `
+              <div style="background: var(--qj-surface-muted); border: 1px solid var(--qj-border); border-radius: 10px; padding: 0.7rem 0.85rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                <div style="min-width: 0;">
+                  <div style="font-weight: 700; font-size: 0.84rem; color: var(--qj-text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    ${escapeHTML(job.title)}
+                  </div>
+                  <div style="font-size: 0.72rem; color: var(--qj-text-muted);">
+                    Honorar: €${job.payment} ${job.tipAmount ? `+ €${job.tipAmount} Trinkgeld` : ''} · ${job.approxLocation}
+                  </div>
+                </div>
+                <button class="btn btn-secondary btn-sm btn-profile-open-receipt" data-job-id="${job.id}" id="btn-receipt-${job.id}" style="font-size: 0.74rem; font-weight: 700; white-space: nowrap; padding: 0.35rem 0.65rem;">
+                  🧾 Quittung
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div style="text-align: center; padding: 1rem; font-size: 0.8rem; color: var(--qj-text-muted);">
+            Noch keine beendeten Jobs vorhanden. Nach Abschluss eines Jobs wird hier automatisch eine rechtssichere Quittung generiert.
+          </div>
+        `}
+      </div>
+
+      <!-- App-Einstellungen (Dark Mode & Push-Mitteilungen) -->
+      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-settings-card">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.25rem;">⚙️</span>
+          <div>
+            <h3 style="font-size: 1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
+              App-Einstellungen
+            </h3>
+            <div style="font-size: 0.72rem; color: var(--qj-text-muted);">
+              Darstellung & Benachrichtigungs-Präferenzen
+            </div>
+          </div>
+        </div>
+
+        <!-- Dark Mode Toggle -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--qj-border-light);">
+          <div>
+            <div style="font-size: 0.84rem; font-weight: 700; color: var(--qj-text-main);">
+              Design-Modus (Dark Mode)
+            </div>
+            <div style="font-size: 0.72rem; color: var(--qj-text-muted);">
+              Aktuell: ${activeTheme === 'dark' ? '🌙 Dunkel' : '☀️ Hell'}
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-toggle-theme" style="font-weight: 700; font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 8px;">
+            ${activeTheme === 'dark' ? '☀️ Zu Hell wechseln' : '🌙 Zu Dunkel wechseln'}
+          </button>
+        </div>
+
+        <!-- Notification Preferences -->
+        <div style="display: flex; flex-direction: column; gap: 0.6rem; padding-top: 0.25rem;">
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--qj-text-main);">
+            Push-Benachrichtigungen
+          </div>
+
+          <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: var(--qj-text-main); cursor: pointer;">
+            <span>📍 Neue Microjobs in meiner Nähe</span>
+            <input type="checkbox" id="notif-new-jobs" ${notifs.newJobsNearMe ? 'checked' : ''} style="cursor: pointer;" />
+          </label>
+
+          <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: var(--qj-text-main); cursor: pointer;">
+            <span>💬 Chat-Nachrichten & Live-Check-In</span>
+            <input type="checkbox" id="notif-chat" ${notifs.chatMessages ? 'checked' : ''} style="cursor: pointer;" />
+          </label>
+
+          <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: var(--qj-text-main); cursor: pointer;">
+            <span>🛡️ Treuhand & Auszahlungen</span>
+            <input type="checkbox" id="notif-payouts" ${notifs.payouts ? 'checked' : ''} style="cursor: pointer;" />
+          </label>
         </div>
       </div>
 
@@ -529,6 +803,87 @@ export function attachProfileScreenEvents() {
       }
       await store.changePassword(current_pw, new_pw, confirm_pw);
       changePwForm.reset();
+    });
+  }
+
+  // --- NEW FEATURES PROFILE EVENT LISTENERS ---
+
+  // Copy parent link
+  const copyParentLinkBtn = document.getElementById('btn-copy-parent-link');
+  if (copyParentLinkBtn) {
+    copyParentLinkBtn.addEventListener('click', () => {
+      const linkText = document.getElementById('parent-link-text')?.innerText?.trim() || '';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(linkText);
+      }
+      store.showToast('📋 Eltern-Link in die Zwischenablage kopiert!');
+    });
+  }
+
+  // Toggle parent code protection
+  const toggleParentCodeInput = document.getElementById('toggle-parent-code');
+  if (toggleParentCodeInput) {
+    toggleParentCodeInput.addEventListener('change', (e) => {
+      store.updateUserParentPortal(e.target.checked);
+    });
+  }
+
+  // Open parent dashboard
+  const openParentDashboardBtn = document.getElementById('btn-open-parent-dashboard');
+  if (openParentDashboardBtn) {
+    openParentDashboardBtn.addEventListener('click', () => {
+      store.openParentModal();
+    });
+  }
+
+  // ID Verification button
+  const verifyIdBtn = document.getElementById('btn-profile-verify-id');
+  if (verifyIdBtn) {
+    verifyIdBtn.addEventListener('click', () => {
+      const idType = document.getElementById('select-id-type')?.value || 'Personalausweis';
+      store.verifyIdentity(idType);
+    });
+  }
+
+  // Open Receipt buttons
+  const receiptBtns = document.querySelectorAll('.btn-profile-open-receipt[data-job-id]');
+  receiptBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const jobId = btn.getAttribute('data-job-id');
+      if (jobId) {
+        store.openReceiptModal(jobId);
+      }
+    });
+  });
+
+  // Dark mode toggle
+  const toggleThemeBtn = document.getElementById('btn-toggle-theme');
+  if (toggleThemeBtn) {
+    toggleThemeBtn.addEventListener('click', () => {
+      const current = store.getState().activeTheme || 'light';
+      store.setTheme(current === 'dark' ? 'light' : 'dark');
+    });
+  }
+
+  // Notification toggles
+  const notifNewJobs = document.getElementById('notif-new-jobs');
+  if (notifNewJobs) {
+    notifNewJobs.addEventListener('change', (e) => {
+      store.updateNotificationSettings('newJobsNearMe', e.target.checked);
+    });
+  }
+
+  const notifChat = document.getElementById('notif-chat');
+  if (notifChat) {
+    notifChat.addEventListener('change', (e) => {
+      store.updateNotificationSettings('chatMessages', e.target.checked);
+    });
+  }
+
+  const notifPayouts = document.getElementById('notif-payouts');
+  if (notifPayouts) {
+    notifPayouts.addEventListener('change', (e) => {
+      store.updateNotificationSettings('payouts', e.target.checked);
     });
   }
 }
