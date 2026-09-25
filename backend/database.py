@@ -146,6 +146,34 @@ def init_db():
     );
     """)
 
+    # 8. Reported Users & Moderation Reports Table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS reports (
+        id TEXT PRIMARY KEY,
+        reporter_id TEXT NOT NULL,
+        reporter_name TEXT NOT NULL,
+        reporter_email TEXT NOT NULL,
+        reported_user_id TEXT NOT NULL,
+        reported_user_name TEXT NOT NULL,
+        reported_user_email TEXT NOT NULL,
+        reported_user_role TEXT NOT NULL DEFAULT 'worker',
+        category TEXT NOT NULL,
+        category_label TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        details TEXT NOT NULL,
+        job_id TEXT NULL,
+        job_title TEXT NULL,
+        status TEXT NOT NULL DEFAULT 'PENDING',
+        severity TEXT NOT NULL DEFAULT 'MEDIUM',
+        action_taken TEXT NULL,
+        admin_notes TEXT NULL,
+        created_at TEXT NOT NULL,
+        resolved_at TEXT NULL
+    );
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_reports_reported_user ON reports(reported_user_id);")
+
     conn.commit()
     conn.close()
 

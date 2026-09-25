@@ -81,6 +81,9 @@ export function renderAuthScreen(state) {
               <button class="btn btn-outline btn-sm btn-quick-login" data-email="marcus@quickjob.local" style="font-size: 0.72rem; padding: 0.3rem 0.5rem;">
                 Dr. Marcus (48 J.)
               </button>
+              <button class="btn btn-outline btn-sm btn-quick-login" data-email="admin@quickjob.local" style="font-size: 0.72rem; padding: 0.3rem 0.5rem; background: #fef2f2; border-color: #fca5a5; color: #991b1b; font-weight: 700;">
+                🛡️ Admin
+              </button>
             </div>
           </div>
 
@@ -101,6 +104,31 @@ export function renderAuthScreen(state) {
                 Vollständiger Name *
               </label>
               <input type="text" id="reg-name" class="form-input" placeholder="z. B. Max Mustermann" required style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
+            </div>
+
+            <!-- Profile Picture (Avatar) Setup during Registration -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.7rem;">
+              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+                Profilbild (optional)
+              </label>
+              <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <div 
+                  id="reg-avatar-preview" 
+                  style="width: 52px; height: 52px; border-radius: 50%; background: #ffffff; border: 2px dashed #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; overflow: hidden; cursor: pointer; flex-shrink: 0;"
+                  title="Bild auswählen"
+                >
+                  📷
+                </div>
+                <div style="flex: 1;">
+                  <label for="reg-avatar-input" class="btn btn-outline btn-sm" style="cursor: pointer; font-size: 0.75rem; padding: 0.3rem 0.6rem; display: inline-flex; align-items: center; gap: 4px;">
+                    <span>📁</span> Bild auswählen
+                  </label>
+                  <input type="file" id="reg-avatar-input" accept="image/*" style="display: none;" />
+                  <div style="font-size: 0.68rem; color: #64748b; margin-top: 3px; line-height: 1.3;">
+                    JPG, PNG oder WebP. Wenn keines gewählt wird, zeigt QuickJob deinen ersten Buchstaben.
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
@@ -424,6 +452,26 @@ export function attachAuthScreenEvents() {
     loginBtn.addEventListener('click', handleLoginSubmit);
   }
 
+  // Handle Register avatar upload preview
+  let currentRegAvatarDataUrl = null;
+  const avatarInput = document.getElementById('reg-avatar-input');
+  const avatarPreview = document.getElementById('reg-avatar-preview');
+  if (avatarInput && avatarPreview) {
+    avatarPreview.addEventListener('click', () => avatarInput.click());
+    avatarInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          currentRegAvatarDataUrl = evt.target.result;
+          avatarPreview.innerHTML = `<img src="${currentRegAvatarDataUrl}" alt="Preview" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`;
+          avatarPreview.style.border = '2px solid #0ea76b';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
   // Handle Register submission
   const registerForm = document.getElementById('form-auth-register');
   if (registerForm) {
@@ -450,7 +498,8 @@ export function attachAuthScreenEvents() {
         password,
         password_confirmation: confirm,
         agb_accepted: agbAccepted,
-        agb_version: '1.1.0'
+        agb_version: '1.1.0',
+        avatarUrl: currentRegAvatarDataUrl
       });
     });
   }

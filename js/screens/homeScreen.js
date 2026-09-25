@@ -23,14 +23,9 @@ export function renderHomeScreen(state) {
     <div class="screen-container home-screen-container" id="screen-home">
       <!-- 1. Compact Header / Hero Greeting -->
       <section class="home-greeting-section">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div>
-            <span class="home-greeting-sub">Welcome back,</span>
-            <h1 class="home-greeting">${escapeHTML(user.name || 'Member')} 👋</h1>
-          </div>
-          <div class="badge ${isMinor ? 'badge-purple' : 'badge-info'}" style="font-size: 0.72rem; padding: 0.25rem 0.6rem;">
-            ${user.ageCategoryLabel || 'Member'}
-          </div>
+        <div>
+          <span class="home-greeting-sub">Welcome back,</span>
+          <h1 class="home-greeting">${escapeHTML(user.name || 'Member')} 👋</h1>
         </div>
       </section>
 
@@ -95,21 +90,47 @@ export function renderHomeScreen(state) {
 }
 
 export function attachHomeScreenEvents() {
+  let homeSearchTimer = null;
+  const executeHomeSearch = (val) => {
+    if (homeSearchTimer) {
+      clearTimeout(homeSearchTimer);
+      homeSearchTimer = null;
+    }
+    const currentQ = store.getState().filters.query || '';
+    if (val !== currentQ) {
+      store.setFilter('query', val);
+    }
+  };
+
   const searchInput = document.getElementById('home-search-input');
   if (searchInput) {
+    // Debounce: Only search if user pauses input for 3 seconds
     searchInput.addEventListener('input', (e) => {
-      store.setFilter('query', e.target.value);
+      if (homeSearchTimer) clearTimeout(homeSearchTimer);
+      homeSearchTimer = setTimeout(() => {
+        executeHomeSearch(e.target.value);
+      }, 3000);
     });
+
+    // Immediate search when pressing Enter
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
+        e.preventDefault();
+        executeHomeSearch(searchInput.value);
         store.setScreen('jobs');
       }
+    });
+
+    // Immediate search when clicking out (blur)
+    searchInput.addEventListener('blur', () => {
+      executeHomeSearch(searchInput.value);
     });
   }
 
   const clearBtn = document.getElementById('btn-clear-home-search');
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
+      if (homeSearchTimer) clearTimeout(homeSearchTimer);
       store.setFilter('query', '');
     });
   }

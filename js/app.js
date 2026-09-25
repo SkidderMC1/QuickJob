@@ -25,6 +25,8 @@ import { renderEmergencyModal, attachEmergencyModalEvents } from './screens/emer
 import { renderReceiptModal, attachReceiptModalEvents } from './screens/receiptModal.js';
 import { renderProofPhotoModal, attachProofPhotoModalEvents } from './screens/proofPhotoModal.js';
 import { renderParentModal, attachParentModalEvents } from './screens/parentModal.js';
+import { renderMapScreen, attachMapScreenEvents } from './screens/mapScreen.js';
+import { renderAdminScreen, attachAdminScreenEvents } from './screens/adminScreen.js';
 
 function getCurrentTimeString() {
   const now = new Date();
@@ -64,6 +66,8 @@ function renderApp() {
           ${!isAuth ? renderAuthScreen(state) : `
             ${state.currentScreen === 'home' ? renderHomeScreen(state) : ''}
             ${state.currentScreen === 'jobs' ? renderJobsScreen(state) : ''}
+            ${state.currentScreen === 'map' ? renderMapScreen(state) : ''}
+            ${state.currentScreen === 'admin' ? renderAdminScreen(state) : ''}
             ${state.currentScreen === 'create' ? renderCreateJobScreen(state) : ''}
             ${state.currentScreen === 'messages' ? renderMessagesScreen(state) : ''}
             ${state.currentScreen === 'profile' ? renderProfileScreen(state) : ''}
@@ -152,6 +156,8 @@ function renderApp() {
               ${!isAuth ? renderAuthScreen(state) : `
                 ${state.currentScreen === 'home' ? renderHomeScreen(state) : ''}
                 ${state.currentScreen === 'jobs' ? renderJobsScreen(state) : ''}
+                ${state.currentScreen === 'map' ? renderMapScreen(state) : ''}
+                ${state.currentScreen === 'admin' ? renderAdminScreen(state) : ''}
                 ${state.currentScreen === 'create' ? renderCreateJobScreen(state) : ''}
                 ${state.currentScreen === 'messages' ? renderMessagesScreen(state) : ''}
                 ${state.currentScreen === 'profile' ? renderProfileScreen(state) : ''}
@@ -224,6 +230,8 @@ function renderApp() {
   } else {
     if (state.currentScreen === 'home') attachHomeScreenEvents();
     if (state.currentScreen === 'jobs') attachJobsScreenEvents();
+    if (state.currentScreen === 'map') attachMapScreenEvents();
+    if (state.currentScreen === 'admin') attachAdminScreenEvents();
     if (state.currentScreen === 'create') attachCreateJobEvents();
     if (state.currentScreen === 'messages') attachMessagesScreenEvents();
     if (state.currentScreen === 'profile') attachProfileScreenEvents();

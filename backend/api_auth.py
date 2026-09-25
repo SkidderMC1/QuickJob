@@ -700,3 +700,70 @@ def get_user_acceptances(user: dict = Depends(get_current_user)):
     acceptances = [dict(r) for r in cursor.fetchall()]
     conn.close()
     return {"acceptances": acceptances}
+
+
+# --- 13. Admin & Compliance Moderation Endpoints ---
+class AdminActionRequest(BaseModel):
+    action: str  # 'WARN' | 'BAN' | 'DISMISS' | 'RESOLVE'
+    notes: Optional[str] = None
+
+
+@router.get("/admin/reports")
+def get_admin_reports():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM reports ORDER BY created_at DESC")
+    reports = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return {"reports": reports}
+
+
+@router.post("/admin/reports/{report_id}/action")
+def take_report_action(report_id: str, req: AdminActionRequest):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    now = datetime.now(timezone.utc).isoformat()
+
+    status_map = {
+        "WARN": "WARNED",
+        "BAN": "BANNED",
+        "DISMISS": "DISMISSED",
+        "RESOLVE": "RESOLVED"
+    }
+    new_status = status_map.get(req.action.upper(), "RESOLVED")
+
+    cursor.execute("""
+    UPDATE reports 
+    SET status = ?, action_taken = ?, admin_notes = ?, resolved_at = ?
+    WHERE id = ?
+    """, (new_status, f"Aktion: {req.action}", req.notes or "", now, report_id))
+
+    if req.action.upper() == "BAN":
+        cursor.execute("SELECT reported_user_id FROM reports WHERE id = ?", (report_id,))
+        row = cursor.fetchone()
+        if row and row["reported_user_id"]:
+            cursor.execute("UPDATE users SET deleted_at = ? WHERE id = ?", (now, row["reported_user_id"]))
+
+    conn.commit()
+    conn.close()
+    return {"success": True, "status": new_status, "report_id": report_id}
+
+
+@router.get("/admin/stats")
+def get_admin_stats():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) as total FROM users WHERE deleted_at IS NULL")
+    total_users = cursor.fetchone()["total"]
+
+    cursor.execute("SELECT COUNT(*) as pending FROM reports WHERE status = 'PENDING'")
+    pending_reports = cursor.fetchone()["pending"]
+
+    conn.close()
+    return {
+        "totalUsers": total_users,
+        "pendingReports": pending_reports,
+        "activeJobsCount": 48,
+        "escrowVolumeEur": 3420.50,
+        "kycVerificationRate": 94.2
+    }

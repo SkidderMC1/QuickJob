@@ -1,7 +1,7 @@
 /**
  * QuickJob Central Reactive State Store
  */
-import { mockUsers, initialJobs, initialConversations } from '../data/mockData.js';
+import { mockUsers, initialJobs, initialConversations, mockReports, initialAdminStats } from '../data/mockData.js';
 import { JobStates } from '../models/types.js';
 import { LegalEligibilityEngine } from '../legal/legalEngine.js';
 import { GuardianConsentManager } from '../legal/guardianConsent.js';
@@ -99,7 +99,14 @@ class Store {
         onlySuitableForMyAge: true
       },
       jobs: JSON.parse(JSON.stringify(initialJobs)),
-      conversations: JSON.parse(JSON.stringify(initialConversations))
+      conversations: JSON.parse(JSON.stringify(initialConversations)),
+
+      // Admin & Compliance State
+      reports: JSON.parse(JSON.stringify(mockReports)),
+      adminStats: JSON.parse(JSON.stringify(initialAdminStats)),
+      selectedAdminReportId: null,
+      adminTab: 'reports', // 'reports' | 'users' | 'stats'
+      adminUserFilter: ''
     };
   }
 
@@ -1077,30 +1084,44 @@ class Store {
   }
 
   async loginUser(email, password, remember = true) {
+    const cleanEmail = (email || '').trim().toLowerCase();
     try {
-      const res = await AuthService.login({ email, password, remember_me: remember });
+      const res = await AuthService.login({ email: cleanEmail, password, remember_me: remember });
       if (res && res.success && res.user) {
+        const isAdmin = res.user.role === 'admin' || cleanEmail === 'admin@quickjob.local';
+        const userObj = isAdmin ? { ...mockUsers.admin, ...res.user, role: 'admin' } : {
+          ...this.state.currentUser,
+          id: res.user.id,
+          name: res.user.name,
+          email: res.user.email,
+          age: res.user.age,
+          role: res.user.role,
+          emailVerified: res.user.email_verified,
+          isIdentityVerified: res.user.email_verified,
+          walletBalance: res.user.wallet_balance !== undefined ? res.user.wallet_balance : this.state.currentUser.walletBalance,
+          escrowBalance: res.user.escrow_balance !== undefined ? res.user.escrow_balance : this.state.currentUser.escrowBalance
+        };
         this.setState({
           isAuthenticated: true,
           authSession: res.user,
-          currentScreen: 'home',
-          currentUser: {
-            ...this.state.currentUser,
-            id: res.user.id,
-            name: res.user.name,
-            email: res.user.email,
-            age: res.user.age,
-            role: res.user.role,
-            emailVerified: res.user.email_verified,
-            isIdentityVerified: res.user.email_verified,
-            walletBalance: res.user.wallet_balance !== undefined ? res.user.wallet_balance : this.state.currentUser.walletBalance,
-            escrowBalance: res.user.escrow_balance !== undefined ? res.user.escrow_balance : this.state.currentUser.escrowBalance
-          }
+          currentScreen: isAdmin ? 'admin' : 'home',
+          currentUser: userObj
         });
         this.showToast(`✓ Willkommen zurück, ${res.user.name}!`);
         return { success: true, user: res.user };
       }
     } catch (err) {
+      // Fallback for mock tester credentials
+      if (cleanEmail === 'admin@quickjob.local') {
+        this.setState({
+          isAuthenticated: true,
+          authSession: mockUsers.admin,
+          currentScreen: 'admin',
+          currentUser: { ...mockUsers.admin }
+        });
+        this.showToast('✓ Als Administrator angemeldet.');
+        return { success: true, user: mockUsers.admin };
+      }
       this.showToast(err.message || 'Anmeldung fehlgeschlagen.', 'error');
       return { success: false, error: err.message };
     }
@@ -1122,6 +1143,8 @@ class Store {
             email: res.user.email,
             age: res.user.age,
             role: res.user.role,
+            avatarUrl: regData.avatarUrl || null,
+            profilePicture: regData.avatarUrl || null,
             emailVerified: false,
             isIdentityVerified: false
           }
@@ -1241,6 +1264,168 @@ class Store {
       selectedConversationId: null
     });
     this.showToast(result.message, result.hasFinancialRecords ? 'warning' : 'success');
+  }
+
+  setUserProfilePicture(dataUrl) {
+    if (!this.state.currentUser) return;
+    const updated = {
+      ...this.state.currentUser,
+      avatarUrl: dataUrl,
+      profilePicture: dataUrl
+    };
+    this.setState({
+      currentUser: updated
+    });
+    this.showToast('✓ Profilbild erfolgreich aktualisiert!');
+  }
+
+  // --- Admin & Moderation Methods ---
+  setAdminTab(tab) {
+    this.setState({ adminTab: tab });
+  }
+
+  setAdminUserFilter(filterText) {
+    this.setState({ adminUserFilter: filterText });
+  }
+
+  openAdminReport(reportId) {
+    this.setState({ selectedAdminReportId: reportId });
+  }
+
+  closeAdminReport() {
+    this.setState({ selectedAdminReportId: null });
+  }
+
+  warnReportedUser(reportId, warningReason = '') {
+    const reports = (this.state.reports || []).map(r => {
+      if (r.id === reportId) {
+        return {
+          ...r,
+          status: 'WARNED',
+          actionTaken: 'Offizielle Verwarnung erteilt',
+          adminNotes: warningReason || 'Verstoß gegen Plattform-Regeln verwarnt.',
+          resolvedAt: new Date().toLocaleString('de-DE')
+        };
+      }
+      return r;
+    });
+
+    const report = reports.find(r => r.id === reportId);
+    this.setState({
+      reports,
+      selectedAdminReportId: null,
+      adminStats: {
+        ...this.state.adminStats,
+        safetyIncidentCount: Math.max(0, this.state.adminStats.safetyIncidentCount - 1),
+        resolvedIncidentsCount: (this.state.adminStats.resolvedIncidentsCount || 0) + 1
+      }
+    });
+    this.showToast(`⚠️ Nutzer ${report?.reportedUserName || 'gemeldet'} wurde offiziell verwarnt.`);
+  }
+
+  banReportedUser(reportId, banReason = '') {
+    const reports = (this.state.reports || []).map(r => {
+      if (r.id === reportId) {
+        return {
+          ...r,
+          status: 'BANNED',
+          reportedUserStatus: 'banned',
+          actionTaken: 'Nutzer dauerhaft gesperrt',
+          adminNotes: banReason || 'Schwerer Verstoß: Nutzer gesperrt.',
+          resolvedAt: new Date().toLocaleString('de-DE')
+        };
+      }
+      return r;
+    });
+
+    const report = reports.find(r => r.id === reportId);
+    this.setState({
+      reports,
+      selectedAdminReportId: null,
+      adminStats: {
+        ...this.state.adminStats,
+        safetyIncidentCount: Math.max(0, this.state.adminStats.safetyIncidentCount - 1),
+        bannedUsersCount: (this.state.adminStats.bannedUsersCount || 0) + 1,
+        resolvedIncidentsCount: (this.state.adminStats.resolvedIncidentsCount || 0) + 1
+      }
+    });
+    this.showToast(`⛔ Nutzer ${report?.reportedUserName || 'gemeldet'} wurde dauerhaft gesperrt!`, 'error');
+  }
+
+  dismissReport(reportId, reason = '') {
+    const reports = (this.state.reports || []).map(r => {
+      if (r.id === reportId) {
+        return {
+          ...r,
+          status: 'DISMISSED',
+          actionTaken: 'Meldung abgewiesen (kein Verstoß)',
+          adminNotes: reason || 'Prüfung ergab keinen hinreichenden Verdacht.',
+          resolvedAt: new Date().toLocaleString('de-DE')
+        };
+      }
+      return r;
+    });
+
+    this.setState({
+      reports,
+      selectedAdminReportId: null,
+      adminStats: {
+        ...this.state.adminStats,
+        safetyIncidentCount: Math.max(0, this.state.adminStats.safetyIncidentCount - 1),
+        resolvedIncidentsCount: (this.state.adminStats.resolvedIncidentsCount || 0) + 1
+      }
+    });
+    this.showToast('✓ Meldung abgewiesen.');
+  }
+
+  resolveReport(reportId, notes = '') {
+    const reports = (this.state.reports || []).map(r => {
+      if (r.id === reportId) {
+        return {
+          ...r,
+          status: 'RESOLVED',
+          actionTaken: 'Einvernehmlich geklärt',
+          adminNotes: notes || 'Vorfall mit beiden Parteien gelöst.',
+          resolvedAt: new Date().toLocaleString('de-DE')
+        };
+      }
+      return r;
+    });
+
+    this.setState({
+      reports,
+      selectedAdminReportId: null,
+      adminStats: {
+        ...this.state.adminStats,
+        safetyIncidentCount: Math.max(0, this.state.adminStats.safetyIncidentCount - 1),
+        resolvedIncidentsCount: (this.state.adminStats.resolvedIncidentsCount || 0) + 1
+      }
+    });
+    this.showToast('✓ Meldung als gelöst markiert.');
+  }
+
+  toggleUserBan(userId) {
+    let newStatus = 'banned';
+    const updatedReports = (this.state.reports || []).map(r => {
+      if (r.reportedUserId === userId) {
+        newStatus = r.reportedUserStatus === 'banned' ? 'active' : 'banned';
+        return {
+          ...r,
+          reportedUserStatus: newStatus
+        };
+      }
+      return r;
+    });
+
+    const isNowBanned = newStatus === 'banned';
+    this.setState({
+      reports: updatedReports,
+      adminStats: {
+        ...this.state.adminStats,
+        bannedUsersCount: isNowBanned ? this.state.adminStats.bannedUsersCount + 1 : Math.max(0, this.state.adminStats.bannedUsersCount - 1)
+      }
+    });
+    this.showToast(isNowBanned ? '⛔ Benutzer wurde gesperrt.' : '✓ Benutzer wurde reaktiviert.');
   }
 
   resetAll() {

@@ -185,6 +185,31 @@ export const mockUsers = {
     skills: ['Tutoring', 'Animals', 'Shopping & Errands'],
     locationApprox: 'Wuppertal-Barmen',
     bio: '14-jährige Schülerin auf der Suche nach leichten Taschengeld-Tätigkeiten (KindArbSchV § 2).'
+  },
+  admin: {
+    id: 'user_admin',
+    name: 'Administrator',
+    email: 'admin@quickjob.local',
+    handle: '@admin',
+    avatarText: 'AD',
+    role: 'admin',
+    age: 35,
+    ageCategory: 'ADULT',
+    ageCategoryLabel: 'Plattform-Admin',
+    rating: 5.0,
+    ratingCount: 100,
+    completedJobs: 0,
+    reliability: 100,
+    walletBalance: 0.0,
+    escrowBalance: 0.0,
+    isIdentityVerified: true,
+    settings: {
+      theme: 'light',
+      notifications: { newJobs: true, messages: true, payments: true }
+    },
+    skills: ['Administration', 'Moderation', 'Compliance'],
+    locationApprox: 'Wuppertal-Zentrum',
+    bio: 'Offizieller QuickJob System-Administrator und Compliance Moderator.'
   }
 };
 
@@ -645,3 +670,124 @@ export const initialConversations = [
     ]
   }
 ];
+
+export const initialAdminStats = {
+  totalUsers: 2840,
+  activeWorkers: 1920,
+  activeEmployers: 920,
+  minorWorkersCount: 412,
+  activeJobsCount: 48,
+  escrowVolumeEur: 3420.50,
+  totalPlatformPayoutsEur: 42150.00,
+  kycVerificationRate: 94.2,
+  safetyIncidentCount: 3,
+  resolvedIncidentsCount: 29,
+  bannedUsersCount: 4
+};
+
+export const mockReports = [
+  {
+    id: 'rep_101',
+    reportedUserId: 'user_kevin_b',
+    reportedUserName: 'Kevin Breuer',
+    reportedUserHandle: '@kevin_b',
+    reportedUserEmail: 'kevin.breuer98@example.de',
+    reportedUserAge: 26,
+    reportedUserRole: 'employer',
+    reportedUserStatus: 'active',
+    reportedUserRating: 2.1,
+    reportedUserRatingCount: 4,
+    reportedUserCompletedJobs: 1,
+    reportedUserReliability: 60,
+    reportedUserJoined: '14.08.2026',
+    reportedUserKyc: false,
+    reporterId: 'user_jasper',
+    reporterName: 'Jasper Klein',
+    reporterHandle: '@jasper_k',
+    reporterEmail: 'jasper@quickjob.local',
+    category: 'JUGENDSCHUTZ_VERSTOSS',
+    categoryLabel: 'Verstoß gegen Jugendschutz (§ 8 & § 22 JArbSchG)',
+    reason: 'Unangemessene Forderungen & Überschreitung der gesetzlichen Ruhezeiten',
+    details: 'Der Auftraggeber verlangte schweres Heben von 40kg Betonplatten und Arbeitszeiten bis nach 21:00 Uhr. Als ich (16 Jahre) auf die Arbeitszeitgrenzen nach JArbSchG hinwies, wurde mit Zahlungsverweigerung und schlechter Bewertung gedroht.',
+    jobId: 'job_01',
+    jobTitle: 'Gartenmauer abreißen & schwere Steine schleppen',
+    status: 'PENDING', // 'PENDING' | 'WARNED' | 'BANNED' | 'DISMISSED' | 'RESOLVED'
+    createdAt: '24.09.2026, 18:30 Uhr',
+    severity: 'HIGH',
+    evidence: [
+      'Chat-Nachricht: "Wenn du um 21:30 Uhr nicht fertig bist, zahl ich keinen Cent."',
+      'Verstoß gegen § 22 JArbSchG (Gefährliche Arbeiten & Heben schwerer Lasten)',
+      'Verstoß gegen § 8 JArbSchG (Arbeitszeit nach 20:00 Uhr für Minderjährige)'
+    ],
+    chatExcerpt: 'Kevin: "Musst bis 21:30 Uhr dableiben und die 40kg Platten tragen, sonst gibts 1 Stern."\nJasper: "Ich bin 16 Jahre alt. Nach JArbSchG darf ich ab 20:00 Uhr nicht mehr arbeiten und keine schweren Lasten tragen."'
+  },
+  {
+    id: 'rep_102',
+    reportedUserId: 'user_artur_s',
+    reportedUserName: 'Artur Schneider',
+    reportedUserHandle: '@artur_schneider',
+    reportedUserEmail: 'artur.trade@mail-fake.com',
+    reportedUserAge: 31,
+    reportedUserRole: 'employer',
+    reportedUserStatus: 'active',
+    reportedUserRating: 1.8,
+    reportedUserRatingCount: 2,
+    reportedUserCompletedJobs: 0,
+    reportedUserReliability: 40,
+    reportedUserJoined: '21.09.2026',
+    reportedUserKyc: false,
+    reporterId: 'user_sophia',
+    reporterName: 'Sophia Weber',
+    reporterHandle: '@sophia_w',
+    reporterEmail: 'sophia@quickjob.local',
+    category: 'BETRUGSVERDACHT',
+    categoryLabel: 'Zahlungsumgehung / Phishing-Verdacht',
+    reason: 'Aufforderung zur Abwicklung außerhalb von QuickJob Treuhand',
+    details: 'Hat wiederholt versucht, die Treuhand-Zahlung zu umgehen und per verdächtiger externer Website zur Eingabe von Bankdaten aufzufordern.',
+    jobId: 'job_03',
+    jobTitle: 'Kartonagen sortieren im Lager',
+    status: 'PENDING',
+    createdAt: '25.09.2026, 07:15 Uhr',
+    severity: 'CRITICAL',
+    evidence: [
+      'Externer Phishing-Link im Chat geteilt: pay-quickjob-verify.xyz',
+      'Weigerung, das integrierte Treuhandkonto (Escrow) zu nutzen'
+    ],
+    chatExcerpt: 'Artur: "Geh auf pay-quickjob-verify.xyz und gib deine IBAN ein."\nSophia: "Zahlungen laufen ausschließlich sicher über die QuickJob App."'
+  },
+  {
+    id: 'rep_103',
+    reportedUserId: 'user_tim_v',
+    reportedUserName: 'Tim Vogt',
+    reportedUserHandle: '@tim_v99',
+    reportedUserEmail: 'tim.vogt@testmail.de',
+    reportedUserAge: 19,
+    reportedUserRole: 'worker',
+    reportedUserStatus: 'warned',
+    reportedUserRating: 3.4,
+    reportedUserRatingCount: 6,
+    reportedUserCompletedJobs: 4,
+    reportedUserReliability: 70,
+    reportedUserJoined: '02.07.2026',
+    reportedUserKyc: true,
+    reporterId: 'user_marcus',
+    reporterName: 'Dr. Marcus Lang',
+    reporterHandle: '@dr_lang',
+    reporterEmail: 'marcus@quickjob.local',
+    category: 'ZUVERLAESSIGKEIT',
+    categoryLabel: 'Unentschuldigtes Nichterscheinen (No-Show)',
+    reason: 'Wiederholtes Nichterscheinen ohne Absage',
+    details: 'Helfer hat den fest zugesagten Auftrag zur Gartenpflege zum zweiten Mal kurzfristig unentschuldigt geschwänzt, nachdem Werkzeuge bereitgestellt wurden.',
+    jobId: 'job_01',
+    jobTitle: 'Gartenpflege & Rasen mähen',
+    status: 'WARNED',
+    createdAt: '23.09.2026, 11:45 Uhr',
+    severity: 'MEDIUM',
+    evidence: [
+      'Bestätigter Termin 14:00 Uhr nicht wahrgenommen',
+      'Keine Rückmeldung im Chat trotz mehrfacher Kontaktaufnahme'
+    ],
+    chatExcerpt: 'Marcus: "Bist du schon unterwegs? Ich warte seit 30 Minuten."\n(Keine Antwort vom Helfer)'
+  }
+];
+

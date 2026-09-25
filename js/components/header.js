@@ -18,15 +18,25 @@ export function renderHeader(state) {
         ${isAuth && user ? `
           <button 
             id="btn-header-profile"
-            style="display: flex; align-items: center; gap: 0.35rem; background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 20px; padding: 0.28rem 0.7rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; color: #1e293b; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"
+            class="header-avatar-btn"
+            style="display: flex; align-items: center; justify-content: center; background: none; border: none; padding: 2px; cursor: pointer; border-radius: 50%;"
             title="Mein Profil (${escapeHTML(user.name)})"
           >
-            <span style="display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: #0ea76b; color: #ffffff; text-align: center; line-height: 22px; font-size: 0.72rem; font-weight: 800;">
-              ${(user.name || 'U').charAt(0)}
-            </span>
-            <span class="header-user-name" style="max-width: 95px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-              ${escapeHTML(user.name?.split(' ')[0] || 'Konto')}
-            </span>
+            ${(user.avatarUrl || user.profilePicture) ? `
+              <img 
+                src="${escapeHTML(user.avatarUrl || user.profilePicture)}" 
+                alt="${escapeHTML(user.name)}" 
+                id="header-user-avatar-img"
+                style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #0ea76b; box-shadow: 0 2px 6px rgba(14, 167, 107, 0.25);"
+              />
+            ` : `
+              <div 
+                id="header-user-avatar-letter"
+                style="width: 36px; height: 36px; border-radius: 50%; background: #0ea76b; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 800; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(14, 167, 107, 0.25);"
+              >
+                ${(user.name || 'U').charAt(0).toUpperCase()}
+              </div>
+            `}
           </button>
         ` : ''}
 

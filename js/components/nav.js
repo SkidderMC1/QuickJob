@@ -6,8 +6,9 @@ import { store } from '../state/store.js';
 export function renderBottomNav(state) {
   const currentScreen = state.currentScreen;
   const unreadMessages = state.conversations ? state.conversations.length : 0;
-  const isMapActive = currentScreen === 'jobs' && state.jobsViewMode === 'map';
+  const isMapActive = currentScreen === 'map' || (currentScreen === 'jobs' && state.jobsViewMode === 'map');
   const isJobsActive = currentScreen === 'jobs' && state.jobsViewMode !== 'map';
+  const isAdmin = state.currentUser?.role === 'admin';
 
   return `
     <nav class="bottom-nav" id="bottom-nav">
@@ -54,6 +55,15 @@ export function renderBottomNav(state) {
         <span>Messages</span>
       </button>
 
+      ${isAdmin ? `
+        <button class="nav-item ${currentScreen === 'admin' ? 'active' : ''}" data-screen="admin" id="nav-admin" title="Admin & Compliance Panel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="${currentScreen === 'admin' ? '#ef4444' : '#991b1b'}" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span style="font-weight: 800; color: ${currentScreen === 'admin' ? '#ef4444' : '#991b1b'};">Admin</span>
+        </button>
+      ` : ''}
+
       <button class="nav-item ${currentScreen === 'profile' ? 'active' : ''}" data-screen="profile" id="nav-profile">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -71,7 +81,7 @@ export function attachNavEvents() {
     item.addEventListener('click', () => {
       const screen = item.getAttribute('data-screen');
       if (screen === 'map') {
-        store.setScreen('jobs', { selectedJobId: null, selectedConversationId: null, jobsViewMode: 'map' });
+        store.setScreen('map', { selectedJobId: null, selectedConversationId: null });
         store.requestBrowserLocation();
       } else if (screen === 'jobs') {
         store.setScreen('jobs', { selectedJobId: null, selectedConversationId: null, jobsViewMode: 'list' });

@@ -22,22 +22,47 @@ export function renderProfileScreen(state) {
       <!-- Profile Header Card -->
       <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.25rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.9rem;">
         <div style="display: flex; align-items: center; gap: 0.85rem;">
-          <div class="employer-avatar" style="width: 58px; height: 58px; font-size: 1.35rem; background: #e2e8f0;">
-            ${user.avatarText || 'US'}
+          <div style="position: relative; flex-shrink: 0;">
+            ${(user.avatarUrl || user.profilePicture) ? `
+              <img 
+                src="${escapeHTML(user.avatarUrl || user.profilePicture)}" 
+                alt="${escapeHTML(user.name)}" 
+                id="profile-avatar-img"
+                style="width: 62px; height: 62px; border-radius: 50%; object-fit: cover; border: 2.5px solid #0ea76b; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"
+              />
+            ` : `
+              <div 
+                id="profile-avatar-letter"
+                style="width: 62px; height: 62px; border-radius: 50%; background: #0ea76b; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 800; border: 2.5px solid #ffffff; box-shadow: 0 4px 10px rgba(14, 167, 107, 0.25);"
+              >
+                ${(user.name || 'U').charAt(0).toUpperCase()}
+              </div>
+            `}
+            <label 
+              for="profile-avatar-file-input" 
+              id="profile-avatar-change-btn" 
+              style="position: absolute; bottom: -2px; right: -2px; width: 26px; height: 26px; border-radius: 50%; background: #ffffff; border: 1.5px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15);" 
+              title="Profilbild ändern"
+            >
+              📷
+            </label>
+            <input type="file" id="profile-avatar-file-input" accept="image/*" style="display: none;" />
           </div>
-          <div>
-            <div style="display: flex; align-items: center; gap: 0.4rem;">
+
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
               <h2 style="font-size: 1.2rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
                 ${escapeHTML(user.name)}
               </h2>
               ${user.isIdentityVerified ? '<span title="Ausweis verifiziert" style="color: #0ea76b; font-weight: 800; font-size: 1.15rem;">✓</span>' : ''}
               ${user.isCompany ? '<span title="Verified Company">🏢</span>' : ''}
+              ${user.role === 'admin' ? '<span class="badge" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-weight: 800; font-size: 0.7rem;">ADMINISTRATOR</span>' : ''}
             </div>
             <div style="font-size: 0.78rem; color: var(--qj-text-muted);">
               ${user.handle} · 📍 ${user.locationApprox || 'Wuppertal'}
             </div>
             <div style="margin-top: 4px; display: flex; gap: 0.35rem; flex-wrap: wrap;">
-              <span class="badge ${isMinor ? 'badge-purple' : 'badge-info'}">
+              <span class="badge ${isMinor ? 'badge-purple' : 'badge-info'}" id="profile-age-category-badge">
                 ${user.ageCategoryLabel}
               </span>
               ${user.isIdentityVerified ? '<span class="badge badge-success" id="profile-id-verified-badge" style="font-weight: 800; font-size: 0.74rem; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; display: inline-flex; align-items: center; gap: 3px;"><span>✓</span> Ausweis verifiziert</span>' : '<span class="badge badge-warning" id="profile-id-unverified-badge">Ausweis ausstehend</span>'}
@@ -45,6 +70,25 @@ export function renderProfileScreen(state) {
             </div>
           </div>
         </div>
+
+        ${user.role === 'admin' ? `
+          <div style="background: linear-gradient(135deg, #1e1b4b, #312e81); color: #ffffff; border-radius: var(--qj-radius-lg); padding: 1rem 1.15rem; box-shadow: 0 4px 15px rgba(49, 46, 129, 0.25); display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+            <div>
+              <div style="font-size: 0.72rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.05em;">
+                🛡️ QuickJob Administration
+              </div>
+              <div style="font-size: 1rem; font-weight: 800; margin-top: 2px;">
+                Admin & Compliance Center
+              </div>
+              <div style="font-size: 0.72rem; color: #c7d2fe; margin-top: 2px;">
+                Gemeldete Nutzer prüfen, Jugendschutz & Plattform-Statistiken
+              </div>
+            </div>
+            <button class="btn btn-primary" id="btn-profile-to-admin" style="white-space: nowrap; font-weight: 800; font-size: 0.8rem; background: #6366f1; border: none; padding: 0.55rem 0.95rem;">
+              Admin-Panel →
+            </button>
+          </div>
+        ` : ''}
 
         <p style="font-size: 0.85rem; color: var(--qj-text-muted); line-height: 1.4;">
           ${escapeHTML(user.bio || 'Active QuickJob local microjob community member.')}
@@ -884,6 +928,29 @@ export function attachProfileScreenEvents() {
   if (notifPayouts) {
     notifPayouts.addEventListener('change', (e) => {
       store.updateNotificationSettings('payouts', e.target.checked);
+    });
+  }
+
+  // Profile avatar change handler
+  const avatarFileInput = document.getElementById('profile-avatar-file-input');
+  if (avatarFileInput) {
+    avatarFileInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          store.setUserProfilePicture(evt.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Jump to Admin Panel button
+  const toAdminBtn = document.getElementById('btn-profile-to-admin');
+  if (toAdminBtn) {
+    toAdminBtn.addEventListener('click', () => {
+      store.setScreen('admin');
     });
   }
 }

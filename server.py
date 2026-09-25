@@ -182,6 +182,15 @@ def seed_default_personas():
             "Wuppertal-Elberfeld",
             "Schüler (12 Jahre). Beschäftigungsverbot gem. § 5 Abs. 1 JArbSchG.",
             None, now, now
+        ),
+        (
+            "user_admin", "admin@quickjob.local", default_pw_hash,
+            "Plattform Admin", "@admin", 35, "ADULT", 1, 0, "admin",
+            0.0, 0.0, 5.0, 100,
+            json.dumps(["Administration", "Moderation", "Compliance"]),
+            "Wuppertal-Zentrum",
+            "Offizieller QuickJob System-Administrator und Compliance Moderator.",
+            None, now, now
         )
     ]
 
@@ -194,6 +203,46 @@ def seed_default_personas():
             created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, p)
+
+    reports_seed = [
+        (
+            "rep_101", "user_jasper", "Jasper Klein", "jasper@quickjob.local",
+            "user_kevin_b", "Kevin Breuer", "kevin.breuer98@example.de", "employer",
+            "JUGENDSCHUTZ_VERSTOSS", "Verstoß gegen Jugendschutz (§ 8 & § 22 JArbSchG)",
+            "Unangemessene Forderungen & Überschreitung der gesetzlichen Ruhezeiten",
+            "Der Auftraggeber verlangte schweres Heben von 40kg Betonplatten und Arbeitszeiten bis nach 21:00 Uhr. Bei Weigerung wurde mit Zahlungsverweigerung gedroht.",
+            "job_01", "Gartenmauer abreißen & schwere Steine schleppen", "PENDING", "HIGH",
+            None, None, now, None
+        ),
+        (
+            "rep_102", "user_sophia", "Sophia Weber", "sophia@quickjob.local",
+            "user_artur_s", "Artur Schneider", "artur.trade@mail-fake.com", "employer",
+            "BETRUGSVERDACHT", "Zahlungsumgehung / Phishing-Verdacht",
+            "Aufforderung zur Abwicklung außerhalb von QuickJob Treuhand",
+            "Hat wiederholt versucht, die Treuhand-Zahlung zu umgehen und per verdächtiger externer Website zur Eingabe von Bankdaten aufzufordern.",
+            "job_03", "Kartonagen sortieren im Lager", "PENDING", "CRITICAL",
+            None, None, now, None
+        ),
+        (
+            "rep_103", "user_marcus", "Dr. Marcus Lang", "marcus@quickjob.local",
+            "user_tim_v", "Tim Vogt", "tim.vogt@testmail.de", "worker",
+            "ZUVERLAESSIGKEIT", "Unentschuldigtes Nichterscheinen (No-Show)",
+            "Wiederholtes Nichterscheinen ohne Absage",
+            "Helfer hat den fest zugesagten Auftrag zur Gartenpflege zum zweiten Mal kurzfristig unentschuldigt geschwänzt.",
+            "job_01", "Gartenpflege & Rasen mähen", "WARNED", "MEDIUM",
+            "Offizielle Verwarnung erteilt", "Verwarnung wegen No-Show ausgesprochen", now, now
+        )
+    ]
+
+    for r in reports_seed:
+        cursor.execute("""
+        INSERT OR IGNORE INTO reports (
+            id, reporter_id, reporter_name, reporter_email,
+            reported_user_id, reported_user_name, reported_user_email, reported_user_role,
+            category, category_label, reason, details, job_id, job_title,
+            status, severity, action_taken, admin_notes, created_at, resolved_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, r)
 
     conn.commit()
     conn.close()
