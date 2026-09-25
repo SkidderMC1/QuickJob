@@ -64,16 +64,11 @@ def run_tests():
         assert not page.is_visible("#btn-safety-modal"), "Safety shield must not clutter visible home header"
         print("✓ Header simplified: [QuickJob logo] [Profile] visible, clutter removed")
 
-        # Step 3: Verify Compact Nearby Map Card
-        print("\n--- TEST 3: Compact Nearby Map Card ---")
+        # Step 3: Verify Map Card is removed from Home screen as requested
+        print("\n--- TEST 3: Map Card Removed from Home ---")
         map_card = page.query_selector("#home-map-card")
-        assert map_card is not None, "Compact map card must exist on Home screen"
-        map_text = map_card.inner_text()
-        assert "jobs near you" in map_text, "Map card must show 'jobs near you'"
-        assert "Open map" in map_text, "Map card must have 'Open map' CTA"
-        map_card_height = page.evaluate("() => document.getElementById('home-map-card').offsetHeight")
-        print(f"✓ Compact map card rendered (height: {map_card_height}px, approx 35-45% shorter than previous 180px banner)")
-        assert map_card_height < 120, f"Map card should be compact (< 120px), got {map_card_height}px"
+        assert map_card is None, "Map card must be removed from Home screen"
+        print("✓ Verified: Map card removed from Home screen as requested")
 
         # Step 4: Verify Categories Section
         print("\n--- TEST 4: Categories Chip System ---")
@@ -168,15 +163,39 @@ def run_tests():
             assert card_width > 0, f"Job card must be visible at {w}px"
             print(f"✓ Viewport {w}px: OK (no horizontal overflow, card width: {card_width}px)")
 
-        # Save visual artifact screenshot
+        # Save visual artifact screenshot of Home
         screenshot_path = os.path.join(ARTIFACTS_DIR, "home_screen_redesigned_390px.png")
         page.set_viewport_size({"width": 390, "height": 844})
         page.screenshot(path=screenshot_path)
         print(f"✓ Screenshot saved to {screenshot_path}")
 
+        # Step 10: Verify Map Tab contains ONLY the map and nothing else
+        print("\n--- TEST 10: Map Tab - Only Map and Nothing Else ---")
+        page.click("#nav-map")
+        page.wait_for_timeout(350)
+
+        # Check map canvas is visible
+        assert page.is_visible("#map-interactive-canvas"), "Map interactive canvas must be visible in Map tab"
+        assert page.is_visible("#user-location-pin"), "User center pin must be visible"
+        assert page.is_visible("#btn-map-locate-me"), "Floating locate button must be visible on the map"
+
+        # Check that NO extra clutter is on the map tab
+        assert not page.is_visible("#jobs-segment-control"), "Segmented control must NOT be visible on Map-only screen"
+        assert not page.is_visible("#jobs-view-mode-bar"), "View mode bar must NOT be visible on Map-only screen"
+        assert not page.is_visible("#jobs-search-input"), "Search input must NOT be visible on Map-only screen"
+        assert not page.is_visible("#jobs-quick-pills"), "Quick filter pills must NOT be visible on Map-only screen"
+        assert not page.is_visible("#youth-protection-locked-badge"), "Youth protection banner must NOT be visible on Map-only screen"
+        assert not page.is_visible("#jobs-cards-container"), "Job cards list must NOT be visible on Map-only screen"
+        print("✓ Verified: Map tab has ONLY the map and nothing else (no search box, no filters, no cards list)")
+
+        # Save visual screenshot of the clean map-only screen
+        map_screenshot_path = os.path.join(ARTIFACTS_DIR, "map_screen_only_390px.png")
+        page.screenshot(path=map_screenshot_path)
+        print(f"✓ Map screenshot saved to {map_screenshot_path}")
+
         browser.close()
         print("\n==================================================")
-        print("ALL HOME SCREEN REDESIGN CHECKS PASSED (100%)!")
+        print("ALL HOME REDESIGN & MAP-ONLY CHECKS PASSED (100%)!")
         print("==================================================")
 
 if __name__ == "__main__":

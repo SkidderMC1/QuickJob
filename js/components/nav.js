@@ -72,9 +72,7 @@ export function attachNavEvents() {
       const screen = item.getAttribute('data-screen');
       if (screen === 'map') {
         store.setScreen('jobs', { selectedJobId: null, selectedConversationId: null, jobsViewMode: 'map' });
-        if (store.getState().locationPermissionGranted === null) {
-          store.setState({ isLocationModalOpen: true });
-        }
+        store.requestBrowserLocation();
       } else if (screen === 'jobs') {
         store.setScreen('jobs', { selectedJobId: null, selectedConversationId: null, jobsViewMode: 'list' });
       } else if (screen) {

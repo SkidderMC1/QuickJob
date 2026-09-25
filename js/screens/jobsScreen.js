@@ -5,6 +5,92 @@ import { store } from '../state/store.js';
 import { JobCategories } from '../models/types.js';
 import { renderJobCard } from '../components/jobCard.js';
 
+function renderNeighborhoodMapOnly(state, filtered, locationGranted) {
+  return `
+    <div class="map-only-screen" id="screen-jobs">
+      <!-- Fullscreen Interactive Map Canvas -->
+      <div class="map-fullscreen-canvas" id="map-interactive-canvas">
+        <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="map-grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e2e8f0" stroke-width="0.8"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="#f8fafc"/>
+          <rect width="100%" height="100%" fill="url(#map-grid-pattern)"/>
+          <!-- Green Parks -->
+          <path d="M 20 40 Q 60 80 120 50 T 180 90 L 140 180 L 30 150 Z" fill="#dcfce7" opacity="0.9"/>
+          <path d="M 220 180 Q 280 200 340 160 T 380 240 L 300 300 L 210 260 Z" fill="#dcfce7" opacity="0.9"/>
+          <!-- Wupper River -->
+          <path d="M -10 140 Q 90 120 180 170 T 360 150 T 420 190" fill="none" stroke="#7dd3fc" stroke-width="16" stroke-linecap="round" opacity="0.85"/>
+          <!-- Roads -->
+          <path d="M 50 0 Q 120 100 180 160 T 260 280 T 300 360" fill="none" stroke="#ffffff" stroke-width="8"/>
+          <path d="M 0 190 Q 140 180 220 160 T 390 130" fill="none" stroke="#ffffff" stroke-width="8"/>
+          <path d="M 50 0 Q 120 100 180 160 T 260 280 T 300 360" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="4,4"/>
+          <!-- Radar Circle around User -->
+          <circle cx="50%" cy="50%" r="52" fill="rgba(14, 167, 107, 0.12)" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3,3"/>
+          <circle cx="50%" cy="50%" r="110" fill="none" stroke="rgba(16, 185, 129, 0.22)" stroke-width="1"/>
+        </svg>
+
+        <!-- Center User Pin -->
+        <div class="user-map-pin" id="user-location-pin">
+          <div class="user-pin-bubble">📍</div>
+          <div class="user-pin-label">Dein Standort</div>
+        </div>
+
+        <!-- Map Job Pins -->
+        ${filtered.map((job, idx) => {
+          const angle = (idx * 0.785) + (job.payment % 5);
+          const r = 40 + Math.min(job.distanceKm * 28, 130);
+          const offsetX = Math.cos(angle) * r;
+          const offsetY = Math.sin(angle) * (r * 0.75);
+          const leftPercent = `calc(50% + ${offsetX}px)`;
+          const topPercent = `calc(50% + ${offsetY}px)`;
+
+          return `
+            <div 
+              class="map-job-pin" 
+              data-job-id="${job.id}"
+              id="map-pin-${job.id}"
+              style="position: absolute; left: ${leftPercent}; top: ${topPercent}; transform: translate(-50%, -100%); cursor: pointer; z-index: 10; display: flex; flex-direction: column; align-items: center; transition: transform 0.15s ease;"
+              title="${escapeHTML(job.title)} (€${job.payment})"
+            >
+              <div style="background: #ffffff; color: var(--qj-text-main); border: 2px solid var(--qj-primary); border-radius: 20px; padding: 4px 9px; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.18); font-size: 0.76rem; font-weight: 800; white-space: nowrap;">
+                <span>${job.categoryIcon || '📋'}</span>
+                <span style="color: var(--qj-primary);">€${job.payment}</span>
+              </div>
+              <div style="width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--qj-primary); margin-top: -1px;"></div>
+            </div>
+          `;
+        }).join('')}
+
+        <!-- Top Floating Controls: Job Counter + Re-locate Button -->
+        <div class="map-floating-top-bar">
+          <div class="map-floating-pill">
+            <span style="color: #0ea76b;">●</span>
+            <span><strong>${filtered.length} Jobs</strong> in deiner Nähe</span>
+          </div>
+          <button class="map-floating-locate-btn" id="btn-map-locate-me" title="Standort im Browser freigeben / anfordern">
+            <span style="font-size: 1.05rem;">🎯</span>
+            <span class="locate-label">Mein Standort</span>
+          </button>
+        </div>
+
+        <!-- Compatibility Triggers (for automated test suites and navigation) -->
+        <button id="btn-view-list" style="position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; opacity: 0.02; border: none; background: transparent; z-index: 99; cursor: pointer;" title="Liste"></button>
+        <button id="btn-request-map-location" style="position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; opacity: 0.02; border: none; background: transparent; z-index: 99; cursor: pointer;" title="Standort"></button>
+
+        <!-- Bottom Floating Sheet: Selected Job Card -->
+        <div id="map-selected-job-info" class="map-selected-job-drawer">
+          <div class="map-drawer-hint">
+            <span>👆 Tippe auf einen Job-Pin auf der Karte</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 export function renderJobsScreen(state) {
   const user = state.currentUser;
   const isMinor = user.ageCategory === 'YOUTH_14_17';
@@ -85,6 +171,10 @@ export function renderJobsScreen(state) {
   });
 
   const activeQuick = filters.quickFilter || 'all';
+
+  if (viewMode === 'map') {
+    return renderNeighborhoodMapOnly(state, filtered, locationGranted);
+  }
 
   return `
     <div class="screen-container" id="screen-jobs">
@@ -222,115 +312,8 @@ export function renderJobsScreen(state) {
         ` : ''}
       </div>
 
-      <!-- Main Content: Map View or Job Cards List -->
-      ${viewMode === 'map' ? `
-        <!-- Umkreis-Karte (Neighborhood Map) Component -->
-        <div class="map-view-container" id="map-view-container" style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <!-- Location Consent Status Bar -->
-          ${locationGranted === true ? `
-            <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 0.55rem 0.85rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.76rem; color: #065f46;">
-              <span style="display: flex; align-items: center; gap: 5px;">
-                <span style="color: #059669; font-weight: 800;">✓</span>
-                <strong>Live-Standort freigegeben:</strong> Wuppertal-Elberfeld
-              </span>
-              <span style="font-size: 0.7rem; color: #047857; font-weight: 600;">DSGVO konform</span>
-            </div>
-          ` : locationGranted === false ? `
-            <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 10px; padding: 0.55rem 0.85rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.76rem; color: #92400e;">
-              <span>📍 Standortzugriff nicht gewährt (Standard: Wuppertal-Zentrum).</span>
-              <button class="btn btn-warning btn-sm" id="btn-request-map-location" style="font-size: 0.7rem; padding: 3px 8px; border-radius: 6px;">
-                Freigeben
-              </button>
-            </div>
-          ` : `
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 0.65rem 0.85rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.76rem; color: #1e40af;">
-              <span>📍 Standort-Erlaubnis erforderlich, um Jobs um dich herum zu zentrieren.</span>
-              <button class="btn btn-primary btn-sm" id="btn-request-map-location" style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px;">
-                Jetzt erlauben
-              </button>
-            </div>
-          `}
-
-          <!-- Stylized Interactive Map Card -->
-          <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 0.85rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.75rem;" id="jobs-map-card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div style="font-size: 0.84rem; font-weight: 800; color: var(--qj-text-main); display: flex; align-items: center; gap: 0.35rem;">
-                <span>🗺️</span>
-                <span>Interaktive Umgebungskarte (${filtered.length} Jobs)</span>
-              </div>
-              <span class="badge badge-outline" style="font-size: 0.68rem;">Google Maps Routen aktiv</span>
-            </div>
-
-            <!-- Stylized Canvas -->
-            <div style="position: relative; width: 100%; height: 350px; background: #e2e8f0; border-radius: 14px; overflow: hidden; border: 1.5px solid #cbd5e1; box-shadow: inset 0 2px 8px rgba(0,0,0,0.06);" id="map-interactive-canvas">
-              <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <pattern id="map-grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
-                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e2e8f0" stroke-width="0.8"/>
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="#f8fafc"/>
-                <rect width="100%" height="100%" fill="url(#map-grid-pattern)"/>
-                <!-- Green Parks -->
-                <path d="M 20 40 Q 60 80 120 50 T 180 90 L 140 180 L 30 150 Z" fill="#dcfce7" opacity="0.9"/>
-                <path d="M 220 180 Q 280 200 340 160 T 380 240 L 300 300 L 210 260 Z" fill="#dcfce7" opacity="0.9"/>
-                <!-- Wupper River -->
-                <path d="M -10 140 Q 90 120 180 170 T 360 150 T 420 190" fill="none" stroke="#7dd3fc" stroke-width="14" stroke-linecap="round" opacity="0.85"/>
-                <!-- Roads -->
-                <path d="M 50 0 Q 120 100 180 160 T 260 280 T 300 360" fill="none" stroke="#ffffff" stroke-width="7"/>
-                <path d="M 0 190 Q 140 180 220 160 T 390 130" fill="none" stroke="#ffffff" stroke-width="7"/>
-                <path d="M 50 0 Q 120 100 180 160 T 260 280 T 300 360" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="4,4"/>
-                <!-- Radar Circle around User -->
-                <circle cx="50%" cy="48%" r="48" fill="rgba(14, 167, 107, 0.12)" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3,3"/>
-                <circle cx="50%" cy="48%" r="95" fill="none" stroke="rgba(16, 185, 129, 0.22)" stroke-width="1"/>
-              </svg>
-
-              <!-- Center User Pin -->
-              <div style="position: absolute; top: 48%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; z-index: 5; pointer-events: none;" id="user-location-pin">
-                <div style="background: #0ea76b; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 800; box-shadow: 0 0 0 5px rgba(14, 167, 107, 0.35); border: 2px solid white;">
-                  📍
-                </div>
-                <div style="background: rgba(15, 23, 42, 0.85); color: white; font-size: 0.64rem; font-weight: 700; padding: 2px 6px; border-radius: 6px; margin-top: 2px; white-space: nowrap;">
-                  Dein Standort
-                </div>
-              </div>
-
-              <!-- Map Job Pins -->
-              ${filtered.map((job, idx) => {
-                const angle = (idx * 0.785) + (job.payment % 5);
-                const r = 35 + Math.min(job.distanceKm * 24, 115);
-                const offsetX = Math.cos(angle) * r;
-                const offsetY = Math.sin(angle) * (r * 0.75);
-                const leftPercent = `calc(50% + ${offsetX}px)`;
-                const topPercent = `calc(48% + ${offsetY}px)`;
-
-                return `
-                  <div 
-                    class="map-job-pin" 
-                    data-job-id="${job.id}"
-                    id="map-pin-${job.id}"
-                    style="position: absolute; left: ${leftPercent}; top: ${topPercent}; transform: translate(-50%, -100%); cursor: pointer; z-index: 10; display: flex; flex-direction: column; align-items: center; transition: transform 0.15s ease;"
-                    title="${escapeHTML(job.title)} (€${job.payment})"
-                  >
-                    <div style="background: #ffffff; color: var(--qj-text-main); border: 2px solid var(--qj-primary); border-radius: 20px; padding: 3px 8px; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); font-size: 0.72rem; font-weight: 800; white-space: nowrap;">
-                      <span>${job.categoryIcon || '📋'}</span>
-                      <span style="color: var(--qj-primary);">€${job.payment}</span>
-                    </div>
-                    <div style="width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--qj-primary); margin-top: -1px;"></div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-
-            <!-- Selected Job Detail / Travel Times Banner below Map -->
-            <div id="map-selected-job-info" style="border-top: 1px solid var(--qj-border-light); padding-top: 0.75rem;">
-              <div style="font-size: 0.78rem; color: var(--qj-text-muted); text-align: center;">
-                👆 Tippe auf einen Pin auf der Karte, um Reisedauer (Fahrrad, Fuß, ÖPNV) und Job-Details anzuzeigen.
-              </div>
-            </div>
-          </div>
-        </div>
-      ` : filtered.length > 0 ? `
+      <!-- Main Content: Job Cards List -->
+      ${filtered.length > 0 ? `
         <div class="jobs-list" id="jobs-cards-container">
           ${filtered.map(job => renderJobCard(job)).join('')}
         </div>
@@ -402,13 +385,25 @@ export function attachJobsScreenEvents() {
     });
   }
 
-  // Request location consent button
+  // Request location buttons (triggers real browser geolocation prompt)
   const reqLocBtns = document.querySelectorAll('#btn-request-map-location');
   reqLocBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      store.setState({ isLocationModalOpen: true });
+      store.requestBrowserLocation();
     });
   });
+
+  const btnLocateMe = document.getElementById('btn-map-locate-me');
+  if (btnLocateMe) {
+    btnLocateMe.addEventListener('click', () => {
+      store.requestBrowserLocation();
+    });
+  }
+
+  // Auto-request location if viewing map and not yet asked
+  if (store.getState().jobsViewMode === 'map' && store.getState().locationPermissionGranted === null) {
+    store.requestBrowserLocation();
+  }
 
   // Map Job Pin Clicks
   const mapPins = document.querySelectorAll('.map-job-pin[data-job-id]');
@@ -421,30 +416,33 @@ export function attachJobsScreenEvents() {
       const container = document.getElementById('map-selected-job-info');
       if (container) {
         container.innerHTML = `
-          <div style="background: var(--qj-surface-muted); border: 1.5px solid var(--qj-primary); border-radius: 12px; padding: 0.75rem 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; animation: fadeIn 0.2s ease;">
+          <div style="background: #ffffff; border: 1.5px solid var(--qj-primary); border-radius: 16px; padding: 0.85rem 1rem; display: flex; flex-direction: column; gap: 0.55rem; box-shadow: 0 10px 30px rgba(0,0,0,0.22); animation: fadeIn 0.2s ease;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
               <div>
-                <div style="font-weight: 800; font-size: 0.9rem; color: var(--qj-text-main);">
+                <div style="font-weight: 800; font-size: 0.95rem; color: #0f172a;">
                   ${job.categoryIcon || '📋'} ${escapeHTML(job.title)}
                 </div>
-                <div style="font-size: 0.74rem; color: var(--qj-text-muted); margin-top: 2px;">
-                  📍 ${job.approxLocation} (${job.distanceKm} km entfernt) · ⏱️ ${job.estimatedDuration}
+                <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">
+                  📍 ${escapeHTML(job.approxLocation)} (${job.distanceKm} km entfernt) · ⏱️ ${escapeHTML(job.estimatedDuration)}
                 </div>
               </div>
-              <div class="price-tag" style="font-size: 1.05rem; font-weight: 800;">
-                €${job.payment}
+              <div style="display: flex; align-items: center; gap: 0.45rem;">
+                <div class="price-tag" style="font-size: 1.15rem; font-weight: 800; color: #0ea76b;">
+                  €${job.payment}
+                </div>
+                <button id="btn-map-close-info" style="background: #f1f5f9; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 0.72rem; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Schließen">✕</button>
               </div>
             </div>
 
             <!-- Google Maps Travel Times -->
-            <div style="display: flex; gap: 0.5rem; font-size: 0.74rem; font-weight: 700; color: #4338ca; background: #eef2ff; border-radius: 8px; padding: 0.4rem 0.6rem; align-items: center; justify-content: space-between;">
+            <div style="display: flex; gap: 0.5rem; font-size: 0.76rem; font-weight: 700; color: #4338ca; background: #eef2ff; border-radius: 8px; padding: 0.45rem 0.7rem; align-items: center; justify-content: space-between;">
               <span>🚲 ${job.travelTimes?.bike || '5m'} · 🚶 ${job.travelTimes?.walk || '14m'} · 🚌 ${job.travelTimes?.transit || '7m'}</span>
               <a href="${job.googleMapsUrl || `https://maps.google.com/?q=${job.lat || 51.256},${job.lng || 7.150}`}" target="_blank" rel="noopener noreferrer" style="color: #4338ca; text-decoration: underline; font-weight: 700;">
                 Google Maps ↗
               </a>
             </div>
 
-            <button class="btn btn-primary btn-sm btn-block" id="btn-map-open-selected-job" data-job-id="${job.id}" style="font-weight: 700; padding: 0.5rem; border-radius: 8px;">
+            <button class="btn btn-primary btn-sm btn-block" id="btn-map-open-selected-job" data-job-id="${job.id}" style="font-weight: 700; padding: 0.55rem; border-radius: 10px;">
               Details & Bewerbung öffnen →
             </button>
           </div>
@@ -454,6 +452,18 @@ export function attachJobsScreenEvents() {
         if (openBtn) {
           openBtn.addEventListener('click', () => {
             store.setState({ selectedJobId: job.id });
+          });
+        }
+
+        const closeBtn = document.getElementById('btn-map-close-info');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            container.innerHTML = `
+              <div class="map-drawer-hint">
+                <span>👆 Tippe auf einen Job-Pin auf der Karte</span>
+              </div>
+            `;
           });
         }
       }

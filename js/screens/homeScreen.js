@@ -46,24 +46,7 @@ export function renderHomeScreen(state) {
         ${state.filters.query ? '<button id="btn-clear-home-search" style="color: #94a3b8; font-size: 0.9rem;">✕</button>' : ''}
       </div>
 
-      <!-- 3. Compact Nearby Map Card (35-45% Shorter, Native Product Feature) -->
-      <section class="home-compact-map-card" id="home-map-card">
-        <div class="map-card-text">
-          <div class="map-card-heading">
-            <span class="map-pin-icon">📍</span>
-            <span class="map-heading-text">${totalCount} jobs near you</span>
-            <span class="map-privacy-tag">DSGVO</span>
-          </div>
-          <p class="map-card-subtext">
-            See available jobs around your location.
-          </p>
-        </div>
-        <button class="btn btn-primary btn-sm btn-open-map-cta" id="btn-home-open-map">
-          Open map →
-        </button>
-      </section>
-
-      <!-- 4. Categories: Horizontally Scrollable Chips -->
+      <!-- 3. Categories: Horizontally Scrollable Chips -->
       <section class="home-categories-section">
         <div class="section-header">
           <h2 class="section-title">Categories</h2>
@@ -130,20 +113,6 @@ export function attachHomeScreenEvents() {
       store.setFilter('query', '');
     });
   }
-
-  // Compact Map Card CTA & Card click
-  const btnHomeOpenMap = document.getElementById('btn-home-open-map');
-  const homeMapCard = document.getElementById('home-map-card');
-  const handleOpenMap = (e) => {
-    if (e) e.stopPropagation();
-    store.setScreen('jobs', { jobsViewMode: 'map' });
-    if (store.getState().locationPermissionGranted === null) {
-      store.setState({ isLocationModalOpen: true });
-    }
-  };
-
-  if (btnHomeOpenMap) btnHomeOpenMap.addEventListener('click', handleOpenMap);
-  if (homeMapCard) homeMapCard.addEventListener('click', handleOpenMap);
 
   // Categories "See all →"
   const viewAllCats = document.getElementById('link-view-all-cats');

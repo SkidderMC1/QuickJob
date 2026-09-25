@@ -546,46 +546,76 @@ class Store {
     }
   }
 
-  grantLocationPermission() {
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      try {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const coords = {
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude
-            };
-            this.setState({
-              locationPermissionGranted: true,
-              userCoordinates: coords,
-              isLocationModalOpen: false,
-              jobsViewMode: 'map'
-            });
-            this.showToast('📍 Live-Standort erfolgreich freigegeben!');
-          },
-          (err) => {
-            console.warn('Geolocation error / browser prompt dismissed:', err);
-            this.setState({
-              locationPermissionGranted: true,
-              isLocationModalOpen: false,
-              jobsViewMode: 'map'
-            });
-            this.showToast('📍 Standort freigegeben (Wuppertal-Zentrum).');
-          },
-          { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
-        );
-        return;
-      } catch (e) {
-        console.warn('Geolocation invocation failed:', e);
-      }
+  requestBrowserLocation(force = false) {
+    if (typeof window !== 'undefined' && !window.isSecureContext && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      this.showToast('⚠️ Standortzugriff erfordert HTTPS oder localhost (127.0.0.1).', 'error');
+      return;
     }
 
-    this.setState({
-      locationPermissionGranted: true,
-      isLocationModalOpen: false,
-      jobsViewMode: 'map'
-    });
-    this.showToast('📍 Standort für Umgebungskarte freigegeben!');
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      this.showToast('⚠️ Standortbestimmung wird von deinem Browser nicht unterstützt.', 'error');
+      return;
+    }
+
+    this.showToast('📍 Standortabfrage im Browser gestartet... Bitte bestätigen.', 'info');
+
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const coords = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          };
+          this.setState({
+            locationPermissionGranted: true,
+            userCoordinates: coords,
+            isLocationModalOpen: false,
+            jobsViewMode: 'map'
+          });
+          this.showToast('✓ Live-Standort erfolgreich ermittelt!');
+        },
+        (err) => {
+          console.warn('Geolocation error / browser prompt status:', err);
+          if (err.code === 1) { // PERMISSION_DENIED
+            this.setState({
+              locationPermissionGranted: false,
+              isLocationModalOpen: false,
+              jobsViewMode: 'map'
+            });
+            this.showToast('⚠️ Standort im Browser blockiert. Klicke links neben der URL auf das Schlosssymbol 🔒, um den Standort zu erlauben.', 'error');
+          } else if (err.code === 2) { // POSITION_UNAVAILABLE
+            this.setState({
+              locationPermissionGranted: true,
+              isLocationModalOpen: false,
+              jobsViewMode: 'map'
+            });
+            this.showToast('📍 Standortsignal nicht empfangen (Wuppertal-Zentrum aktiv).');
+          } else if (err.code === 3) { // TIMEOUT
+            this.setState({
+              locationPermissionGranted: true,
+              isLocationModalOpen: false,
+              jobsViewMode: 'map'
+            });
+            this.showToast('📍 Zeitüberschreitung der Standortabfrage.');
+          } else {
+            this.setState({
+              locationPermissionGranted: true,
+              isLocationModalOpen: false,
+              jobsViewMode: 'map'
+            });
+            this.showToast('📍 Standard-Standort (Wuppertal) aktiviert.');
+          }
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    } catch (e) {
+      console.warn('Geolocation exception:', e);
+      this.showToast('Standortabfrage konnte nicht gestartet werden.', 'error');
+    }
+  }
+
+  grantLocationPermission() {
+    return this.requestBrowserLocation();
   }
 
   denyLocationPermission() {
