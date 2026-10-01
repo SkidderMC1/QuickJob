@@ -100,6 +100,7 @@ export function attachLocationModalEvents() {
   if (allowBtn) {
     allowBtn.addEventListener('click', () => {
       store.grantLocationPermission();
+      store.setScreen('map');
     });
   }
 

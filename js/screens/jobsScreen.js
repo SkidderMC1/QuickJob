@@ -104,8 +104,6 @@ export function renderJobsScreen(state) {
 
         <!-- Hidden compatibility triggers for test suites -->
         <button id="tab-feed-map" style="display: none;" aria-hidden="true" data-feed-tab="map"></button>
-        <button id="btn-view-map" style="display: none;" aria-hidden="true"></button>
-        <button id="btn-view-list" style="display: none;" aria-hidden="true"></button>
         <button id="btn-floating-map-toggle" style="display: none;" aria-hidden="true"></button>
       </div>
 
@@ -199,16 +197,26 @@ export function renderJobsScreen(state) {
         ` : ''}
       </div>
 
-      <!-- Results Count Header -->
+      <!-- Results Count Header & View Switcher -->
       <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.25rem;">
         <span style="font-size: 0.85rem; font-weight: 700; color: var(--qj-text-muted);">
           ${currentTab === 'saved' ? `Gemerkt (${filtered.length})` : currentTab === 'my_jobs' ? `Meine Aufträge (${filtered.length})` : `Gefundene Microjobs (${filtered.length})`}
         </span>
-        ${(currentTab === 'all' && (filters.category !== 'all' || filters.query || filters.minPayment > 0 || filters.maxDistanceKm < 10)) ? `
-          <button id="btn-reset-filters" style="font-size: 0.78rem; color: var(--qj-primary); font-weight: 700;">
-            Filter zurücksetzen
-          </button>
-        ` : ''}
+        <div style="display: flex; align-items: center; gap: 0.4rem;">
+          <div class="view-toggle-group" style="display: flex; background: #f1f5f9; border-radius: 8px; padding: 2px;">
+            <button id="btn-view-list" class="btn-toggle-view ${viewMode === 'list' ? 'active' : ''}" style="border: none; background: ${viewMode === 'list' ? '#ffffff' : 'transparent'}; font-size: 0.74rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; cursor: pointer; color: ${viewMode === 'list' ? '#0f172a' : '#64748b'}; box-shadow: ${viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};">
+              ☰ Liste
+            </button>
+            <button id="btn-view-map" class="btn-toggle-view ${viewMode === 'map' ? 'active' : ''}" style="border: none; background: ${viewMode === 'map' ? '#ffffff' : 'transparent'}; font-size: 0.74rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; cursor: pointer; color: ${viewMode === 'map' ? '#0f172a' : '#64748b'}; box-shadow: ${viewMode === 'map' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};">
+              🗺️ Karte
+            </button>
+          </div>
+          ${(currentTab === 'all' && (filters.category !== 'all' || filters.query || filters.minPayment > 0 || filters.maxDistanceKm < 10)) ? `
+            <button id="btn-reset-filters" style="font-size: 0.78rem; color: var(--qj-primary); font-weight: 700; background: none; border: none; cursor: pointer;">
+              Filter zurücksetzen
+            </button>
+          ` : ''}
+        </div>
       </div>
 
       <!-- Main Content: Job Cards List -->
@@ -259,7 +267,7 @@ export function renderJobsScreen(state) {
         <button 
           id="btn-floating-map-toggle" 
           class="btn btn-primary"
-          style="pointer-events: auto; background: #0f172a; color: #ffffff; border-radius: 30px; padding: 0.55rem 1.25rem; font-size: 0.82rem; font-weight: 800; display: flex; align-items: center; gap: 0.45rem; box-shadow: 0 6px 20px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.25); cursor: pointer;"
+          style="pointer-events: auto; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border-radius: 30px; padding: 0.55rem 1.25rem; font-size: 0.82rem; font-weight: 800; display: flex; align-items: center; gap: 0.45rem; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); border: 2px solid rgba(255,255,255,0.35); cursor: pointer;"
         >
           ${viewMode === 'map' ? '<span>📋</span><span>Liste anzeigen</span>' : '<span>🗺️</span><span>Karte anzeigen</span>'}
         </button>
@@ -280,7 +288,19 @@ export function attachJobsScreenEvents() {
   const btnViewMap = document.getElementById('btn-view-map');
   if (btnViewMap) {
     btnViewMap.addEventListener('click', () => {
-      store.setScreen('map');
+      if (store.getState().locationPermissionGranted === null) {
+        store.setState({ isLocationModalOpen: true });
+      } else {
+        store.setScreen('map');
+      }
+    });
+  }
+
+  const btnViewList = document.getElementById('btn-view-list');
+  if (btnViewList) {
+    btnViewList.addEventListener('click', () => {
+      store.setJobsViewMode('list');
+      store.setScreen('jobs');
     });
   }
 
@@ -331,7 +351,7 @@ export function attachJobsScreenEvents() {
       if (jobsSearchTimer) clearTimeout(jobsSearchTimer);
       jobsSearchTimer = setTimeout(() => {
         executeJobsSearch(e.target.value);
-      }, 3000);
+      }, 200);
     });
 
     searchInput.addEventListener('keydown', (e) => {
@@ -404,7 +424,17 @@ export function attachJobsScreenEvents() {
   quickPills.forEach(pill => {
     pill.addEventListener('click', () => {
       const q = pill.getAttribute('data-quick');
-      store.setFilter('quickFilter', q === 'all' ? null : q);
+      if (q === 'all') {
+        store.setState({
+          filters: {
+            ...store.getState().filters,
+            quickFilter: null,
+            category: 'all'
+          }
+        });
+      } else {
+        store.setFilter('quickFilter', q);
+      }
     });
   });
 

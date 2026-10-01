@@ -35,10 +35,67 @@ function getCurrentTimeString() {
   return `${hours}:${minutes}`;
 }
 
+let lastStateSnapshot = null;
+
 function renderApp() {
   const state = store.getState();
   const root = document.getElementById('app-root');
   if (!root) return;
+
+  // Optimized atomic toast updater: Avoids tearing down the whole DOM on toast changes
+  if (lastStateSnapshot && root.children.length > 0) {
+    const isOnlyToastChange = (
+      lastStateSnapshot.toast !== state.toast &&
+      lastStateSnapshot.currentScreen === state.currentScreen &&
+      lastStateSnapshot.displayMode === state.displayMode &&
+      lastStateSnapshot.isAuthenticated === state.isAuthenticated &&
+      lastStateSnapshot.selectedJobId === state.selectedJobId &&
+      lastStateSnapshot.selectedConversationId === state.selectedConversationId &&
+      lastStateSnapshot.reviewJobId === state.reviewJobId &&
+      lastStateSnapshot.applicantJobId === state.applicantJobId &&
+      lastStateSnapshot.reportJobId === state.reportJobId &&
+      lastStateSnapshot.activeLegalDocType === state.activeLegalDocType &&
+      lastStateSnapshot.isGuardianModalOpen === state.isGuardianModalOpen &&
+      lastStateSnapshot.isLocationModalOpen === state.isLocationModalOpen &&
+      lastStateSnapshot.isEmergencyModalOpen === state.isEmergencyModalOpen &&
+      lastStateSnapshot.isParentModalOpen === state.isParentModalOpen &&
+      lastStateSnapshot.isProofModalOpen === state.isProofModalOpen &&
+      lastStateSnapshot.isSafetyModalOpen === state.isSafetyModalOpen &&
+      lastStateSnapshot.receiptModalJobId === state.receiptModalJobId &&
+      lastStateSnapshot.activeMode === state.activeMode &&
+      lastStateSnapshot.activeTheme === state.activeTheme &&
+      lastStateSnapshot.currentUser === state.currentUser &&
+      lastStateSnapshot.jobs === state.jobs &&
+      lastStateSnapshot.filters === state.filters
+    );
+
+    if (isOnlyToastChange) {
+      lastStateSnapshot = { ...state };
+      const existingToast = document.getElementById('toast-notice');
+      if (!state.toast) {
+        if (existingToast) existingToast.remove();
+      } else {
+        const toastClass = state.toast.type === 'error' ? 'toast-error' : 'toast-success';
+        const icon = state.toast.type === 'error' ? '⚠️' : '✓';
+        if (existingToast) {
+          existingToast.className = `toast-notice ${toastClass}`;
+          existingToast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-text">${escapeHTML(state.toast.message)}</span>`;
+        } else {
+          const container = document.getElementById('phone-screen') || document.querySelector('.native-pwa-container') || root;
+          const newToast = document.createElement('div');
+          newToast.className = `toast-notice ${toastClass}`;
+          newToast.id = 'toast-notice';
+          newToast.setAttribute('role', 'status');
+          newToast.setAttribute('aria-live', 'polite');
+          newToast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-text">${escapeHTML(state.toast.message)}</span>`;
+          container.appendChild(newToast);
+        }
+      }
+      return;
+    }
+  }
+
+  lastStateSnapshot = { ...state };
 
   // Sync theme
   const theme = state.activeTheme || state.currentUser?.settings?.theme || 'light';
@@ -48,6 +105,27 @@ function renderApp() {
   } else {
     document.documentElement.removeAttribute('data-theme');
     document.body.classList.remove('dark-mode');
+  }
+
+  // Manage body scroll lock for open modals
+  const isAnyModalOpen = Boolean(
+    (state.isAuthenticated && state.selectedJobId) ||
+    state.isSafetyModalOpen ||
+    (state.isAuthenticated && state.reviewJobId) ||
+    (state.isAuthenticated && state.applicantJobId) ||
+    (state.isAuthenticated && state.reportJobId) ||
+    state.activeLegalDocType ||
+    (state.isAuthenticated && state.isGuardianModalOpen) ||
+    state.isLocationModalOpen ||
+    state.isEmergencyModalOpen ||
+    state.receiptModalJobId ||
+    state.isProofModalOpen ||
+    state.isParentModalOpen
+  );
+  if (isAnyModalOpen) {
+    document.body.classList.add('modal-open');
+  } else {
+    document.body.classList.remove('modal-open');
   }
 
   const timeStr = getCurrentTimeString();
@@ -77,9 +155,9 @@ function renderApp() {
 
         <!-- Toast Notification Banner -->
         ${state.toast ? `
-          <div class="toast-notice" id="toast-notice">
-            <span>${state.toast.type === 'error' ? '⚠️' : '✓'}</span>
-            <span>${escapeHTML(state.toast.message)}</span>
+          <div class="toast-notice ${state.toast.type === 'error' ? 'toast-error' : 'toast-success'}" id="toast-notice" role="status" aria-live="polite">
+            <span class="toast-icon">${state.toast.type === 'error' ? '⚠️' : '✓'}</span>
+            <span class="toast-text">${escapeHTML(state.toast.message)}</span>
           </div>
         ` : ''}
 
@@ -167,9 +245,9 @@ function renderApp() {
 
             <!-- Toast Notification Banner -->
             ${state.toast ? `
-              <div class="toast-notice" id="toast-notice">
-                <span>${state.toast.type === 'error' ? '⚠️' : '✓'}</span>
-                <span>${escapeHTML(state.toast.message)}</span>
+              <div class="toast-notice ${state.toast.type === 'error' ? 'toast-error' : 'toast-success'}" id="toast-notice" role="status" aria-live="polite">
+                <span class="toast-icon">${state.toast.type === 'error' ? '⚠️' : '✓'}</span>
+                <span class="toast-text">${escapeHTML(state.toast.message)}</span>
               </div>
             ` : ''}
 
@@ -280,6 +358,32 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (e) {
     console.warn('URL param parse error', e);
   }
+
+  // Global Escape Key Listener for Modals
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const state = store.getState();
+      if (state.selectedJobId || state.isSafetyModalOpen || state.reviewJobId || 
+          state.applicantJobId || state.reportJobId || state.activeLegalDocType || 
+          state.isGuardianModalOpen || state.isLocationModalOpen || state.isEmergencyModalOpen ||
+          state.receiptModalJobId || state.isProofModalOpen || state.isParentModalOpen) {
+        store.setState({
+          selectedJobId: null,
+          isSafetyModalOpen: false,
+          reviewJobId: null,
+          applicantJobId: null,
+          reportJobId: null,
+          activeLegalDocType: null,
+          isGuardianModalOpen: false,
+          isLocationModalOpen: false,
+          isEmergencyModalOpen: false,
+          receiptModalJobId: null,
+          isProofModalOpen: false,
+          isParentModalOpen: false
+        });
+      }
+    }
+  });
 
   renderApp();
   store.subscribe(() => {

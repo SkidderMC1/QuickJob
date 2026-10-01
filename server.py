@@ -97,6 +97,10 @@ async def security_and_path_filter_middleware(request: Request, call_next):
         "img-src 'self' data:; "
         "connect-src 'self';"
     )
+
+    if any(raw_path.endswith(ext) for ext in [".js", ".css", ".html", "/"]):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+
     return response
 
 

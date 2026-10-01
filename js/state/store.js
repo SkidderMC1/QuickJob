@@ -157,12 +157,15 @@ class Store {
   }
 
   showToast(message, type = 'success') {
+    if (this._toastTimer) {
+      clearTimeout(this._toastTimer);
+      this._toastTimer = null;
+    }
     this.setState({ toast: { message, type, id: Date.now() } });
-    setTimeout(() => {
-      if (this.state.toast && Date.now() - this.state.toast.id >= 2800) {
-        this.setState({ toast: null });
-      }
-    }, 3000);
+    this._toastTimer = setTimeout(() => {
+      this.setState({ toast: null });
+      this._toastTimer = null;
+    }, 2500);
   }
 
   // Navigation (Guarded by Mandatory Authentication Gate)
@@ -622,6 +625,11 @@ class Store {
   }
 
   grantLocationPermission() {
+    this.setState({
+      locationPermissionGranted: true,
+      isLocationModalOpen: false,
+      jobsViewMode: 'map'
+    });
     return this.requestBrowserLocation();
   }
 

@@ -17,7 +17,7 @@ export function renderMapScreen(state) {
     <div class="map-only-screen" id="screen-map">
       <!-- Fullscreen Interactive Map Canvas -->
       <div class="map-fullscreen-canvas" id="map-interactive-canvas">
-        <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" xmlns="http://www.w3.org/2000/svg">
+        <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <pattern id="map-grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
               <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e2e8f0" stroke-width="0.8"/>
@@ -47,10 +47,11 @@ export function renderMapScreen(state) {
 
         <!-- Map Job Pins -->
         ${availableJobs.map((job, idx) => {
-          const angle = (idx * 0.785) + (job.payment % 5);
-          const r = 40 + Math.min(job.distanceKm * 28, 130);
+          const totalPins = availableJobs.length || 1;
+          const angle = (idx * (2 * Math.PI / totalPins)) + 0.35;
+          const r = 65 + ((idx % 2) * 45);
           const offsetX = Math.cos(angle) * r;
-          const offsetY = Math.sin(angle) * (r * 0.75);
+          const offsetY = Math.sin(angle) * (r * 0.65);
           const leftPercent = `calc(50% + ${offsetX}px)`;
           const topPercent = `calc(50% + ${offsetY}px)`;
 
@@ -71,21 +72,24 @@ export function renderMapScreen(state) {
           `;
         }).join('')}
 
-        <!-- Top Floating Bar: Job Count Pill + Standalone Re-locate Button -->
+        <!-- Top Floating Bar: Job Count Pill + View Switcher + Locate Button -->
         <div class="map-floating-top-bar">
           <div class="map-floating-pill">
             <span style="color: #0ea76b;">●</span>
-            <span><strong>${availableJobs.length} Jobs</strong> in deiner Nähe</span>
+            <span><strong>${availableJobs.length} Jobs</strong></span>
           </div>
-          <button class="map-floating-locate-btn" id="btn-map-locate-me" title="Standort im Browser anfordern">
-            <span style="font-size: 1.05rem;">🎯</span>
-            <span class="locate-label">Mein Standort</span>
-          </button>
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
+            <button id="btn-view-list" class="btn btn-sm" style="pointer-events: auto; background: rgba(255, 255, 255, 0.95); border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 4px 10px; font-size: 0.76rem; font-weight: 700; color: #0f172a; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 4px;">
+              <span>☰</span><span>Liste</span>
+            </button>
+            <button class="map-floating-locate-btn" id="btn-map-locate-me" title="Standort im Browser anfordern">
+              <span style="font-size: 1.05rem;">🎯</span>
+              <span class="locate-label">Standort</span>
+            </button>
+          </div>
         </div>
 
-        <!-- Compatibility Triggers for automated test suites -->
-        <button id="btn-view-list" style="position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; opacity: 0.02; border: none; background: transparent; z-index: 99; cursor: pointer;" title="Zur Jobliste"></button>
-        <button id="btn-request-map-location" style="position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; opacity: 0.02; border: none; background: transparent; z-index: 99; cursor: pointer;" title="Standort freigeben"></button>
+        <button id="btn-request-map-location" style="display: none;" aria-hidden="true"></button>
 
         <!-- Bottom Floating Sheet: Selected Job Card -->
         <div id="map-selected-job-info" class="map-selected-job-drawer">
@@ -156,6 +160,13 @@ export function attachMapScreenEvents() {
               Treuhand gesichert ✓
             </div>
           </div>
+        </div>
+        <!-- Google Maps Travel Times -->
+        <div style="display: flex; gap: 0.5rem; font-size: 0.76rem; font-weight: 700; color: #4338ca; background: #eef2ff; border-radius: 8px; padding: 0.45rem 0.7rem; align-items: center; justify-content: space-between; margin-top: 0.5rem;">
+          <span>🚲 ${job.travelTimes?.bike || '5m'} · 🚶 ${job.travelTimes?.walk || '14m'} · 🚌 ${job.travelTimes?.transit || '7m'}</span>
+          <a href="${job.googleMapsUrl || `https://maps.google.com/?q=${job.lat || 51.256},${job.lng || 7.150}`}" target="_blank" rel="noopener noreferrer" style="color: #4338ca; text-decoration: underline; font-weight: 700;">
+            Google Maps ↗
+          </a>
         </div>
         <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
           <button 

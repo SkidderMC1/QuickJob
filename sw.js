@@ -3,7 +3,7 @@
  * Provides offline support, caching, and instant startup
  */
 
-const CACHE_NAME = 'quickjob-v3';
+const CACHE_NAME = 'quickjob-v4';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -22,16 +22,27 @@ const ASSETS_TO_CACHE = [
   './js/components/nav.js',
   './js/components/jobCard.js',
   './js/components/debugDrawer.js',
+  './js/components/consentBanner.js',
   './js/screens/homeScreen.js',
   './js/screens/jobsScreen.js',
+  './js/screens/mapScreen.js',
+  './js/screens/adminScreen.js',
   './js/screens/jobDetailScreen.js',
   './js/screens/createJobScreen.js',
   './js/screens/messagesScreen.js',
   './js/screens/profileScreen.js',
+  './js/screens/authScreen.js',
   './js/screens/safetyModal.js',
   './js/screens/reviewModal.js',
   './js/screens/applicantModal.js',
   './js/screens/reportModal.js',
+  './js/screens/legalModal.js',
+  './js/screens/guardianModal.js',
+  './js/screens/locationModal.js',
+  './js/screens/emergencyModal.js',
+  './js/screens/receiptModal.js',
+  './js/screens/proofPhotoModal.js',
+  './js/screens/parentModal.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png'

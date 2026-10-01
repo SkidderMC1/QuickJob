@@ -391,7 +391,8 @@ export function attachMessagesScreenEvents() {
   if (completeBtn) {
     completeBtn.addEventListener('click', () => {
       const jobId = completeBtn.getAttribute('data-job-id');
-      store.openProofModal(jobId);
+      store.updateJobState(jobId, JobStates.COMPLETED);
+      store.showToast('✓ Job als erledigt markiert!');
     });
   }
 

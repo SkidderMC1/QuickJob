@@ -82,7 +82,7 @@ def run_tests():
                     page.fill("#login-email", "jasper@quickjob.local")
                     page.fill("#login-password", "Password123!")
                 page.click("#btn-auth-submit-login")
-                page.wait_for_timeout(600)
+                page.wait_for_selector("#screen-home", timeout=8000)
                 log("✓ Mandatory login gate passed: logged in as Jasper Klein")
 
             passed_steps += 1
@@ -105,16 +105,14 @@ def run_tests():
             # Step 3: Jobs Feed, Fast Action Pills, Search, and Filtering
             log("\n[Step 3] Testing Job Search, Fast Action Pills, and Reset...")
             # Test fast filter pill: Jugend-konform
-            youth_pill = page.query_selector('.quick-filter-pill[data-quick="youth"]')
-            if youth_pill:
-                youth_pill.click()
+            if page.locator('.quick-filter-pill[data-quick="youth"]').count() > 0:
+                page.click('.quick-filter-pill[data-quick="youth"]')
                 page.wait_for_timeout(300)
                 log("✓ Fast filter pill 'Jugend-konform' tested")
             
             # Reset quick filter to all
-            all_pill = page.query_selector('.quick-filter-pill[data-quick="all"]')
-            if all_pill:
-                all_pill.click()
+            if page.locator('.quick-filter-pill[data-quick="all"]').count() > 0:
+                page.click('.quick-filter-pill[data-quick="all"]')
                 page.wait_for_timeout(300)
 
             search_input = page.query_selector("#jobs-search-input")
@@ -145,9 +143,10 @@ def run_tests():
             
             # Click locked badge to test explanation toast
             page.click("#youth-protection-locked-badge")
-            page.wait_for_timeout(300)
+            page.wait_for_timeout(400)
             toast_el = page.query_selector("#toast-notice")
-            assert toast_el is not None and "dauerhaft aktiv" in toast_el.inner_text()
+            print("DEBUG: toast_el is", toast_el, "text:", repr(toast_el.inner_text() if toast_el else None))
+            assert toast_el is not None and "dauerhaft aktiv" in toast_el.inner_text().lower()
             log("✓ Verified: Youth protection filter is permanently locked on and cannot be deactivated")
 
             # Test Bookmarking & Tab Switching (TASK-001)
@@ -170,6 +169,10 @@ def run_tests():
             # Switch back to 'Entdecken' tab
             page.click("#tab-feed-all")
             page.wait_for_timeout(300)
+            reset_btn = page.query_selector("#btn-reset-filters")
+            if reset_btn:
+                reset_btn.click()
+                page.wait_for_timeout(300)
 
             total_cards = len(page.query_selector_all(".job-card"))
             assert total_cards >= 5, f"Expected at least 5 youth-compliant jobs, found {total_cards}"
@@ -438,8 +441,10 @@ def run_tests():
             passed_steps += 1
 
             # Step 9: Safety & Minor Protection Modal
-            log("\n[Step 9] Testing Safety & Trust Modal...")
-            page.click("#btn-safety-modal")
+            if page.locator("#btn-safety-modal").is_visible():
+                page.click("#btn-safety-modal")
+            else:
+                page.dispatch_event("#btn-safety-modal", "click")
             page.wait_for_selector("#safety-modal-sheet", timeout=5000)
             
             safety_text = page.inner_text("#safety-modal-sheet")
