@@ -20,7 +20,7 @@ export function renderReceiptModal(state) {
 
   return `
     <div class="modal-overlay" id="receipt-modal-overlay">
-      <div class="modal-sheet" id="receipt-modal-sheet" style="max-height: 90%;">
+      <div class="modal-sheet" id="receipt-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="receipt-modal-title" style="max-height: 90%;">
         <div class="modal-grabber"></div>
 
         <!-- Header -->
@@ -30,7 +30,7 @@ export function renderReceiptModal(state) {
               📄
             </div>
             <div>
-              <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
+              <h2 id="receipt-modal-title" style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
                 Zahlungsquittung (§ 368 BGB)
               </h2>
               <span style="font-size: 0.72rem; color: var(--qj-text-muted);">
@@ -38,7 +38,7 @@ export function renderReceiptModal(state) {
               </span>
             </div>
           </div>
-          <button id="btn-close-receipt" style="font-size: 1.25rem; color: #64748b; padding: 4px; border: none; background: transparent; cursor: pointer;">
+          <button id="btn-close-receipt" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px; border: none; background: transparent; cursor: pointer;">
             ✕
           </button>
         </div>

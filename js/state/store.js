@@ -427,17 +427,40 @@ class Store {
         return c;
       });
 
-      this.setState({ conversations: updatedConvs });
-      if (this.state.currentScreen !== 'messages' || this.state.selectedConversationId !== conversationId) {
-        this.showToast(`💬 Neue Nachricht von ${currentConv.participant.name}`);
+      const scrollContainer = document.getElementById('chat-messages-scroll');
+      if (scrollContainer && this.state.currentScreen === 'messages' && this.state.selectedConversationId === conversationId) {
+        this.state.conversations = updatedConvs;
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble theirs';
+        const textDiv = document.createElement('div');
+        textDiv.textContent = replyMsg.text;
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'chat-time';
+        timeDiv.textContent = replyMsg.timestamp;
+        bubble.appendChild(textDiv);
+        bubble.appendChild(timeDiv);
+        scrollContainer.appendChild(bubble);
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      } else {
+        this.setState({ conversations: updatedConvs });
+        if (this.state.currentScreen !== 'messages' || this.state.selectedConversationId !== conversationId) {
+          this.showToast(`💬 Neue Nachricht von ${currentConv.participant.name}`);
+        }
       }
     }, 850);
   }
 
   // Job lifecycle state machine transitions
   updateJobState(jobId, newState) {
+    const targetJob = this.state.jobs.find(j => j.id === jobId);
+    let walletCredit = 0;
+
     const jobs = this.state.jobs.map(j => {
       if (j.id === jobId) {
+        if (newState === JobStates.PAYMENT_RELEASED && !j.paymentCredited) {
+          walletCredit = Number(j.payment) || 0;
+          return { ...j, state: newState, paymentCredited: true };
+        }
         return { ...j, state: newState };
       }
       return j;
@@ -450,7 +473,16 @@ class Store {
       return c;
     });
 
-    this.setState({ jobs, conversations: convs });
+    let updatedUser = this.state.currentUser;
+    if (walletCredit > 0 && targetJob && targetJob.worker && targetJob.worker.id === this.state.currentUser.id) {
+      updatedUser = {
+        ...this.state.currentUser,
+        walletBalance: (this.state.currentUser.walletBalance || 0) + walletCredit,
+        escrowBalance: Math.max(0, (this.state.currentUser.escrowBalance || 0) - walletCredit)
+      };
+    }
+
+    this.setState({ jobs, conversations: convs, currentUser: updatedUser });
     this.showToast(`Job status transitioned to: ${newState}`);
   }
 
@@ -948,9 +980,20 @@ class Store {
       return;
     }
 
+    const payoutTx = {
+      id: `payout_${Date.now()}`,
+      amount: amount,
+      currency: 'EUR',
+      date: new Date().toISOString(),
+      status: 'PROCESSING',
+      ibanMasked: user.payoutIban || 'DE** **** **** **** 4821',
+      description: `SEPA-Auszahlung an ${user.name}`
+    };
+
     const updatedUser = {
       ...user,
-      walletBalance: 0.0
+      walletBalance: 0.0,
+      payoutHistory: [...(user.payoutHistory || []), payoutTx]
     };
 
     this.setState({ currentUser: updatedUser });

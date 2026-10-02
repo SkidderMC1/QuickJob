@@ -15,7 +15,7 @@ export function renderParentModal(state) {
 
   return `
     <div class="modal-overlay" id="parent-modal-overlay">
-      <div class="modal-sheet" id="parent-modal-sheet" style="max-height: 90%;">
+      <div class="modal-sheet" id="parent-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="parent-modal-title" style="max-height: 90%;">
         <div class="modal-grabber"></div>
 
         <!-- Header -->
@@ -25,7 +25,7 @@ export function renderParentModal(state) {
               👨‍👩‍👧
             </div>
             <div>
-              <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
+              <h2 id="parent-modal-title" style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
                 Eltern-Dashboard & Schutz-Portal
               </h2>
               <span style="font-size: 0.72rem; color: #4338ca; font-weight: 600;">
@@ -33,7 +33,7 @@ export function renderParentModal(state) {
               </span>
             </div>
           </div>
-          <button id="btn-close-parent-modal" style="font-size: 1.25rem; color: #64748b; padding: 4px; border: none; background: transparent; cursor: pointer;">
+          <button id="btn-close-parent-modal" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px; border: none; background: transparent; cursor: pointer;">
             ✕
           </button>
         </div>

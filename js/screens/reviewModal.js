@@ -27,18 +27,18 @@ export function renderReviewModal(state) {
 
   return `
     <div class="modal-overlay" id="review-modal-overlay">
-      <div class="modal-sheet" id="review-modal-sheet" style="max-height: 85%;">
+      <div class="modal-sheet" id="review-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="review-modal-title" style="max-height: 85%;">
         <div class="modal-grabber"></div>
 
         <!-- Header -->
         <div class="modal-header">
           <div>
             <span class="badge badge-success">⭐ Auftrag bewerten</span>
-            <h2 style="font-size: 1.1rem; font-weight: 800; margin-top: 4px; color: var(--qj-text-main);">
+            <h2 id="review-modal-title" style="font-size: 1.1rem; font-weight: 800; margin-top: 4px; color: var(--qj-text-main);">
               Bewertung für ${escapeHTML(recipientName)}
             </h2>
           </div>
-          <button id="btn-close-review" style="font-size: 1.25rem; color: #64748b; padding: 4px;">
+          <button id="btn-close-review" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px;">
             ✕
           </button>
         </div>

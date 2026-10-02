@@ -14,21 +14,21 @@ export function renderApplicantModal(state) {
 
   return `
     <div class="modal-overlay" id="applicant-modal-overlay">
-      <div class="modal-sheet" id="applicant-modal-sheet" style="max-height: 88%;">
+      <div class="modal-sheet" id="applicant-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="applicant-modal-title" style="max-height: 88%;">
         <div class="modal-grabber"></div>
 
         <!-- Header -->
         <div class="modal-header">
           <div>
             <span class="badge badge-purple">👥 Bewerbungen prüfen</span>
-            <h2 style="font-size: 1.1rem; font-weight: 800; margin-top: 4px; color: var(--qj-text-main); line-height: 1.3;">
+            <h2 id="applicant-modal-title" style="font-size: 1.1rem; font-weight: 800; margin-top: 4px; color: var(--qj-text-main); line-height: 1.3;">
               ${escapeHTML(job.title)}
             </h2>
             <div style="font-size: 0.78rem; color: var(--qj-text-muted); margin-top: 2px;">
               ${applicants.length} Helfer haben sich beworben · Vergütung: €${job.payment}
             </div>
           </div>
-          <button id="btn-close-applicants" style="font-size: 1.25rem; color: #64748b; padding: 4px;">
+          <button id="btn-close-applicants" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px;">
             ✕
           </button>
         </div>

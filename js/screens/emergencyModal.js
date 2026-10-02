@@ -14,7 +14,7 @@ export function renderEmergencyModal(state) {
 
   return `
     <div class="modal-overlay" id="emergency-modal-overlay" style="z-index: 9999;">
-      <div class="modal-sheet" id="emergency-modal-sheet" style="background: #fff5f5; border: 2px solid #ef4444; max-height: 90%;">
+      <div class="modal-sheet" id="emergency-modal-sheet" role="alertdialog" aria-modal="true" aria-labelledby="emergency-modal-title" style="background: #fff5f5; border: 2px solid #ef4444; max-height: 90%;">
         <div class="modal-grabber" style="background: #fca5a5;"></div>
 
         <!-- Header -->
@@ -24,7 +24,7 @@ export function renderEmergencyModal(state) {
               🚨
             </div>
             <div>
-              <h2 style="font-size: 1.15rem; font-weight: 800; color: #991b1b; margin: 0;">
+              <h2 id="emergency-modal-title" style="font-size: 1.15rem; font-weight: 800; color: #991b1b; margin: 0;">
                 Notfall & Sofort-Hilfe (SOS)
               </h2>
               <span style="font-size: 0.72rem; color: #b91c1c; font-weight: 600;">
@@ -32,7 +32,7 @@ export function renderEmergencyModal(state) {
               </span>
             </div>
           </div>
-          <button id="btn-close-emergency" style="font-size: 1.25rem; color: #991b1b; padding: 4px; border: none; background: transparent; cursor: pointer;">
+          <button id="btn-close-emergency" aria-label="Schließen" style="font-size: 1.25rem; color: #991b1b; padding: 4px; border: none; background: transparent; cursor: pointer;">
             ✕
           </button>
         </div>

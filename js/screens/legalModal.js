@@ -13,7 +13,7 @@ export function renderLegalModal(state) {
 
   return `
     <div class="modal-backdrop" id="legal-modal-backdrop" style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 1rem;">
-      <div class="modal-card" style="background: #fff; width: 100%; max-width: 620px; max-height: 88vh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title" style="background: #fff; width: 100%; max-width: 620px; max-height: 88vh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
         
         <!-- Header & Document Tab Bar -->
         <div style="padding: 1rem 1.25rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
@@ -22,12 +22,12 @@ export function renderLegalModal(state) {
               <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #6366f1;">
                 Rechtliche Dokumente · Version ${doc.version}
               </div>
-              <h2 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0.2rem 0 0 0;">
+              <h2 id="legal-modal-title" style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0.2rem 0 0 0;">
                 ${doc.title}
               </h2>
             </div>
             ${!isAcceptanceFlow ? `
-              <button id="btn-close-legal-modal" class="btn btn-ghost" style="font-size: 1.35rem; padding: 0.25rem; line-height: 1;">✕</button>
+              <button id="btn-close-legal-modal" aria-label="Schließen" class="btn btn-ghost" style="font-size: 1.35rem; padding: 0.25rem; line-height: 1;">✕</button>
             ` : ''}
           </div>
 

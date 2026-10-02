@@ -383,6 +383,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     }
+
+    // Quick Search Shortcut: Ctrl+K / Cmd+K or '/'
+    const isEditing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) ||
+                      document.activeElement?.isContentEditable;
+    if ((e.key === 'k' && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !isEditing)) {
+      e.preventDefault();
+      const state = store.getState();
+      if (state.currentScreen === 'home') {
+        const homeInput = document.getElementById('home-search-input');
+        if (homeInput) {
+          homeInput.focus();
+          homeInput.select();
+        }
+      } else {
+        if (state.currentScreen !== 'jobs') {
+          store.setScreen('jobs');
+        }
+        setTimeout(() => {
+          const jobsInput = document.getElementById('jobs-search-input');
+          if (jobsInput) {
+            jobsInput.focus();
+            jobsInput.select();
+          }
+        }, 60);
+      }
+    }
   });
 
   renderApp();

@@ -42,18 +42,18 @@ export function renderReportModal(state) {
 
   return `
     <div class="modal-overlay" id="report-modal-overlay" style="z-index: 9000;">
-      <div class="modal-sheet" id="report-modal-sheet" style="max-height: 90%;">
+      <div class="modal-sheet" id="report-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="report-modal-title" style="max-height: 90%;">
         <div class="modal-grabber"></div>
 
         <!-- Header -->
         <div class="modal-header">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span class="badge badge-danger">🛡️ Vertraulich Melden</span>
-            <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--qj-text-main);">
+            <h3 id="report-modal-title" style="font-size: 1.05rem; font-weight: 800; color: var(--qj-text-main);">
               Sicherheitsmeldung
             </h3>
           </div>
-          <button id="btn-close-report" style="font-size: 1.25rem; color: #64748b; padding: 4px;">
+          <button id="btn-close-report" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px;">
             ✕
           </button>
         </div>

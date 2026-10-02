@@ -19,7 +19,7 @@ export function renderJobDetailModal(jobId, state) {
 
   return `
     <div class="modal-overlay" id="job-detail-overlay">
-      <div class="modal-sheet" id="job-detail-sheet" style="height: 88%;">
+      <div class="modal-sheet" id="job-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="job-detail-title" style="height: 88%;">
         <div class="modal-grabber"></div>
 
         <!-- Header -->
@@ -41,7 +41,7 @@ export function renderJobDetailModal(jobId, state) {
             <button id="btn-report-job" data-job-id="${job.id}" title="Problem oder Verstoß melden" style="color: #ef4444; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border: 1px solid #fecaca; border-radius: 6px; background: #fef2f2; cursor: pointer; display: flex; align-items: center; gap: 3px;">
               <span>🚩</span><span>Melden</span>
             </button>
-            <button id="btn-close-detail" style="font-size: 1.25rem; color: #64748b; padding: 4px;">
+            <button id="btn-close-detail" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px;">
               ✕
             </button>
           </div>
@@ -59,7 +59,7 @@ export function renderJobDetailModal(jobId, state) {
                 ⏱️ ${job.estimatedDuration}
               </span>
             </div>
-            <h2 style="font-size: 1.25rem; font-weight: 800; margin-top: 0.4rem; color: var(--qj-text-main); line-height: 1.3;">
+            <h2 id="job-detail-title" style="font-size: 1.25rem; font-weight: 800; margin-top: 0.4rem; color: var(--qj-text-main); line-height: 1.3;">
               ${escapeHTML(job.title)}
             </h2>
           </div>

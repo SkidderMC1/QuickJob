@@ -15,14 +15,14 @@ export function renderGuardianModal(state) {
 
   return `
     <div class="modal-backdrop" id="guardian-modal-backdrop" style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 1rem;">
-      <div class="modal-card" style="background: #fff; width: 100%; max-width: 540px; max-height: 88vh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="guardian-modal-title" style="background: #fff; width: 100%; max-width: 540px; max-height: 88vh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
         
         <!-- Header -->
         <div style="padding: 1.25rem; border-bottom: 1px solid #e2e8f0; background: #faf5ff; display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; align-items: center; gap: 0.6rem;">
             <span style="font-size: 1.4rem;">👨‍👩‍👧</span>
             <div>
-              <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #581c87;">
+              <h3 id="guardian-modal-title" style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #581c87;">
                 Eltern-Einwilligung & Jugendschutz
               </h3>
               <div style="font-size: 0.72rem; color: #7e22ce; font-weight: 600;">
@@ -30,7 +30,7 @@ export function renderGuardianModal(state) {
               </div>
             </div>
           </div>
-          <button id="btn-close-guardian-modal" class="btn btn-ghost" style="font-size: 1.35rem; padding: 0.25rem; line-height: 1;">✕</button>
+          <button id="btn-close-guardian-modal" aria-label="Schließen" class="btn btn-ghost" style="font-size: 1.35rem; padding: 0.25rem; line-height: 1;">✕</button>
         </div>
 
         <!-- Body -->

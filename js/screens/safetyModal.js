@@ -8,15 +8,15 @@ export function renderSafetyModal(state) {
 
   return `
     <div class="modal-overlay" id="safety-modal-overlay">
-      <div class="modal-sheet" id="safety-modal-sheet" style="height: 85%;">
+      <div class="modal-sheet" id="safety-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="safety-modal-title" style="height: 85%;">
         <div class="modal-grabber"></div>
 
         <div class="modal-header">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span style="font-size: 1.25rem;">🛡️</span>
-            <h3 style="font-size: 1.05rem; font-weight: 800;">Trust, Safety & Minor Protection</h3>
+            <h3 id="safety-modal-title" style="font-size: 1.05rem; font-weight: 800;">Trust, Safety & Minor Protection</h3>
           </div>
-          <button id="btn-close-safety" style="font-size: 1.25rem; color: #64748b; padding: 4px;">✕</button>
+          <button id="btn-close-safety" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px;">✕</button>
         </div>
 
         <div class="modal-body">

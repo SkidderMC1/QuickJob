@@ -104,12 +104,12 @@ export function attachHomeScreenEvents() {
 
   const searchInput = document.getElementById('home-search-input');
   if (searchInput) {
-    // Debounce: Only search if user pauses input for 3 seconds
+    // Fast 200ms debounce
     searchInput.addEventListener('input', (e) => {
       if (homeSearchTimer) clearTimeout(homeSearchTimer);
       homeSearchTimer = setTimeout(() => {
         executeHomeSearch(e.target.value);
-      }, 3000);
+      }, 200);
     });
 
     // Immediate search when pressing Enter

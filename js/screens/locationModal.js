@@ -8,7 +8,7 @@ export function renderLocationModal(state) {
 
   return `
     <div class="modal-overlay" id="location-modal-overlay">
-      <div class="modal-sheet" id="location-modal-sheet" style="max-height: 85%;">
+      <div class="modal-sheet" id="location-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="location-modal-title" style="max-height: 85%;">
         <div class="modal-grabber"></div>
 
         <!-- Header -->
@@ -18,7 +18,7 @@ export function renderLocationModal(state) {
               📍
             </div>
             <div>
-              <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
+              <h2 id="location-modal-title" style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
                 Standort für Umgebungskarte nutzen?
               </h2>
               <span style="font-size: 0.72rem; color: var(--qj-text-muted);">
@@ -26,7 +26,7 @@ export function renderLocationModal(state) {
               </span>
             </div>
           </div>
-          <button id="btn-close-location-modal" style="font-size: 1.25rem; color: #64748b; padding: 4px; border: none; background: transparent; cursor: pointer;">
+          <button id="btn-close-location-modal" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px; border: none; background: transparent; cursor: pointer;">
             ✕
           </button>
         </div>

@@ -15,7 +15,7 @@ export function renderProofPhotoModal(state) {
 
   return `
     <div class="modal-overlay" id="proof-photo-modal-overlay">
-      <div class="modal-sheet" id="proof-photo-modal-sheet" style="max-height: 90%;">
+      <div class="modal-sheet" id="proof-photo-modal-sheet" role="dialog" aria-modal="true" aria-labelledby="proof-modal-title" style="max-height: 90%;">
         <div class="modal-grabber"></div>
 
         <!-- Header -->
@@ -25,7 +25,7 @@ export function renderProofPhotoModal(state) {
               📸
             </div>
             <div>
-              <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
+              <h2 id="proof-modal-title" style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
                 Vorher-/Nachher-Nachweis
               </h2>
               <span style="font-size: 0.72rem; color: var(--qj-text-muted);">
@@ -33,7 +33,7 @@ export function renderProofPhotoModal(state) {
               </span>
             </div>
           </div>
-          <button id="btn-close-proof-photo" style="font-size: 1.25rem; color: #64748b; padding: 4px; border: none; background: transparent; cursor: pointer;">
+          <button id="btn-close-proof-photo" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px; border: none; background: transparent; cursor: pointer;">
             ✕
           </button>
         </div>
