@@ -23,8 +23,8 @@ export function renderProfileScreen(state) {
 
   return `
     <div class="screen-container" id="screen-profile">
-      <!-- Profile Header Card -->
-      <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.25rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.9rem;">
+      <!-- Profile Header Card (High-Craft Surface) -->
+      <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: 18px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 6px 18px -4px rgba(15, 23, 42, 0.05); display: flex; flex-direction: column; gap: 0.9rem;">
         <div style="display: flex; align-items: center; gap: 0.85rem;">
           <div style="position: relative; flex-shrink: 0;">
             ${(user.avatarUrl || user.profilePicture) ? `
@@ -32,12 +32,12 @@ export function renderProfileScreen(state) {
                 src="${escapeHTML(user.avatarUrl || user.profilePicture)}" 
                 alt="${escapeHTML(user.name)}" 
                 id="profile-avatar-img"
-                style="width: 62px; height: 62px; border-radius: 50%; object-fit: cover; border: 2.5px solid #0091ff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"
+                style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2.5px solid #0070f3; box-shadow: 0 4px 12px rgba(0, 112, 243, 0.25);"
               />
             ` : `
               <div 
                 id="profile-avatar-letter"
-                style="width: 62px; height: 62px; border-radius: 50%; background: #0091ff; color: var(--qj-text-inverse); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 800; border: 2.5px solid var(--qj-card); box-shadow: 0 4px 10px rgba(0, 145, 255, 0.25);"
+                style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #0070f3 0%, #005bb5 100%); color: var(--qj-text-inverse); display: flex; align-items: center; justify-content: center; font-size: 1.65rem; font-weight: 850; border: 2.5px solid #ffffff; box-shadow: 0 4px 12px rgba(0, 112, 243, 0.3);"
               >
                 ${(user.name || 'U').charAt(0).toUpperCase()}
               </div>
@@ -45,7 +45,7 @@ export function renderProfileScreen(state) {
             <label 
               for="profile-avatar-file-input" 
               id="profile-avatar-change-btn" 
-              style="position: absolute; bottom: -2px; right: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--qj-card); border: 1.5px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15);" 
+              style="position: absolute; bottom: -2px; right: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--qj-card); border: 1.5px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15); transition: transform 0.15s ease;" 
               title="Profilbild ändern"
             >
               📷
@@ -55,17 +55,17 @@ export function renderProfileScreen(state) {
 
           <div style="flex: 1; min-width: 0;">
             <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
-              <h1 style="font-size: 1.2rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
+              <h1 style="font-size: 1.25rem; font-weight: 850; color: var(--qj-text-main); margin: 0; letter-spacing: -0.02em;">
                 ${escapeHTML(user.name)}
               </h1>
-              ${user.isIdentityVerified ? '<span title="Ausweis verifiziert" style="color: #0091ff; font-weight: 800; font-size: 1.15rem;">✓</span>' : ''}
+              ${user.isIdentityVerified ? '<span title="Ausweis verifiziert" style="color: #0070f3; font-weight: 800; font-size: 1.15rem;">✓</span>' : ''}
               ${user.isCompany ? '<span title="Verified Company">🏢</span>' : ''}
               ${user.role === 'admin' ? '<span class="badge" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-weight: 800; font-size: 0.7rem;">ADMINISTRATOR</span>' : ''}
             </div>
-            <div style="font-size: 0.78rem; color: var(--qj-text-muted);">
+            <div style="font-size: 0.78rem; color: var(--qj-text-muted); margin-top: 1px;">
               ${user.handle} · 📍 ${user.locationApprox || 'Wuppertal'}
             </div>
-            <div style="margin-top: 4px; display: flex; gap: 0.35rem; flex-wrap: wrap;">
+            <div style="margin-top: 5px; display: flex; gap: 0.35rem; flex-wrap: wrap;">
               <span class="badge ${isMinor ? 'badge-purple' : 'badge-info'}" id="profile-age-category-badge">
                 ${user.ageCategoryLabel}
               </span>
@@ -94,44 +94,44 @@ export function renderProfileScreen(state) {
           </div>
         ` : ''}
 
-        <p style="font-size: 0.85rem; color: var(--qj-text-muted); line-height: 1.4;">
+        <p style="font-size: 0.85rem; color: var(--qj-text-muted); line-height: 1.45;">
           ${escapeHTML(user.bio || 'Active EasyJob local microjob community member.')}
         </p>
 
-        <!-- Stats Grid -->
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; background: var(--qj-surface-muted); border-radius: var(--qj-radius-md); padding: 0.75rem 0.5rem; text-align: center;">
+        <!-- Stats Grid (Frosted Surface with Tabular Figures) -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.35rem; background: var(--qj-surface-muted); border: 1px solid var(--qj-border); border-radius: 14px; padding: 0.8rem 0.45rem; text-align: center;">
           <div>
-            <div style="font-size: 1.15rem; font-weight: 800; color: #d97706;">
+            <div style="font-size: 1.18rem; font-weight: 850; color: #d97706; font-feature-settings: 'tnum';">
               ★ ${user.rating || '5.0'}
             </div>
-            <div style="font-size: 0.7rem; color: var(--qj-text-subtle); font-weight: 600;">
+            <div style="font-size: 0.68rem; color: var(--qj-text-muted); font-weight: 650; text-transform: uppercase; letter-spacing: 0.02em; margin-top: 1px;">
               ${user.ratingCount || 1} Reviews
             </div>
           </div>
 
           <div>
-            <div style="font-size: 1.15rem; font-weight: 800; color: var(--qj-primary);">
+            <div style="font-size: 1.18rem; font-weight: 850; color: var(--qj-primary); font-feature-settings: 'tnum';">
               ${user.completedJobs || 0}
             </div>
-            <div style="font-size: 0.7rem; color: var(--qj-text-subtle); font-weight: 600;">
+            <div style="font-size: 0.68rem; color: var(--qj-text-muted); font-weight: 650; text-transform: uppercase; letter-spacing: 0.02em; margin-top: 1px;">
               Completed
             </div>
           </div>
 
           <div>
-            <div style="font-size: 1.15rem; font-weight: 800; color: var(--qj-text-main);">
+            <div style="font-size: 1.18rem; font-weight: 850; color: var(--qj-text-main); font-feature-settings: 'tnum';">
               ${user.reliability || 98}%
             </div>
-            <div style="font-size: 0.7rem; color: var(--qj-text-subtle); font-weight: 600;">
+            <div style="font-size: 0.68rem; color: var(--qj-text-muted); font-weight: 650; text-transform: uppercase; letter-spacing: 0.02em; margin-top: 1px;">
               Reliability
             </div>
           </div>
 
           <div>
-            <div style="font-size: 1.15rem; font-weight: 800; color: #eab308;" id="profile-saved-count-stat">
+            <div style="font-size: 1.18rem; font-weight: 850; color: #d97706; font-feature-settings: 'tnum';" id="profile-saved-count-stat">
               ${savedJobs.length}
             </div>
-            <div style="font-size: 0.7rem; color: var(--qj-text-subtle); font-weight: 600;">
+            <div style="font-size: 0.68rem; color: var(--qj-text-muted); font-weight: 650; text-transform: uppercase; letter-spacing: 0.02em; margin-top: 1px;">
               Gemerkt
             </div>
           </div>

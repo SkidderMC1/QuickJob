@@ -81,10 +81,10 @@ export function renderConsentBanner(state) {
     `;
   }
 
-  // Floating Initial Banner
+  // Floating Initial Banner (Floating Glass Card)
   return `
-    <div id="tdddg-consent-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(12px); border-top: 1px solid #e2e8f0; box-shadow: 0 -8px 30px rgba(0,0,0,0.12); z-index: 8500; padding: 1rem 1.25rem;">
-      <div style="max-width: 600px; margin: 0 auto;">
+    <div id="tdddg-consent-banner" style="position: fixed; bottom: 16px; left: 16px; right: 16px; max-width: 520px; margin: 0 auto; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(226, 232, 240, 0.9); border-radius: 20px; box-shadow: 0 16px 40px -6px rgba(15, 23, 42, 0.22), 0 2px 8px rgba(0,0,0,0.06); z-index: 8500; padding: 1rem 1.15rem;">
+      <div style="max-width: 100%; margin: 0 auto;">
         <div style="display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem;">
           <span style="font-size: 1.35rem;">🍪</span>
           <div>

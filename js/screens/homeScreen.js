@@ -23,10 +23,10 @@ export function renderHomeScreen(state) {
   return `
     <div class="screen-container home-screen-container" id="screen-home">
       <!-- 1. Compact Header / Hero Greeting (Decluttered) -->
-      <section class="home-greeting-section" style="margin-bottom: -0.35rem;">
+      <section class="home-greeting-section" style="margin-bottom: -0.15rem;">
         <div>
-          <span class="home-greeting-sub" style="font-size: 0.76rem; color: var(--qj-text-muted); font-weight: 600;">Welcome back,</span>
-          <h1 class="home-greeting" style="font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; margin-top: 1px;">${escapeHTML(user.name || 'Member')} 👋</h1>
+          <span class="home-greeting-sub" style="font-size: 0.76rem; color: var(--qj-text-muted); font-weight: 650; text-transform: uppercase; letter-spacing: 0.04em;">Willkommen zurück,</span>
+          <h1 class="home-greeting" style="font-size: 1.35rem; font-weight: 850; letter-spacing: -0.03em; margin-top: 2px; color: var(--qj-text-main);">${escapeHTML(user.name || 'Member')} 👋</h1>
         </div>
       </section>
 

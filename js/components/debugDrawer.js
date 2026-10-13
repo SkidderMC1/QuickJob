@@ -13,13 +13,12 @@ export function renderDebugDrawer(state) {
   const displayMode = state.displayMode;
 
   return `
-    <!-- Discreet Non-Intrusive Debug Trigger (Anti-Pattern #25 Remediation) -->
+    <!-- Discreet Non-Intrusive Debug Trigger (Anti-Pattern #25 Remediation: Hidden from standard viewport) -->
     <div 
       id="debug-floating-trigger"
-      style="position: fixed; bottom: calc(60px + env(safe-area-inset-bottom, 0px)); right: 8px; z-index: 9999; display: flex; align-items: center; gap: 3px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #cbd5e1; padding: 2px 7px; border-radius: 9999px; font-size: 0.65rem; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.12); cursor: pointer; user-select: none; opacity: 0.35; transition: opacity 0.2s ease, transform 0.15s ease;"
-      onmouseenter="this.style.opacity='1'; this.style.transform='scale(1.04)';"
-      onmouseleave="this.style.opacity='0.35'; this.style.transform='scale(1)';"
+      style="display: none;"
       title="Open Developer & Tester Tools"
+      aria-hidden="true"
     >
       <span style="font-size: 0.75rem;">🛠️</span>
       <span>Debug</span>

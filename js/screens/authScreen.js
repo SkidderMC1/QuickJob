@@ -9,21 +9,21 @@ export function renderAuthScreen(state) {
   const mode = state.authViewMode || 'login'; // 'login' | 'register' | 'forgot_password' | 'reset_password' | 'verify_email'
 
   return `
-    <div class="auth-screen-container" style="padding: 1.25rem 1rem; max-width: 480px; margin: 0 auto;">
-      <!-- Auth Card Shell -->
-      <div style="background: var(--qj-card); border: 1.5px solid var(--qj-border, #e2e8f0); border-radius: 20px; padding: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.06);">
+    <div class="auth-screen-container">
+      <!-- Auth Card Shell (Elevated Surface) -->
+      <div class="auth-card">
         
         <!-- Brand Header -->
-        <div style="text-align: center; margin-bottom: 1.5rem;">
-          <div style="font-size: 2.2rem; line-height: 1; margin-bottom: 0.35rem;">⚡</div>
-          <h1 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0;">
+        <div class="auth-header">
+          <div class="auth-logo-badge">⚡</div>
+          <h1 class="auth-title">
             ${mode === 'login' ? 'Willkommen zurück' :
               mode === 'register' ? 'Konto erstellen' :
               mode === 'forgot_password' ? 'Passwort vergessen?' :
               mode === 'reset_password' ? 'Neues Passwort festlegen' :
               'E-Mail bestätigen'}
           </h1>
-          <p style="font-size: 0.8rem; color: #64748b; margin: 0.25rem 0 0 0;">
+          <p class="auth-subtitle">
             ${mode === 'login' ? 'Melden Sie sich an, um Microjobs auszuführen oder zu inserieren.' :
               mode === 'register' ? 'Registrieren Sie sich für sichere Nachbarschaftshilfe.' :
               mode === 'forgot_password' ? 'Geben Sie Ihre E-Mail-Adresse ein für einen sicheren Reset-Link.' :
@@ -34,55 +34,55 @@ export function renderAuthScreen(state) {
 
         <!-- MODE 1: LOGIN -->
         ${mode === 'login' ? `
-          <form id="form-auth-login" style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <form id="form-auth-login" class="auth-form">
             <div>
-              <label for="login-email" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
+              <label for="login-email" class="auth-label">
                 E-Mail-Adresse
               </label>
-              <input type="email" id="login-email" class="form-input" placeholder="name@beispiel.de" required style="width: 100%; padding: 0.65rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.88rem;" />
+              <input type="email" id="login-email" class="form-input auth-input" placeholder="name@beispiel.de" required />
             </div>
 
             <div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-                <label for="login-password" style="font-size: 0.78rem; font-weight: 700; color: #334155;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                <label for="login-password" class="auth-label" style="margin-bottom: 0;">
                   Passwort
                 </label>
-                <button type="button" id="btn-to-forgot-password" class="btn btn-link" style="font-size: 0.74rem; color: #6366f1; text-decoration: underline; padding: 0;">
+                <button type="button" id="btn-to-forgot-password" class="auth-link">
                   Passwort vergessen?
                 </button>
               </div>
-              <input type="password" id="login-password" class="form-input" placeholder="••••••••" required style="width: 100%; padding: 0.65rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.88rem;" />
+              <input type="password" id="login-password" class="form-input auth-input" placeholder="••••••••" required />
             </div>
 
             <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.1rem;">
-              <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: #475569; cursor: pointer;">
+              <label style="display: flex; align-items: center; gap: 0.45rem; font-size: 0.8rem; color: #475569; cursor: pointer; font-weight: 550;">
                 <input type="checkbox" id="login-remember" checked />
                 <span>Angemeldet bleiben</span>
               </label>
             </div>
 
-            <button type="submit" id="btn-auth-submit-login" class="btn btn-primary" style="font-weight: 700; padding: 0.75rem; margin-top: 0.35rem; width: 100%;">
+            <button type="submit" id="btn-auth-submit-login" class="btn btn-primary" style="font-weight: 750; padding: 0.78rem; margin-top: 0.4rem; width: 100%; border-radius: 12px;">
               Anmelden
             </button>
           </form>
 
           <!-- Quick Persona Pills for Tester Convenience (non-production only) -->
           ${store.isNonProductionEnvironment() ? `
-          <div style="margin-top: 1.25rem; border-top: 1px solid #f1f5f9; padding-top: 1rem; text-align: center;">
-            <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 800; color: #94a3b8; margin-bottom: 0.5rem;">
+          <div style="margin-top: 1.25rem; border-top: 1px solid var(--qj-border); padding-top: 1rem; text-align: center;">
+            <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 800; color: var(--qj-text-subtle); margin-bottom: 0.5rem;">
               Test-Zugangsdaten (1-Klick)
             </div>
             <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: center;">
-              <button class="btn btn-outline btn-sm btn-quick-login" data-email="jasper@quickjob.local" style="font-size: 0.72rem; padding: 0.3rem 0.5rem;">
+              <button class="btn btn-outline btn-sm btn-quick-login auth-quick-pill" data-email="jasper@quickjob.local">
                 Jasper (16 J.)
               </button>
-              <button class="btn btn-outline btn-sm btn-quick-login" data-email="sophia@quickjob.local" style="font-size: 0.72rem; padding: 0.3rem 0.5rem;">
+              <button class="btn btn-outline btn-sm btn-quick-login auth-quick-pill" data-email="sophia@quickjob.local">
                 Sophia (22 J.)
               </button>
-              <button class="btn btn-outline btn-sm btn-quick-login" data-email="marcus@quickjob.local" style="font-size: 0.72rem; padding: 0.3rem 0.5rem;">
+              <button class="btn btn-outline btn-sm btn-quick-login auth-quick-pill" data-email="marcus@quickjob.local">
                 Dr. Marcus (48 J.)
               </button>
-              <button class="btn btn-outline btn-sm btn-quick-login" data-email="admin@quickjob.local" style="font-size: 0.72rem; padding: 0.3rem 0.5rem; background: #fef2f2; border-color: #fca5a5; color: #991b1b; font-weight: 700;">
+              <button class="btn btn-outline btn-sm btn-quick-login auth-quick-pill" data-email="admin@quickjob.local" style="background: #fef2f2; border-color: #fca5a5; color: #991b1b; font-weight: 700;">
                 🛡️ Admin
               </button>
             </div>
@@ -90,9 +90,9 @@ export function renderAuthScreen(state) {
           ` : ''}
 
           <!-- Switch to Register -->
-          <div style="text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: #64748b;">
+          <div style="text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: var(--qj-text-muted);">
             Noch kein Konto? 
-            <button id="btn-to-register" class="btn btn-link" style="font-size: 0.8rem; font-weight: 700; color: #6366f1; text-decoration: underline; padding: 0 0 0 0.25rem;">
+            <button id="btn-to-register" class="auth-link" style="padding-left: 0.25rem;">
               Jetzt kostenlos registrieren
             </button>
           </div>
@@ -213,7 +213,7 @@ export function renderAuthScreen(state) {
               <label style="display: flex; align-items: flex-start; gap: 0.55rem; cursor: pointer;">
                 <input type="checkbox" id="reg-check-agb" style="margin-top: 0.2rem; transform: scale(1.15);" />
                 <span style="font-size: 0.76rem; color: #1e293b; line-height: 1.45;">
-                  Ich habe die <button type="button" class="btn-link" id="link-read-agb" style="padding: 0; font-weight: 700; color: #6366f1; text-decoration: underline;">AGB (Version 1.1.0)</button> sowie die <button type="button" class="btn-link" id="link-read-privacy" style="padding: 0; font-weight: 700; color: #6366f1; text-decoration: underline;">Datenschutzerklärung</button> zur Kenntnis genommen und stimme ihnen verbindlich zu. *
+                  Ich habe die <button type="button" class="btn-link" id="link-read-agb" style="padding: 0; font-weight: 700; color: var(--qj-primary); text-decoration: underline;">AGB (Version 1.1.0)</button> sowie die <button type="button" class="btn-link" id="link-read-privacy" style="padding: 0; font-weight: 700; color: var(--qj-primary); text-decoration: underline;">Datenschutzerklärung</button> zur Kenntnis genommen und stimme ihnen verbindlich zu. *
                 </span>
               </label>
             </div>
@@ -225,7 +225,7 @@ export function renderAuthScreen(state) {
 
           <div style="text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: #64748b;">
             Bereits registriert? 
-            <button id="btn-to-login" class="btn btn-link" style="font-size: 0.8rem; font-weight: 700; color: #6366f1; text-decoration: underline; padding: 0 0 0 0.25rem;">
+            <button id="btn-to-login" class="btn btn-link" style="font-size: 0.8rem; font-weight: 700; color: var(--qj-primary); text-decoration: underline; padding: 0 0 0 0.25rem;">
               Hier anmelden
             </button>
           </div>
@@ -247,7 +247,7 @@ export function renderAuthScreen(state) {
           </form>
 
           <div style="text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: #64748b;">
-            <button id="btn-to-login-from-forgot" class="btn btn-link" style="font-size: 0.8rem; font-weight: 700; color: #6366f1; text-decoration: underline; padding: 0;">
+            <button id="btn-to-login-from-forgot" class="btn btn-link" style="font-size: 0.8rem; font-weight: 700; color: var(--qj-primary); text-decoration: underline; padding: 0;">
               ← Zurück zur Anmeldung
             </button>
           </div>
@@ -283,7 +283,7 @@ export function renderAuthScreen(state) {
           </form>
 
           <div style="text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: #64748b;">
-            <button id="btn-to-login-from-reset" class="btn btn-link" style="font-size: 0.8rem; font-weight: 700; color: #6366f1; text-decoration: underline; padding: 0;">
+            <button id="btn-to-login-from-reset" class="btn btn-link" style="font-size: 0.8rem; font-weight: 700; color: var(--qj-primary); text-decoration: underline; padding: 0;">
               ← Zurück zur Anmeldung
             </button>
           </div>
@@ -322,7 +322,7 @@ export function renderAuthScreen(state) {
             </div>
 
             <div style="text-align: center; margin-top: 0.5rem;">
-              <button id="btn-to-login-from-verify" class="btn btn-link" style="font-size: 0.8rem; font-weight: 700; color: #6366f1; text-decoration: underline; padding: 0;">
+              <button id="btn-to-login-from-verify" class="btn btn-link" style="font-size: 0.8rem; font-weight: 700; color: var(--qj-primary); text-decoration: underline; padding: 0;">
                 ← Zurück zur Anmeldung
               </button>
             </div>

@@ -19,7 +19,7 @@ export function renderHeader(state) {
           <button 
             id="btn-header-profile"
             class="header-avatar-btn"
-            style="display: flex; align-items: center; justify-content: center; background: none; border: none; padding: 2px; cursor: pointer; border-radius: 50%;"
+            style="display: flex; align-items: center; justify-content: center; background: none; border: none; padding: 2px; cursor: pointer; border-radius: 50%; transition: transform 0.15s ease;"
             title="Mein Profil (${escapeHTML(user.name)})"
           >
             ${(user.avatarUrl || user.profilePicture) ? `
@@ -27,12 +27,12 @@ export function renderHeader(state) {
                 src="${escapeHTML(user.avatarUrl || user.profilePicture)}" 
                 alt="${escapeHTML(user.name)}" 
                 id="header-user-avatar-img"
-                style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #0091ff; box-shadow: 0 2px 6px rgba(0, 145, 255, 0.25);"
+                style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #0070f3; box-shadow: 0 2px 8px rgba(0, 112, 243, 0.28);"
               />
             ` : `
               <div 
                 id="header-user-avatar-letter"
-                style="width: 36px; height: 36px; border-radius: 50%; background: #0091ff; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 800; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0, 145, 255, 0.25);"
+                style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #0070f3 0%, #005bb5 100%); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 850; border: 2px solid #ffffff; box-shadow: 0 2px 8px rgba(0, 112, 243, 0.32);"
               >
                 ${(user.name || 'U').charAt(0).toUpperCase()}
               </div>

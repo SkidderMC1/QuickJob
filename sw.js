@@ -3,7 +3,7 @@
  * Provides offline support, caching, and instant startup
  */
 
-const CACHE_NAME = 'easyjob-v9';
+const CACHE_NAME = 'easyjob-v11';
 
 const ASSETS_TO_CACHE = [
   './',
