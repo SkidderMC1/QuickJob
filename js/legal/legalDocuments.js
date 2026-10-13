@@ -1,5 +1,5 @@
 /**
- * QuickJob Versioned Legal Documents Architecture
+ * EasyJob Versioned Legal Documents Architecture
  * Provides immutable, versioned texts for AGB, Privacy Policy, Impressum (§ 5 DDG),
  * Consumer Cancellation Policy (§§ 312g, 355 BGB), and Youth Protection Charter.
  *
@@ -21,31 +21,31 @@ export const LEGAL_DOCUMENTS = {
     version: '1.1.0',
     effectiveFrom: '2026-09-22',
     lawyerReviewStatus: 'DRAFT_REQUIRING_QUALIFIED_LAWYER_REVIEW',
-    summary: 'Vertragsbedingungen für die Vermittlung und Durchführung von Nachbarschafts-Microjobs über QuickJob.',
+    summary: 'Vertragsbedingungen für die Vermittlung und Durchführung von Nachbarschafts-Microjobs über EasyJob.',
     content: `
-# Allgemeine Geschäftsbedingungen (AGB) der Plattform QuickJob
+# Allgemeine Geschäftsbedingungen (AGB) der Plattform EasyJob
 **Version:** 1.1.0 (Stand: 22. September 2026)  
 *Status: Technischer Entwurf — Erfordert anwaltliche Endprüfung durch Fachanwalt für IT- und Arbeitsrecht.*
 
 ## 1. Geltungsbereich & Vertragsgegenstand
-1.1 Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für die Nutzung der Plattform QuickJob (Webanwendung, PWA und mobile Ansichten) durch registrierte Nutzer (Auftraggeber und Auftragnehmer/Helfer).  
-1.2 QuickJob ist eine Vermittlungsplattform, die private Nachbarschaftshilfe, Miniaufträge und Hilfstätigkeiten zwischen Nutzern koordiniert. Soweit nicht ausdrücklich anders vereinbart, kommt der eigentliche Dienst- oder Werkvertrag über die zu erbringende Leistung unmittelbar zwischen dem Auftraggeber und dem Helfer zustande.
+1.1 Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für die Nutzung der Plattform EasyJob (Webanwendung, PWA und mobile Ansichten) durch registrierte Nutzer (Auftraggeber und Auftragnehmer/Helfer).  
+1.2 EasyJob ist eine Vermittlungsplattform, die private Nachbarschaftshilfe, Miniaufträge und Hilfstätigkeiten zwischen Nutzern koordiniert. Soweit nicht ausdrücklich anders vereinbart, kommt der eigentliche Dienst- oder Werkvertrag über die zu erbringende Leistung unmittelbar zwischen dem Auftraggeber und dem Helfer zustande.
 
 ## 2. Registrierung & Minderjährigenschutz (§§ 106 ff., 113 BGB; JArbSchG)
 2.1 Die Registrierung als Helfer ist ab vollendetem 13. Lebensjahr zulässig. Für Personen unter 13 Jahren gilt ein ausnahmsloses Nutzungsverbot (§ 5 Abs. 1 JArbSchG).  
 2.2 Minderjährige Nutzer (13 bis 17 Jahre) bedürfen zur wirksamen Registrierung und Annahme von Aufträgen der ausdrücklichen Einwilligung ihrer Personensorgeberechtigten (gesetzlichen Vertreter) gemäß §§ 107, 113 BGB.  
-2.3 QuickJob behält sich vor, Nachweise über die Einwilligung der Personensorgeberechtigten anzufordern und Konten ohne verifizierte Zustimmung für Auftragsannahmen zu sperren.
+2.3 EasyJob behält sich vor, Nachweise über die Einwilligung der Personensorgeberechtigten anzufordern und Konten ohne verifizierte Zustimmung für Auftragsannahmen zu sperren.
 
 ## 3. Zulässige Tätigkeiten & Jugendarbeitsschutz
 3.1 Für Minderjährige sind Tätigkeiten, die den Bestimmungen des Jugendarbeitsschutzgesetzes (JArbSchG) oder der Kinderarbeitsschutzverordnung (KindArbSchV) widersprechen, streng untersagt.  
 3.2 Insbesondere sind gefährliche Arbeiten (§ 22 JArbSchG), Arbeiten mit schweren Lasten, giftigen Stoffen, gefährlichen Werkzeugen (z. B. Motorsägen), Höhenarbeiten sowie Arbeiten nach 20:00 Uhr (bzw. nach 18:00 Uhr für Kinder von 13–14 Jahren) für Minderjährige gesperrt.
 
 ## 4. Zahlungsabwicklung & Treuhand (Escrow)
-4.1 Zahlungen zwischen Auftraggebern und Helfern werden über einen lizenzierten Zahlungsdienstleister (z. B. BaFin-reguliertes E-Geld-Institut / Stripe Connect) treuhänderisch abgewickelt. QuickJob selbst verwahrt keine Fremdgelder ohne aufsichtsrechtliche Genehmigung (§ 1 ZAG).  
+4.1 Zahlungen zwischen Auftraggebern und Helfern werden über einen lizenzierten Zahlungsdienstleister (z. B. BaFin-reguliertes E-Geld-Institut / Stripe Connect) treuhänderisch abgewickelt. EasyJob selbst verwahrt keine Fremdgelder ohne aufsichtsrechtliche Genehmigung (§ 1 ZAG).  
 4.2 Der vereinbarte Vergütungsbetrag wird bei Auftragsvergabe im Treuhand-Wallet reserviert und nach Bestätigung der ordnungsgemäßen Ausführung durch den Auftraggeber freigegeben.
 
 ## 5. Haftung & Gewährleistung (§§ 307 ff. BGB)
-5.1 QuickJob haftet für Vorsatz und grobe Fahrlässigkeit uneingeschränkt. Für leichte Fahrlässigkeit haftet QuickJob nur bei Verletzung wesentlicher Vertragspflichten (Kardinalpflichten), beschränkt auf den vertragstypisch vorhersehbaren Schaden.  
+5.1 EasyJob haftet für Vorsatz und grobe Fahrlässigkeit uneingeschränkt. Für leichte Fahrlässigkeit haftet EasyJob nur bei Verletzung wesentlicher Vertragspflichten (Kardinalpflichten), beschränkt auf den vertragstypisch vorhersehbaren Schaden.  
 5.2 Für die tatsächliche Durchführung und Mangelfreiheit der vermittelten Hilfstätigkeiten haften die Vertragsparteien (Auftraggeber und Helfer) nach den gesetzlichen Bestimmungen des BGB.
 
 ## 6. Schlussbestimmungen
@@ -62,12 +62,12 @@ export const LEGAL_DOCUMENTS = {
     lawyerReviewStatus: 'DSGVO_COMPLIANT_ARCHITECTURE',
     summary: 'Informationen über Art, Umfang und Zwecke der Erhebung und Verwendung personenbezogener Daten gem. Art. 13/14 DSGVO.',
     content: `
-# Datenschutzerklärung der Plattform QuickJob
+# Datenschutzerklärung der Plattform EasyJob
 **Version:** 1.1.0 (Stand: 22. September 2026)
 
 ## 1. Verantwortlicher
 Verantwortliche Stelle im Sinne der Datenschutz-Grundverordnung (DSGVO) und des Bundesdatenschutzgesetzes (BDSG):  
-**[LEGAL_CONFIGURATION_REQUIRED: Plattformbetreiber / QuickJob Betreibergesellschaft]**  
+**[LEGAL_CONFIGURATION_REQUIRED: Plattformbetreiber / EasyJob Betreibergesellschaft]**  
 E-Mail: datenschutz@quickjob.local  
 Datenschutzbeauftragter: [LEGAL_CONFIGURATION_REQUIRED: Benennung DPO falls gesetzlich erforderlich gem. § 38 BDSG]
 
@@ -105,7 +105,7 @@ Jeder Nutzer hat das Recht auf:
 Angaben gemäß § 5 Digitale-Dienste-Gesetz (DDG):
 
 ### Diensteanbieter
-**[LEGAL_CONFIGURATION_REQUIRED: QuickJob Plattform Betreibergesellschaft mbH i.G.]**  
+**[LEGAL_CONFIGURATION_REQUIRED: EasyJob Plattform Betreibergesellschaft mbH i.G.]**  
 Musterstraße 42  
 42103 Wuppertal  
 Deutschland
@@ -160,14 +160,14 @@ Das Widerrufsrecht erlischt bei einem Vertrag zur Erbringung von Dienstleistunge
 
   YOUTH_PROTECTION: {
     id: 'YOUTH_PROTECTION',
-    title: 'QuickJob Jugendschutz-Charta (JArbSchG / KindArbSchV)',
+    title: 'EasyJob Jugendschutz-Charta (JArbSchG / KindArbSchV)',
     version: '1.0.0',
     effectiveFrom: '2026-09-22',
     lawyerReviewStatus: 'COMPLIANCE_ENFORCED',
-    summary: 'Verbindliche Schutzregeln für Kinder und Jugendliche auf der Plattform QuickJob.',
+    summary: 'Verbindliche Schutzregeln für Kinder und Jugendliche auf der Plattform EasyJob.',
     content: `
-# QuickJob Jugendschutz-Charta
-Sicherheit, Gesundheit und gesetzlicher Schutz junger Menschen stehen bei QuickJob an oberster Stelle.
+# EasyJob Jugendschutz-Charta
+Sicherheit, Gesundheit und gesetzlicher Schutz junger Menschen stehen bei EasyJob an oberster Stelle.
 
 ### 1. Gesetzliche Altersstufen
 - **Unter 13 Jahren:** Vollständiges Verbot jeglicher Erwerbstätigkeit (§ 5 Abs. 1 JArbSchG).

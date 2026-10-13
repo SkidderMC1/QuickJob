@@ -1,12 +1,18 @@
 /**
- * QuickJob Pure Standalone Neighborhood Map Screen
+ * EasyJob Pure Standalone Neighborhood Map Screen
  * A clean, dedicated map experience without duplicated job feed tabs or filter bars.
  */
 import { store } from '../state/store.js';
+import { JobCategories } from '../models/types.js';
+import { isMinorUser } from '../legal/legalEngine.js';
+
+// Category → emoji lookup derived from the single source of truth (JobCategories).
+const CATEGORY_ICONS = Object.fromEntries(JobCategories.map(c => [c.id, c.icon]));
+const categoryIconFor = (category) => CATEGORY_ICONS[category] || '📋';
 
 export function renderMapScreen(state) {
   const user = state.currentUser;
-  const isMinor = user?.ageCategory === 'YOUTH_14_17';
+  const isMinor = isMinorUser(user);
 
   // Filter jobs safe for minors
   const availableJobs = (state.jobs || []).filter(j => 
@@ -15,15 +21,16 @@ export function renderMapScreen(state) {
 
   return `
     <div class="map-only-screen" id="screen-map">
+      <h1 style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Nachbarschaftskarte</h1>
       <!-- Fullscreen Interactive Map Canvas -->
       <div class="map-fullscreen-canvas" id="map-interactive-canvas">
         <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <pattern id="map-grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e2e8f0" stroke-width="0.8"/>
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--qj-border)" stroke-width="0.8"/>
             </pattern>
           </defs>
-          <rect width="100%" height="100%" fill="#f8fafc"/>
+          <rect width="100%" height="100%" fill="var(--qj-surface-subtle)"/>
           <rect width="100%" height="100%" fill="url(#map-grid-pattern)"/>
           <!-- Green Parks -->
           <path d="M 20 40 Q 60 80 120 50 T 180 90 L 140 180 L 30 150 Z" fill="#dcfce7" opacity="0.9"/>
@@ -31,11 +38,11 @@ export function renderMapScreen(state) {
           <!-- Wupper River -->
           <path d="M -10 140 Q 90 120 180 170 T 360 150 T 420 190" fill="none" stroke="#7dd3fc" stroke-width="16" stroke-linecap="round" opacity="0.85"/>
           <!-- Roads -->
-          <path d="M 50 0 Q 120 100 180 160 T 260 280 T 300 360" fill="none" stroke="#ffffff" stroke-width="8"/>
-          <path d="M 0 190 Q 140 180 220 160 T 390 130" fill="none" stroke="#ffffff" stroke-width="8"/>
+          <path d="M 50 0 Q 120 100 180 160 T 260 280 T 300 360" fill="none" stroke="var(--qj-card)" stroke-width="8"/>
+          <path d="M 0 190 Q 140 180 220 160 T 390 130" fill="none" stroke="var(--qj-card)" stroke-width="8"/>
           <path d="M 50 0 Q 120 100 180 160 T 260 280 T 300 360" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="4,4"/>
           <!-- Radar Circle around User -->
-          <circle cx="50%" cy="50%" r="52" fill="rgba(14, 167, 107, 0.12)" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3,3"/>
+          <circle cx="50%" cy="50%" r="52" fill="rgba(0, 145, 255, 0.12)" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3,3"/>
           <circle cx="50%" cy="50%" r="110" fill="none" stroke="rgba(16, 185, 129, 0.22)" stroke-width="1"/>
         </svg>
 
@@ -56,30 +63,32 @@ export function renderMapScreen(state) {
           const topPercent = `calc(50% + ${offsetY}px)`;
 
           return `
-            <div 
-              class="map-job-pin" 
+            <button
+              type="button"
+              class="map-job-pin"
               data-job-id="${job.id}"
               id="map-pin-${job.id}"
-              style="position: absolute; left: ${leftPercent}; top: ${topPercent}; transform: translate(-50%, -100%); cursor: pointer; z-index: 10; display: flex; flex-direction: column; align-items: center; transition: transform 0.15s ease;"
+              aria-label="${escapeHTML(job.title)}, ${job.payment} Euro, ${job.distanceKm} km entfernt"
+              style="position: absolute; left: ${leftPercent}; top: ${topPercent}; transform: translate(-50%, -100%); cursor: pointer; z-index: 10; display: flex; flex-direction: column; align-items: center; transition: transform 0.15s ease; background: none; border: none; padding: 0; font: inherit;"
               title="${escapeHTML(job.title)} (€${job.payment})"
             >
-              <div style="background: #ffffff; color: var(--qj-text-main); border: 2px solid var(--qj-primary); border-radius: 20px; padding: 4px 9px; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.18); font-size: 0.76rem; font-weight: 800; white-space: nowrap;">
-                <span>${job.categoryIcon || '📋'}</span>
+              <div style="background: var(--qj-card); color: var(--qj-text-main); border: 2px solid var(--qj-primary); border-radius: 20px; padding: 4px 9px; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 14px rgba(0,0,0,0.18); font-size: 0.76rem; font-weight: 800; white-space: nowrap;">
+                <span>${categoryIconFor(job.category)}</span>
                 <span style="color: var(--qj-primary);">€${job.payment}</span>
               </div>
               <div style="width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--qj-primary); margin-top: -1px;"></div>
-            </div>
+            </button>
           `;
         }).join('')}
 
         <!-- Top Floating Bar: Job Count Pill + View Switcher + Locate Button -->
         <div class="map-floating-top-bar">
           <div class="map-floating-pill">
-            <span style="color: #0ea76b;">●</span>
+            <span style="color: #0091ff;">●</span>
             <span><strong>${availableJobs.length} Jobs</strong></span>
           </div>
           <div style="display: flex; align-items: center; gap: 0.4rem;">
-            <button id="btn-view-list" class="btn btn-sm" style="pointer-events: auto; background: rgba(255, 255, 255, 0.95); border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 4px 10px; font-size: 0.76rem; font-weight: 700; color: #0f172a; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 4px;">
+            <button id="btn-view-list" class="btn btn-sm" style="pointer-events: auto; background: var(--qj-card); border: 1.5px solid var(--qj-border); border-radius: 20px; padding: 4px 10px; font-size: 0.76rem; font-weight: 700; color: var(--qj-text-main); cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 4px;">
               <span>☰</span><span>Liste</span>
             </button>
             <button class="map-floating-locate-btn" id="btn-map-locate-me" title="Standort im Browser anfordern">
@@ -138,7 +147,7 @@ export function attachMapScreenEvents() {
         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem;">
           <div style="flex: 1; min-width: 0;">
             <div style="display: flex; align-items: center; gap: 0.35rem; margin-bottom: 3px;">
-              <span style="font-size: 1.15rem;">${job.categoryIcon || '📋'}</span>
+              <span style="font-size: 1.15rem;">${categoryIconFor(job.category)}</span>
               <span style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase;">
                 ${job.category} · ${job.distanceKm} km entfernt
               </span>
@@ -156,7 +165,7 @@ export function attachMapScreenEvents() {
             <div class="price-tag" style="font-size: 1.15rem; font-weight: 800;">
               €${job.payment}
             </div>
-            <div style="font-size: 0.68rem; color: #0ea76b; font-weight: 700; margin-top: 2px;">
+            <div style="font-size: 0.68rem; color: #0091ff; font-weight: 700; margin-top: 2px;">
               Treuhand gesichert ✓
             </div>
           </div>

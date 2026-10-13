@@ -1,15 +1,16 @@
 /**
- * QuickJob Job Detail Modal / View
+ * EasyJob Job Detail Modal / View
  */
 import { store } from '../state/store.js';
 import { JobCategories } from '../models/types.js';
+import { isMinorUser } from '../legal/legalEngine.js';
 
 export function renderJobDetailModal(jobId, state) {
   const job = state.jobs.find(j => j.id === jobId);
   if (!job) return '';
 
   const user = state.currentUser;
-  const isMinor = user.ageCategory === 'YOUTH_14_17';
+  const isMinor = isMinorUser(user);
   const isTooYoung = isMinor && job.minAge && job.minAge > 17;
   const categoryInfo = JobCategories.find(c => c.id === job.category) || { name: job.category, icon: '📋' };
   const isDirect = job.applicationMode === 'DIRECT_ACCEPT';
@@ -34,7 +35,7 @@ export function renderJobDetailModal(jobId, state) {
           </div>
 
           <div style="display: flex; align-items: center; gap: 0.4rem;">
-            <button id="btn-detail-bookmark" data-job-id="${job.id}" title="${job.isBookmarked ? 'Aus gemerkten Jobs entfernen' : 'Job für später merken'}" style="background: ${job.isBookmarked ? '#fef3c7' : '#f8fafc'}; border: 1px solid ${job.isBookmarked ? '#f59e0b' : '#e2e8f0'}; color: ${job.isBookmarked ? '#b45309' : '#475569'}; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+            <button id="btn-detail-bookmark" data-job-id="${job.id}" title="${job.isBookmarked ? 'Aus gemerkten Jobs entfernen' : 'Job für später merken'}" style="background: ${job.isBookmarked ? '#fef3c7' : 'var(--qj-surface-muted)'}; border: 1px solid ${job.isBookmarked ? '#f59e0b' : 'var(--qj-border)'}; color: ${job.isBookmarked ? '#b45309' : 'var(--qj-text-muted)'}; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 3px;">
               <span>${job.isBookmarked ? '⭐' : '☆'}</span>
               <span>${job.isBookmarked ? 'Gemerkt' : 'Merken'}</span>
             </button>
@@ -59,10 +60,38 @@ export function renderJobDetailModal(jobId, state) {
                 ⏱️ ${job.estimatedDuration}
               </span>
             </div>
-            <h2 id="job-detail-title" style="font-size: 1.25rem; font-weight: 800; margin-top: 0.4rem; color: var(--qj-text-main); line-height: 1.3;">
+            <h1 id="job-detail-title" style="font-size: 1.25rem; font-weight: 800; margin-top: 0.4rem; color: var(--qj-text-main); line-height: 1.3;">
               ${escapeHTML(job.title)}
-            </h2>
+            </h1>
           </div>
+
+          ${job.isBoosted ? `
+            <!-- Express Boost Banner -->
+            <div class="job-detail-boost-banner" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(139, 92, 246, 0.12)); border: 1.5px solid rgba(245, 158, 11, 0.4); border-radius: var(--qj-radius-sm); padding: 0.65rem 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.45rem;">
+                <span style="font-size: 1.15rem;">🚀</span>
+                <div>
+                  <div style="font-size: 0.82rem; font-weight: 800; color: #b45309;">Express-Boost Aktiv</div>
+                  <div style="font-size: 0.72rem; color: #78350f;">Priorisierte Zuteilung &amp; garantierte Treuhandauszahlung</div>
+                </div>
+              </div>
+              <span class="badge badge-warning" style="font-weight: 800; font-size: 0.72rem;">TOP-ANGEBOT</span>
+            </div>
+          ` : ''}
+
+          ${job.isTeamwork ? `
+            <!-- Teamwork Banner -->
+            <div class="job-detail-teamwork-banner" style="background: rgba(79, 70, 229, 0.08); border: 1.5px solid rgba(79, 70, 229, 0.3); border-radius: var(--qj-radius-sm); padding: 0.65rem 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.45rem;">
+                <span style="font-size: 1.15rem;">👥</span>
+                <div>
+                  <div style="font-size: 0.82rem; font-weight: 800; color: #4338ca;">Teamwork-Auftrag (Duo)</div>
+                  <div style="font-size: 0.72rem; color: #3730a3;">Dieser Job wird zu zweit erledigt · 2 Helfer arbeiten im Team</div>
+                </div>
+              </div>
+              <span class="badge badge-purple" style="font-weight: 800; font-size: 0.72rem;">2 HELFER</span>
+            </div>
+          ` : ''}
 
           <!-- Schedule & Location Box -->
           <div style="background: var(--qj-surface-muted); border-radius: var(--qj-radius-md); padding: 0.85rem; display: flex; flex-direction: column; gap: 0.6rem;">
@@ -96,17 +125,17 @@ export function renderJobDetailModal(jobId, state) {
                 </a>
               </div>
               <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; text-align: center;">
-                <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.4rem 0.2rem;">
+                <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.4rem 0.2rem;">
                   <div style="font-size: 1.05rem;">🚲</div>
                   <div style="font-size: 0.72rem; font-weight: 700; color: var(--qj-text-main);">${job.travelTimes?.bike || '6 Min.'}</div>
                   <div style="font-size: 0.65rem; color: var(--qj-text-subtle);">Fahrrad</div>
                 </div>
-                <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.4rem 0.2rem;">
+                <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.4rem 0.2rem;">
                   <div style="font-size: 1.05rem;">🚶</div>
                   <div style="font-size: 0.72rem; font-weight: 700; color: var(--qj-text-main);">${job.travelTimes?.walk || '16 Min.'}</div>
                   <div style="font-size: 0.65rem; color: var(--qj-text-subtle);">Zu Fuß</div>
                 </div>
-                <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.4rem 0.2rem;">
+                <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.4rem 0.2rem;">
                   <div style="font-size: 1.05rem;">🚌</div>
                   <div style="font-size: 0.72rem; font-weight: 700; color: var(--qj-text-main);">${job.travelTimes?.transit || '9 Min.'}</div>
                   <div style="font-size: 0.65rem; color: var(--qj-text-subtle);">ÖPNV / Bus</div>
@@ -148,7 +177,7 @@ export function renderJobDetailModal(jobId, state) {
             <h4 style="font-size: 0.92rem; font-weight: 800; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--qj-text-muted);">
               Employer
             </h4>
-            <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 0.85rem; display: flex; align-items: center; justify-content: space-between;">
+            <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 0.85rem; display: flex; align-items: center; justify-content: space-between;">
               <div style="display: flex; align-items: center; gap: 0.65rem;">
                 <div class="employer-avatar" style="width: 42px; height: 42px; font-size: 0.95rem;">
                   ${job.employer.avatarText || 'EM'}
@@ -175,7 +204,7 @@ export function renderJobDetailModal(jobId, state) {
           <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: var(--qj-radius-sm); padding: 0.75rem; font-size: 0.78rem; color: #065f46; display: flex; gap: 0.5rem;">
             <span style="font-size: 1.1rem;">🛡️</span>
             <div>
-              <strong>QuickJob Escrow Protection:</strong> €${job.payment} is pre-authorized and protected. Funds are automatically transferred only when the task is safely completed.
+              <strong>EasyJob Escrow Protection:</strong> €${job.payment} is pre-authorized and protected. Funds are automatically transferred only when the task is safely completed.
             </div>
           </div>
         </div>
@@ -183,15 +212,16 @@ export function renderJobDetailModal(jobId, state) {
         <!-- Sticky Bottom CTA -->
         <div class="modal-footer">
           ${isMyPostedJob ? `
-            ${job.worker ? `
-              <button class="btn btn-primary btn-block" id="btn-open-assigned-chat">
-                💬 Chat mit Helfer (${escapeHTML(job.worker.name)})
-              </button>
-            ` : `
+            <div style="display: flex; gap: 0.5rem; width: 100%;">
               <button class="btn btn-primary btn-block" id="btn-open-applicants-mgr" data-job-id="${job.id}">
                 👥 Bewerbungen prüfen (${applicantsList.length} Helfer)
               </button>
-            `}
+              ${job.worker ? `
+                <button class="btn btn-secondary btn-block" id="btn-open-assigned-chat" style="flex: 1;">
+                  💬 Chat (${escapeHTML(job.worker.name)})
+                </button>
+              ` : ''}
+            </div>
           ` : isAssignedToMe ? `
             <button class="btn btn-primary btn-block" id="btn-open-assigned-chat">
               💬 Open Job Chat & Address
@@ -237,7 +267,7 @@ export function attachJobDetailEvents() {
   if (acceptBtn) {
     acceptBtn.addEventListener('click', () => {
       const jobId = acceptBtn.getAttribute('data-job-id');
-      store.applyToJob(jobId, 'Accepted job directly via QuickJob!');
+      store.applyToJob(jobId, 'Accepted job directly via EasyJob!');
     });
   }
 

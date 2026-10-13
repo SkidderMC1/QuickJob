@@ -1,5 +1,5 @@
 /**
- * QuickJob TDDDG § 25 Consent Banner Component
+ * EasyJob TDDDG § 25 Consent Banner Component
  * Strictly prevents dark patterns: Equal prominent styling for Reject All and Accept All.
  */
 import { ConsentManager, ConsentCategories } from '../legal/consentManager.js';
@@ -14,13 +14,13 @@ export function renderConsentBanner(state) {
   if (state.isConsentModalOpen) {
     const consent = ConsentManager.getConsentState();
     return `
-      <div class="modal-backdrop" id="consent-modal-backdrop" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: flex-end; justify-content: center;">
+      <div class="modal-backdrop" id="consent-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="consent-modal-title" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; align-items: flex-end; justify-content: center;">
         <div class="modal-sheet" style="background: var(--qj-surface, #fff); width: 100%; max-width: 500px; max-height: 85vh; border-radius: 20px 20px 0 0; padding: 1.5rem; overflow-y: auto; box-shadow: 0 -10px 25px rgba(0,0,0,0.15);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #1e1b4b; display: flex; align-items: center; gap: 0.5rem;">
+            <h3 id="consent-modal-title" style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #1e1b4b; display: flex; align-items: center; gap: 0.5rem;">
               <span>🍪</span><span>Datenschutz- & Speicherpräferenzen</span>
             </h3>
-            <button id="btn-close-consent-modal" class="btn btn-ghost" style="font-size: 1.25rem; line-height: 1; padding: 0.25rem;">✕</button>
+            <button id="btn-close-consent-modal" aria-label="Schließen" class="btn btn-ghost" style="font-size: 1.25rem; line-height: 1; padding: 0.25rem;">✕</button>
           </div>
 
           <p style="font-size: 0.82rem; color: #64748b; line-height: 1.45; margin-bottom: 1.25rem;">
@@ -145,6 +145,15 @@ export function attachConsentBannerEvents() {
   if (closeModalBtn) {
     closeModalBtn.addEventListener('click', () => {
       store.setState({ isConsentModalOpen: false });
+    });
+  }
+
+  const consentBackdrop = document.getElementById('consent-modal-backdrop');
+  if (consentBackdrop) {
+    consentBackdrop.addEventListener('click', (e) => {
+      if (e.target === consentBackdrop) {
+        store.setState({ isConsentModalOpen: false });
+      }
     });
   }
 

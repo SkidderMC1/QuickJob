@@ -1,14 +1,15 @@
 /**
- * QuickJob Mobile Home Screen View
+ * EasyJob Mobile Home Screen View
  * Redesigned for mobile-first visual excellence, rapid scannability, and clear information hierarchy.
  */
 import { store } from '../state/store.js';
 import { JobCategories } from '../models/types.js';
 import { renderJobCard } from '../components/jobCard.js';
+import { isMinorUser } from '../legal/legalEngine.js';
 
 export function renderHomeScreen(state) {
   const user = state.currentUser || {};
-  const isMinor = user.ageCategory === 'YOUTH_14_17';
+  const isMinor = isMinorUser(user);
   
   // Filter jobs safe for minors
   const availableJobs = state.jobs.filter(j => 
@@ -21,11 +22,11 @@ export function renderHomeScreen(state) {
 
   return `
     <div class="screen-container home-screen-container" id="screen-home">
-      <!-- 1. Compact Header / Hero Greeting -->
-      <section class="home-greeting-section">
+      <!-- 1. Compact Header / Hero Greeting (Decluttered) -->
+      <section class="home-greeting-section" style="margin-bottom: -0.35rem;">
         <div>
-          <span class="home-greeting-sub">Welcome back,</span>
-          <h1 class="home-greeting">${escapeHTML(user.name || 'Member')} 👋</h1>
+          <span class="home-greeting-sub" style="font-size: 0.76rem; color: var(--qj-text-muted); font-weight: 600;">Welcome back,</span>
+          <h1 class="home-greeting" style="font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; margin-top: 1px;">${escapeHTML(user.name || 'Member')} 👋</h1>
         </div>
       </section>
 
@@ -38,7 +39,7 @@ export function renderHomeScreen(state) {
           placeholder="Search garden, tutoring, dog walking..." 
           value="${escapeHTML(state.filters.query)}"
         />
-        ${state.filters.query ? '<button id="btn-clear-home-search" style="color: #94a3b8; font-size: 0.9rem;">✕</button>' : ''}
+        ${state.filters.query ? '<button id="btn-clear-home-search" style="color: #94a3b8; font-size: 0.9rem;">✕</button>' : '<span class="search-kbd-hint" title="Taste / für Schnellsuche" style="font-size: 0.72rem; color: var(--qj-text-subtle); background: var(--qj-surface-muted); border: 1px solid var(--qj-border); padding: 1px 6px; border-radius: 4px; font-family: var(--qj-font-mono); font-weight: 700; user-select: none;">/</span>'}
       </div>
 
       <!-- 3. Categories: Horizontally Scrollable Chips -->
@@ -48,13 +49,13 @@ export function renderHomeScreen(state) {
           <span class="section-link" id="link-view-all-cats">See all →</span>
         </div>
         <div class="category-scroll" id="home-category-chips">
-          <div class="category-chip ${state.filters.category === 'all' ? 'active' : ''}" data-cat="all">
-            <span>✨ All ${totalCount}</span>
+          <div class="category-chip ${state.filters.category === 'all' ? 'active' : ''}" data-cat="all" role="button" tabindex="0" aria-pressed="${state.filters.category === 'all'}">
+            <span>✨ Alle ${totalCount}</span>
           </div>
           ${JobCategories.map(cat => {
             const count = availableJobs.filter(j => j.category === cat.id).length;
             return `
-              <div class="category-chip ${state.filters.category === cat.id ? 'active' : ''}" data-cat="${cat.id}">
+              <div class="category-chip ${state.filters.category === cat.id ? 'active' : ''}" data-cat="${cat.id}" role="button" tabindex="0" aria-pressed="${state.filters.category === cat.id}">
                 <span>${cat.icon} ${cat.name} ${count}</span>
               </div>
             `;
@@ -89,40 +90,58 @@ export function renderHomeScreen(state) {
   `;
 }
 
-export function attachHomeScreenEvents() {
-  let homeSearchTimer = null;
-  const executeHomeSearch = (val) => {
-    if (homeSearchTimer) {
-      clearTimeout(homeSearchTimer);
-      homeSearchTimer = null;
-    }
-    const currentQ = store.getState().filters.query || '';
-    if (val !== currentQ) {
-      store.setFilter('query', val);
-    }
-  };
+// Persistent search debounce & focus retention across re-renders
+let homeSearchTimer = null;
+let homeSearchShouldRefocus = false;
 
+export function attachHomeScreenEvents() {
   const searchInput = document.getElementById('home-search-input');
   if (searchInput) {
+    if (homeSearchShouldRefocus) {
+      searchInput.focus();
+      const end = searchInput.value.length;
+      try { searchInput.setSelectionRange(end, end); } catch (e) { /* noop */ }
+      homeSearchShouldRefocus = false;
+    }
+
+    const executeHomeSearch = (val) => {
+      homeSearchTimer = null;
+      const state = store.getState();
+      if (state.currentScreen !== 'home') return;
+      const currentQ = state.filters.query || '';
+      if (val !== currentQ) {
+        homeSearchShouldRefocus = true;
+        store.setFilter('query', val);
+      }
+    };
+
     // Fast 200ms debounce
     searchInput.addEventListener('input', (e) => {
+      const val = e.target.value;
       if (homeSearchTimer) clearTimeout(homeSearchTimer);
       homeSearchTimer = setTimeout(() => {
-        executeHomeSearch(e.target.value);
+        executeHomeSearch(val);
       }, 200);
     });
 
-    // Immediate search when pressing Enter
+    // Immediate search when pressing Enter / blur; cancel and blur on Escape
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
+        if (homeSearchTimer) clearTimeout(homeSearchTimer);
         executeHomeSearch(searchInput.value);
         store.setScreen('jobs');
+      } else if (e.key === 'Escape') {
+        if (homeSearchTimer) clearTimeout(homeSearchTimer);
+        homeSearchTimer = null;
+        homeSearchShouldRefocus = false;
+        searchInput.blur();
       }
     });
 
     // Immediate search when clicking out (blur)
     searchInput.addEventListener('blur', () => {
+      if (homeSearchTimer) clearTimeout(homeSearchTimer);
       executeHomeSearch(searchInput.value);
     });
   }
@@ -131,6 +150,7 @@ export function attachHomeScreenEvents() {
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
       if (homeSearchTimer) clearTimeout(homeSearchTimer);
+      homeSearchTimer = null;
       store.setFilter('query', '');
     });
   }
@@ -162,10 +182,17 @@ export function attachHomeScreenEvents() {
   // Category chip clicks
   const catChips = document.querySelectorAll('.category-chip[data-cat]');
   catChips.forEach(chip => {
-    chip.addEventListener('click', () => {
+    const selectCategory = () => {
       const cat = chip.getAttribute('data-cat');
       store.setFilter('category', cat);
       store.setScreen('jobs', { jobsViewMode: 'list' });
+    };
+    chip.addEventListener('click', selectCategory);
+    chip.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectCategory();
+      }
     });
   });
 

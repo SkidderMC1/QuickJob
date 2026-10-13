@@ -17,8 +17,8 @@
 | **TASK-013** | GDPR Art. 15-21 Data Subject Rights Portal & Fiscal Retention Hold (§ 147 AO) | PRIVACY / GDPR | P0 | 9 | 3 | 9 | **DONE** |
 | **TASK-014** | Adversarial Legal Compliance Automated Playwright Test Suite (8/8 Scenarios) | QA / COMPLIANCE | P0 | 10 | 3 | 9 | **DONE** |
 | **TASK-015** | Production Authentication, Accounts, Auditable AGB & TDDDG Cookies | AUTH / SECURITY | P0 | 10 | 4 | 10 | **DONE** |
-| **TASK-006** | Microjob Completion Photo Proof & Before/After Upload Widget | TRUST / ESCROW | P1 | 8 | 3 | 9 | **BACKLOG** |
-| **TASK-007** | Live In-Job Safety Check-In & One-Tap Guardian Geoshare SOS | SAFETY / EMERGENCY | P1 | 9 | 4 | 8 | **BACKLOG** |
+| **TASK-006** | Microjob Completion Photo Proof & Before/After Upload Widget | TRUST / ESCROW | P1 | 8 | 3 | 9 | **DONE** |
+| **TASK-007** | Live In-Job Safety Check-In & One-Tap Guardian Geoshare SOS | SAFETY / EMERGENCY | P1 | 9 | 4 | 8 | **DONE** |
 
 ---
 

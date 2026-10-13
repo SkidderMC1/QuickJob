@@ -1,5 +1,5 @@
 """
-QuickJob Penetration Testing & Vulnerability Verification Suite
+EasyJob Penetration Testing & Vulnerability Verification Suite
 Automates adversarial exploits across the complete attack surface:
 1. Sensitive File & Database Exposure (Static Mount Misconfiguration)
 2. Path Traversal & Directory Climbing
@@ -35,7 +35,7 @@ def log(msg):
 
 def raw_http_request(method, path, headers=None, body_bytes=None):
     url = f"{BASE_URL}{path}"
-    req_headers = {"User-Agent": "QuickJob-Security-Audit/1.0"}
+    req_headers = {"User-Agent": "EasyJob-Security-Audit/1.0"}
     if headers:
         req_headers.update(headers)
     req = urllib.request.Request(url, data=body_bytes, headers=req_headers, method=method)
@@ -53,7 +53,7 @@ def raw_http_request(method, path, headers=None, body_bytes=None):
         return 0, {}, str(e).encode('utf-8')
 
 
-def test_exploit_sensitive_file_exposure():
+def attack_sensitive_file_exposure():
     log("\n[ATTACK 1] Testing Sensitive File & Database Exposure via Static Mount...")
     targets = [
         "/data/quickjob.db",
@@ -75,7 +75,7 @@ def test_exploit_sensitive_file_exposure():
     return len(exposed) == 0, exposed
 
 
-def test_exploit_path_traversal():
+def attack_path_traversal():
     log("\n[ATTACK 2] Testing Path Traversal & Directory Climbing...")
     traversal_paths = [
         "/css/../data/quickjob.db",
@@ -87,7 +87,7 @@ def test_exploit_path_traversal():
     exploited = []
     for p in traversal_paths:
         status, headers, content = raw_http_request("GET", p)
-        if status == 200 and (b"SQLite" in content or b"QuickJob" in content):
+        if status == 200 and (b"SQLite" in content or b"EasyJob" in content):
             exploited.append(p)
             log(f"  [EXPLOIT] Path traversal succeeded on {p}!")
         else:
@@ -95,7 +95,7 @@ def test_exploit_path_traversal():
     return len(exploited) == 0, exploited
 
 
-def test_exploit_unauthenticated_dev_endpoints():
+def attack_unauthenticated_dev_endpoints():
     log("\n[ATTACK 3] Testing Unauthenticated Dev Endpoint Token Harvesting...")
     status, headers, content = raw_http_request("GET", "/api/dev/latest-email")
     if status == 200:
@@ -109,7 +109,7 @@ def test_exploit_unauthenticated_dev_endpoints():
         return False, f"Unexpected HTTP {status}"
 
 
-def test_authorized_dev_endpoint():
+def check_authorized_dev_endpoint():
     log("\n[TEST 4] Testing Authorized Dev Endpoint with X-Dev-Key...")
     status, headers, content = raw_http_request(
         "GET",
@@ -124,7 +124,7 @@ def test_authorized_dev_endpoint():
         return False, f"HTTP {status}"
 
 
-def test_exploit_cors_reflection():
+def attack_cors_reflection():
     log("\n[ATTACK 5] Testing CORS Wildcard Origin Reflection with Credentials...")
     evil_origin = "http://evil-attacker.com"
     status, headers, content = raw_http_request(
@@ -143,7 +143,7 @@ def test_exploit_cors_reflection():
         return True, "Protected"
 
 
-def test_exploit_security_headers():
+def attack_security_headers():
     log("\n[ATTACK 6] Auditing Defensive HTTP Security Headers...")
     status, headers, content = raw_http_request("GET", "/")
     missing = []
@@ -164,7 +164,7 @@ def test_exploit_security_headers():
     return len(missing) == 0, missing
 
 
-def test_exploit_password_dos():
+def attack_password_dos():
     log("\n[ATTACK 7] Testing Password Length Limit / Algorithmic Complexity DoS...")
     giant_password = "A1!" + "x" * 100000
     payload = json.dumps({
@@ -194,7 +194,7 @@ def test_exploit_password_dos():
         return False, f"Unexpected response: {status}"
 
 
-def test_exploit_parameter_fuzzing():
+def attack_parameter_fuzzing():
     log("\n[ATTACK 8] Testing Boundary & Parameter Validation Fuzzing...")
     fuzz_cases = [
         ("Child under 13 registration", {"email": "child@quickjob.local", "password": "Password123!", "password_confirmation": "Password123!", "name": "Child", "age": 12, "agb_accepted": True}, 403),
@@ -221,7 +221,7 @@ def test_exploit_parameter_fuzzing():
     return all_defended, "Parameter boundary checks enforced"
 
 
-def test_exploit_sql_injection():
+def attack_sql_injection():
     log("\n[ATTACK 9] Testing SQL Injection Payloads Across Auth Endpoints...")
     sqli_payloads = [
         "' OR '1'='1",
@@ -247,7 +247,7 @@ def test_exploit_sql_injection():
     return all_defended, "SQL queries safely parameterized"
 
 
-def test_exploit_session_tampering():
+def attack_session_tampering():
     log("\n[ATTACK 10] Testing Session Token Tampering & Privilege Escalation...")
     tampered_tokens = [
         "forged_session_token_12345",
@@ -271,7 +271,7 @@ def test_exploit_session_tampering():
     return all_defended, "Session tokens cryptographically validated"
 
 
-def test_exploit_account_enumeration():
+def attack_account_enumeration():
     log("\n[ATTACK 11] Testing Account Enumeration Resistance...")
     # 1. Non-existent user login
     status1, _, content1 = raw_http_request(
@@ -297,7 +297,7 @@ def test_exploit_account_enumeration():
         return False, "Timing/Message discrepancy"
 
 
-def test_exploit_rate_limiting():
+def attack_rate_limiting():
     log("\n[ATTACK 12] Testing Rate Limiting & Brute-Force Abuse Resistance...")
     # Reset first via authorized endpoint
     raw_http_request("POST", "/api/dev/reset-rate-limits", headers={"X-Dev-Key": DEV_KEY})
@@ -326,40 +326,40 @@ def run_full_security_penetration_test():
     log("=====================================================================")
 
     results = {}
-    r1, d1 = test_exploit_sensitive_file_exposure()
+    r1, d1 = attack_sensitive_file_exposure()
     results["1. Sensitive File Exposure"] = (r1, d1)
 
-    r2, d2 = test_exploit_path_traversal()
+    r2, d2 = attack_path_traversal()
     results["2. Path Traversal Protection"] = (r2, d2)
 
-    r3, d3 = test_exploit_unauthenticated_dev_endpoints()
+    r3, d3 = attack_unauthenticated_dev_endpoints()
     results["3. Unauth Dev Endpoints"] = (r3, d3)
 
-    r4, d4 = test_authorized_dev_endpoint()
+    r4, d4 = check_authorized_dev_endpoint()
     results["4. Authorized Dev Access"] = (r4, d4)
 
-    r5, d5 = test_exploit_cors_reflection()
+    r5, d5 = attack_cors_reflection()
     results["5. CORS Origin Whitelist"] = (r5, d5)
 
-    r6, d6 = test_exploit_security_headers()
+    r6, d6 = attack_security_headers()
     results["6. Defensive HTTP Headers"] = (r6, d6)
 
-    r7, d7 = test_exploit_password_dos()
+    r7, d7 = attack_password_dos()
     results["7. Password Algorithmic DoS Limit"] = (r7, d7)
 
-    r8, d8 = test_exploit_parameter_fuzzing()
+    r8, d8 = attack_parameter_fuzzing()
     results["8. Parameter Boundary Fuzzing"] = (r8, d8)
 
-    r9, d9 = test_exploit_sql_injection()
+    r9, d9 = attack_sql_injection()
     results["9. SQL Injection Resistance"] = (r9, d9)
 
-    r10, d10 = test_exploit_session_tampering()
+    r10, d10 = attack_session_tampering()
     results["10. Session Token Tampering"] = (r10, d10)
 
-    r11, d11 = test_exploit_account_enumeration()
+    r11, d11 = attack_account_enumeration()
     results["11. Account Enumeration Shield"] = (r11, d11)
 
-    r12, d12 = test_exploit_rate_limiting()
+    r12, d12 = attack_rate_limiting()
     results["12. Rate Limiting Abuse Defense"] = (r12, d12)
 
     log("\n=====================================================================")
@@ -377,4 +377,6 @@ def run_full_security_penetration_test():
 
 
 if __name__ == "__main__":
-    run_full_security_penetration_test()
+    _results = run_full_security_penetration_test()
+    _all_defended = all(v[0] for v in _results.values())
+    sys.exit(0 if _all_defended else 1)

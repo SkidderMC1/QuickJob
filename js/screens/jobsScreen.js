@@ -1,15 +1,18 @@
 /**
- * QuickJob Jobs Discovery, Bookmarks & My Jobs Screen
+ * EasyJob Jobs Discovery, Bookmarks & My Jobs Screen
  */
 import { store } from '../state/store.js';
 import { JobCategories } from '../models/types.js';
 import { renderJobCard } from '../components/jobCard.js';
+import { isMinorUser } from '../legal/legalEngine.js';
 
-
+// Module-scoped search timer & focus retention across re-renders
+let jobsSearchTimer = null;
+let jobsSearchShouldRefocus = false;
 
 export function renderJobsScreen(state) {
   const user = state.currentUser;
-  const isMinor = user.ageCategory === 'YOUTH_14_17';
+  const isMinor = isMinorUser(user);
   const filters = state.filters;
   const currentTab = filters.feedTab || 'all';
 
@@ -32,6 +35,8 @@ export function renderJobsScreen(state) {
 
     // 2. Quick Filter Logic (on discover tab)
     if (currentTab === 'all') {
+      if (filters.quickFilter === 'boost' && !job.isBoosted) return false;
+      if (filters.quickFilter === 'team' && !job.isTeamwork) return false;
       if (filters.quickFilter === 'direct' && job.applicationMode !== 'DIRECT_ACCEPT') return false;
       if (filters.quickFilter === 'near' && job.distanceKm > 2) return false;
       if (filters.quickFilter === 'high_pay' && job.payment < 30) return false;
@@ -83,6 +88,8 @@ export function renderJobsScreen(state) {
     if (filters.sortBy === 'highest_pay') {
       return b.payment - a.payment;
     }
+    if (a.isBoosted && !b.isBoosted) return -1;
+    if (!a.isBoosted && b.isBoosted) return 1;
     return 0;
   });
 
@@ -102,22 +109,21 @@ export function renderJobsScreen(state) {
           <span>📋</span><span>Meine Jobs (${myJobsCount})</span>
         </button>
 
-        <!-- Hidden compatibility triggers for test suites -->
+        <!-- Hidden compatibility trigger for test suites -->
         <button id="tab-feed-map" style="display: none;" aria-hidden="true" data-feed-tab="map"></button>
-        <button id="btn-floating-map-toggle" style="display: none;" aria-hidden="true"></button>
       </div>
 
-      <!-- Search Box (always available) -->
-      <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+      <!-- Search Box & Filter Controls (Streamlined Spacing) -->
+      <div style="display: flex; flex-direction: column; gap: 0.4rem;">
         <div class="search-box">
-          <span style="color: #94a3b8;">🔍</span>
+          <span style="color: #94a3b8; font-size: 0.95rem;">🔍</span>
           <input 
             type="text" 
             id="jobs-search-input" 
             placeholder="Search by keyword, location, skill..." 
             value="${escapeHTML(filters.query)}"
           />
-          ${filters.query ? '<button id="btn-clear-jobs-search" style="color: #94a3b8;">✕</button>' : ''}
+          ${filters.query ? '<button id="btn-clear-jobs-search" style="color: #94a3b8;">✕</button>' : '<span class="search-kbd-hint" title="Taste / für Schnellsuche" style="font-size: 0.72rem; color: var(--qj-text-subtle); background: var(--qj-surface-muted); border: 1px solid var(--qj-border); padding: 1px 6px; border-radius: 4px; font-family: var(--qj-font-mono); font-weight: 700; user-select: none;">/</span>'}
         </div>
 
         ${currentTab === 'all' ? `
@@ -125,6 +131,12 @@ export function renderJobsScreen(state) {
           <div class="quick-filter-pills" id="jobs-quick-pills">
             <button class="quick-filter-pill ${activeQuick === 'all' ? 'active' : ''}" data-quick="all">
               <span>✨</span><span>Alle</span>
+            </button>
+            <button class="quick-filter-pill ${activeQuick === 'boost' ? 'active' : ''}" data-quick="boost">
+              <span>🚀</span><span>Boost</span>
+            </button>
+            <button class="quick-filter-pill ${activeQuick === 'team' ? 'active' : ''}" data-quick="team">
+              <span>👥</span><span>Team</span>
             </button>
             <button class="quick-filter-pill ${activeQuick === 'direct' ? 'active' : ''}" data-quick="direct">
               <span>⚡</span><span>Sofort-Zuschlag</span>
@@ -162,20 +174,20 @@ export function renderJobsScreen(state) {
 
           <!-- Gesetzlicher Jugendschutz Banner (Nicht deaktivierbar für Minderjährige) -->
           ${isMinor ? `
-            <div id="youth-protection-locked-badge" style="background: #f5f3ff; border: 1.5px solid #c4b5fd; border-radius: var(--qj-radius-sm); padding: 0.55rem 0.8rem; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(124, 58, 237, 0.08);">
-              <div style="display: flex; align-items: center; gap: 0.45rem;">
-                <span style="font-size: 1.05rem;">🛡️</span>
+            <div id="youth-protection-locked-badge" style="background: #f5f3ff; border: 1.5px solid #c4b5fd; border-radius: var(--qj-radius-xs); padding: 0.35rem 0.65rem; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 2px rgba(124, 58, 237, 0.05);">
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <span style="font-size: 0.95rem;">🛡️</span>
                 <div>
-                  <div style="font-size: 0.78rem; font-weight: 800; color: #5b21b6; display: flex; align-items: center; gap: 0.35rem;">
+                  <div style="font-size: 0.74rem; font-weight: 800; color: #5b21b6; display: flex; align-items: center; gap: 0.3rem;">
                     <span>Gesetzlicher Jugendschutz aktiv</span>
-                    <span style="font-size: 0.68rem; color: #7c3aed; font-weight: 600;">(JArbSchG)</span>
+                    <span style="font-size: 0.65rem; color: #7c3aed; font-weight: 600;">(JArbSchG)</span>
                   </div>
-                  <div style="font-size: 0.7rem; color: #6b21a8; margin-top: 1px;">
-                    Gefährliche & unzulässige 18+ Arbeiten werden automatisch gesperrt
+                  <div style="font-size: 0.67rem; color: #6b21a8; margin-top: 1px;">
+                    Gefährliche & unzulässige 18+ Arbeiten automatisch gesperrt
                   </div>
                 </div>
               </div>
-              <span class="badge badge-purple" style="font-size: 0.72rem; font-weight: 800; background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; display: flex; align-items: center; gap: 3px; white-space: nowrap;">
+              <span class="badge badge-purple" style="font-size: 0.68rem; font-weight: 800; background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; display: flex; align-items: center; gap: 2px; white-space: nowrap; padding: 0.15rem 0.45rem;">
                 <span>🔒</span><span>Dauerhaft aktiv</span>
               </span>
             </div>
@@ -183,12 +195,12 @@ export function renderJobsScreen(state) {
 
           <!-- Category Scroll Bar -->
           <div class="category-scroll">
-            <div class="category-chip ${filters.category === 'all' ? 'active' : ''}" data-cat="all">
+            <div class="category-chip ${filters.category === 'all' ? 'active' : ''}" data-cat="all" role="button" tabindex="0" aria-pressed="${filters.category === 'all'}">
               <span>✨</span>
-              <span>All</span>
+              <span>Alle</span>
             </div>
             ${JobCategories.map(cat => `
-              <div class="category-chip ${filters.category === cat.id ? 'active' : ''}" data-cat="${cat.id}">
+              <div class="category-chip ${filters.category === cat.id ? 'active' : ''}" data-cat="${cat.id}" role="button" tabindex="0" aria-pressed="${filters.category === cat.id}">
                 <span>${cat.icon}</span>
                 <span>${cat.name}</span>
               </div>
@@ -198,16 +210,16 @@ export function renderJobsScreen(state) {
       </div>
 
       <!-- Results Count Header & View Switcher -->
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.25rem;">
-        <span style="font-size: 0.85rem; font-weight: 700; color: var(--qj-text-muted);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.1rem;">
+        <h1 style="font-size: 0.85rem; font-weight: 700; color: var(--qj-text-muted); margin: 0;">
           ${currentTab === 'saved' ? `Gemerkt (${filtered.length})` : currentTab === 'my_jobs' ? `Meine Aufträge (${filtered.length})` : `Gefundene Microjobs (${filtered.length})`}
-        </span>
+        </h1>
         <div style="display: flex; align-items: center; gap: 0.4rem;">
-          <div class="view-toggle-group" style="display: flex; background: #f1f5f9; border-radius: 8px; padding: 2px;">
-            <button id="btn-view-list" class="btn-toggle-view ${viewMode === 'list' ? 'active' : ''}" style="border: none; background: ${viewMode === 'list' ? '#ffffff' : 'transparent'}; font-size: 0.74rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; cursor: pointer; color: ${viewMode === 'list' ? '#0f172a' : '#64748b'}; box-shadow: ${viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};">
+          <div class="view-toggle-group" style="display: flex; background: var(--qj-surface-muted); border-radius: 8px; padding: 2px;">
+            <button id="btn-view-list" class="btn-toggle-view ${viewMode === 'list' ? 'active' : ''}" style="border: none; background: ${viewMode === 'list' ? 'var(--qj-card)' : 'transparent'}; font-size: 0.74rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; cursor: pointer; color: ${viewMode === 'list' ? 'var(--qj-text-main)' : 'var(--qj-text-muted)'}; box-shadow: ${viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};">
               ☰ Liste
             </button>
-            <button id="btn-view-map" class="btn-toggle-view ${viewMode === 'map' ? 'active' : ''}" style="border: none; background: ${viewMode === 'map' ? '#ffffff' : 'transparent'}; font-size: 0.74rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; cursor: pointer; color: ${viewMode === 'map' ? '#0f172a' : '#64748b'}; box-shadow: ${viewMode === 'map' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};">
+            <button id="btn-view-map" class="btn-toggle-view ${viewMode === 'map' ? 'active' : ''}" style="border: none; background: ${viewMode === 'map' ? 'var(--qj-card)' : 'transparent'}; font-size: 0.74rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; cursor: pointer; color: ${viewMode === 'map' ? 'var(--qj-text-main)' : 'var(--qj-text-muted)'}; box-shadow: ${viewMode === 'map' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};">
               🗺️ Karte
             </button>
           </div>
@@ -226,7 +238,7 @@ export function renderJobsScreen(state) {
         </div>
       ` : currentTab === 'saved' ? `
         <!-- Empty Saved Bookmarks State -->
-        <div style="text-align: center; padding: 3rem 1.5rem; background: #ffffff; border: 1.5px dashed var(--qj-border); border-radius: var(--qj-radius-lg); margin-top: 0.5rem;">
+        <div style="text-align: center; padding: 3rem 1.5rem; background: var(--qj-card); border: 1.5px dashed var(--qj-border); border-radius: var(--qj-radius-lg); margin-top: 0.5rem;">
           <div style="font-size: 2.8rem; margin-bottom: 0.5rem;">⭐</div>
           <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main);">Noch keine gemerkten Jobs</h3>
           <p style="font-size: 0.85rem; color: var(--qj-text-muted); margin: 0.35rem 0 1.25rem 0; line-height: 1.45;">
@@ -238,7 +250,7 @@ export function renderJobsScreen(state) {
         </div>
       ` : currentTab === 'my_jobs' ? `
         <!-- Empty My Jobs State -->
-        <div style="text-align: center; padding: 3rem 1.5rem; background: #ffffff; border: 1.5px dashed var(--qj-border); border-radius: var(--qj-radius-lg); margin-top: 0.5rem;">
+        <div style="text-align: center; padding: 3rem 1.5rem; background: var(--qj-card); border: 1.5px dashed var(--qj-border); border-radius: var(--qj-radius-lg); margin-top: 0.5rem;">
           <div style="font-size: 2.8rem; margin-bottom: 0.5rem;">📋</div>
           <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main);">Keine aktiven Aufträge</h3>
           <p style="font-size: 0.85rem; color: var(--qj-text-muted); margin: 0.35rem 0 1.25rem 0; line-height: 1.45;">
@@ -250,7 +262,7 @@ export function renderJobsScreen(state) {
         </div>
       ` : `
         <!-- Empty Search Results State -->
-        <div style="text-align: center; padding: 3rem 1.5rem; background: #ffffff; border: 1.5px dashed var(--qj-border); border-radius: var(--qj-radius-lg); margin-top: 0.5rem;">
+        <div style="text-align: center; padding: 3rem 1.5rem; background: var(--qj-card); border: 1.5px dashed var(--qj-border); border-radius: var(--qj-radius-lg); margin-top: 0.5rem;">
           <div style="font-size: 2.8rem; margin-bottom: 0.5rem;">🔍</div>
           <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--qj-text-main);">Keine Microjobs gefunden</h3>
           <p style="font-size: 0.85rem; color: var(--qj-text-muted); margin: 0.35rem 0 1.25rem 0;">
@@ -267,7 +279,7 @@ export function renderJobsScreen(state) {
         <button 
           id="btn-floating-map-toggle" 
           class="btn btn-primary"
-          style="pointer-events: auto; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border-radius: 30px; padding: 0.55rem 1.25rem; font-size: 0.82rem; font-weight: 800; display: flex; align-items: center; gap: 0.45rem; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); border: 2px solid rgba(255,255,255,0.35); cursor: pointer;"
+          style="pointer-events: auto; background: linear-gradient(135deg, #0091ff 0%, #0074cc 100%); color: var(--qj-text-inverse); border-radius: 30px; padding: 0.55rem 1.25rem; font-size: 0.82rem; font-weight: 800; display: flex; align-items: center; gap: 0.45rem; box-shadow: 0 6px 20px rgba(0, 145, 255, 0.4); border: 2px solid rgba(255,255,255,0.35); cursor: pointer;"
         >
           ${viewMode === 'map' ? '<span>📋</span><span>Liste anzeigen</span>' : '<span>🗺️</span><span>Karte anzeigen</span>'}
         </button>
@@ -333,35 +345,49 @@ export function attachJobsScreenEvents() {
     });
   }
 
-  let jobsSearchTimer = null;
-  const executeJobsSearch = (val) => {
-    if (jobsSearchTimer) {
-      clearTimeout(jobsSearchTimer);
-      jobsSearchTimer = null;
-    }
-    const currentQ = store.getState().filters.query || '';
-    if (val !== currentQ) {
-      store.setFilter('query', val);
-    }
-  };
-
   const searchInput = document.getElementById('jobs-search-input');
   if (searchInput) {
+    if (jobsSearchShouldRefocus) {
+      searchInput.focus();
+      const end = searchInput.value.length;
+      try { searchInput.setSelectionRange(end, end); } catch (e) { /* noop */ }
+      jobsSearchShouldRefocus = false;
+    }
+
+    const executeJobsSearch = (val) => {
+      jobsSearchTimer = null;
+      const state = store.getState();
+      if (state.currentScreen !== 'jobs') return;
+      const currentQ = state.filters.query || '';
+      if (val !== currentQ) {
+        jobsSearchShouldRefocus = true;
+        store.setFilter('query', val);
+      }
+    };
+
     searchInput.addEventListener('input', (e) => {
+      const val = e.target.value;
       if (jobsSearchTimer) clearTimeout(jobsSearchTimer);
       jobsSearchTimer = setTimeout(() => {
-        executeJobsSearch(e.target.value);
+        executeJobsSearch(val);
       }, 200);
     });
 
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
+        if (jobsSearchTimer) clearTimeout(jobsSearchTimer);
         executeJobsSearch(searchInput.value);
+      } else if (e.key === 'Escape') {
+        if (jobsSearchTimer) clearTimeout(jobsSearchTimer);
+        jobsSearchTimer = null;
+        jobsSearchShouldRefocus = false;
+        searchInput.blur();
       }
     });
 
     searchInput.addEventListener('blur', () => {
+      if (jobsSearchTimer) clearTimeout(jobsSearchTimer);
       executeJobsSearch(searchInput.value);
     });
   }
@@ -370,6 +396,7 @@ export function attachJobsScreenEvents() {
   if (clearBtn) {
     clearBtn.addEventListener('click', () => {
       if (jobsSearchTimer) clearTimeout(jobsSearchTimer);
+      jobsSearchTimer = null;
       store.setFilter('query', '');
     });
   }
@@ -413,9 +440,16 @@ export function attachJobsScreenEvents() {
 
   const catChips = document.querySelectorAll('.category-chip[data-cat]');
   catChips.forEach(chip => {
-    chip.addEventListener('click', () => {
+    const selectCategory = () => {
       const cat = chip.getAttribute('data-cat');
       store.setFilter('category', cat);
+    };
+    chip.addEventListener('click', selectCategory);
+    chip.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectCategory();
+      }
     });
   });
 

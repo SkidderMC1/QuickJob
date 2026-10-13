@@ -1,5 +1,5 @@
 """
-Capture comprehensive high-resolution screenshots of all QuickJob UI screens
+Capture comprehensive high-resolution screenshots of all EasyJob UI screens
 and navigation flows for UI evaluation report.
 """
 import os
@@ -7,7 +7,7 @@ import sys
 from playwright.sync_api import sync_playwright
 
 BASE_URL = "http://127.0.0.1:8000"
-ARTIFACT_DIR = r"C:\Users\Einrichtung\.gemini\antigravity-ide\brain\82d22bd1-8e5b-4db0-bce9-9e6811152705"
+ARTIFACT_DIR = os.environ.get("ARTIFACT_DIR", r"C:\Users\Einrichtung\.gemini\antigravity\brain\d3c76e63-f3ac-4cd0-a65d-af8202b7d2ee")
 
 def dismiss_consent(page):
     try:

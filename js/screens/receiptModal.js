@@ -1,5 +1,5 @@
 /**
- * QuickJob Legally Compliant Microjob Receipt Modal (§ 368 BGB / § 147 AO)
+ * EasyJob Legally Compliant Microjob Receipt Modal (§ 368 BGB / § 147 AO)
  */
 import { store } from '../state/store.js';
 
@@ -26,7 +26,7 @@ export function renderReceiptModal(state) {
         <!-- Header -->
         <div class="modal-header">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(14, 167, 107, 0.12); color: #0ea76b; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 800;">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(0, 145, 255, 0.12); color: #0091ff; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 800;">
               📄
             </div>
             <div>
@@ -38,56 +38,56 @@ export function renderReceiptModal(state) {
               </span>
             </div>
           </div>
-          <button id="btn-close-receipt" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px; border: none; background: transparent; cursor: pointer;">
+          <button id="btn-close-receipt" aria-label="Schließen" style="font-size: 1.25rem; color: var(--qj-text-muted); padding: 4px; border: none; background: transparent; cursor: pointer;">
             ✕
           </button>
         </div>
 
         <!-- Body / Printable Receipt Paper -->
         <div class="modal-body" style="gap: 1rem;">
-          <div class="printable-receipt" style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 0.85rem; font-family: monospace, sans-serif;">
+          <div class="printable-receipt" style="background: var(--qj-card); border: 1.5px solid var(--qj-border); border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 15px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 0.85rem; font-family: monospace, sans-serif;">
             <!-- Receipt Header -->
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0ea76b; padding-bottom: 0.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0091ff; padding-bottom: 0.75rem;">
               <div>
-                <div style="font-size: 1.15rem; font-weight: 800; color: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif;">
-                  ⚡ QuickJob Quittung
+                <div style="font-size: 1.15rem; font-weight: 800; color: var(--qj-text-main); font-family: 'Plus Jakarta Sans', sans-serif;">
+                  ⚡ EasyJob Quittung
                 </div>
-                <div style="font-size: 0.75rem; color: #64748b;">
+                <div style="font-size: 0.75rem; color: var(--qj-text-muted);">
                   Nachbarschaftliche Taschengeld-Vermittlung
                 </div>
               </div>
               <div style="text-align: right;">
-                <div style="font-size: 0.8rem; font-weight: 700; color: #0f172a;">${receiptNumber}</div>
-                <div style="font-size: 0.72rem; color: #64748b;">Datum: ${receiptDate}</div>
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--qj-text-main);">${receiptNumber}</div>
+                <div style="font-size: 0.72rem; color: var(--qj-text-muted);">Datum: ${receiptDate}</div>
               </div>
             </div>
 
             <!-- Parties Grid -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; background: #f8fafc; border-radius: 8px; padding: 0.75rem; font-size: 0.78rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; background: var(--qj-surface-subtle); border-radius: 8px; padding: 0.75rem; font-size: 0.78rem;">
               <div>
-                <div style="font-size: 0.68rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Zahlungsempfänger (Helfer)</div>
-                <div style="font-weight: 800; color: #0f172a; margin-top: 2px;">${escapeHTML(workerName)}</div>
-                <div style="color: #64748b;">Verifizierter Schüler / Helfer</div>
+                <div style="font-size: 0.68rem; font-weight: 700; color: var(--qj-text-muted); text-transform: uppercase;">Zahlungsempfänger (Helfer)</div>
+                <div style="font-weight: 800; color: var(--qj-text-main); margin-top: 2px;">${escapeHTML(workerName)}</div>
+                <div style="color: var(--qj-text-muted);">Verifizierter Schüler / Helfer</div>
               </div>
               <div>
-                <div style="font-size: 0.68rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Auftraggeber (Zahlender)</div>
-                <div style="font-weight: 800; color: #0f172a; margin-top: 2px;">${escapeHTML(employerName)}</div>
-                <div style="color: #64748b;">Privathaushalt / Auftraggeber</div>
+                <div style="font-size: 0.68rem; font-weight: 700; color: var(--qj-text-muted); text-transform: uppercase;">Auftraggeber (Zahlender)</div>
+                <div style="font-weight: 800; color: var(--qj-text-main); margin-top: 2px;">${escapeHTML(employerName)}</div>
+                <div style="color: var(--qj-text-muted);">Privathaushalt / Auftraggeber</div>
               </div>
             </div>
 
             <!-- Job Service Description -->
-            <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem;">
-              <div style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Erbrachte Leistung</div>
-              <div style="font-size: 0.88rem; font-weight: 700; color: #0f172a;">${escapeHTML(job.title)}</div>
-              <div style="font-size: 0.76rem; color: #475569; margin-top: 2px;">
+            <div style="border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.75rem;">
+              <div style="font-size: 0.72rem; font-weight: 700; color: var(--qj-text-muted); text-transform: uppercase; margin-bottom: 0.25rem;">Erbrachte Leistung</div>
+              <div style="font-size: 0.88rem; font-weight: 700; color: var(--qj-text-main);">${escapeHTML(job.title)}</div>
+              <div style="font-size: 0.76rem; color: var(--qj-text-muted); margin-top: 2px;">
                 Kategorie: ${job.category} · Dauer: ${job.estimatedDuration} · Ort: ${job.approxLocation}
               </div>
             </div>
 
             <!-- Line Items Table -->
-            <div style="display: flex; flex-direction: column; gap: 0.4rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.65rem;">
-              <div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: #334155;">
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; border-bottom: 1px solid var(--qj-border); padding-bottom: 0.65rem;">
+              <div style="display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--qj-text-main);">
                 <span>Grundhonorar (Aufwandsentschädigung):</span>
                 <span style="font-weight: 700;">€${basePayment.toFixed(2)}</span>
               </div>
@@ -97,15 +97,15 @@ export function renderReceiptModal(state) {
                   <span style="font-weight: 700;">+ €${tipPayment.toFixed(2)}</span>
                 </div>
               ` : ''}
-              <div style="display: flex; justify-content: space-between; font-size: 1rem; font-weight: 800; color: #0f172a; border-top: 2px solid #0f172a; padding-top: 0.45rem; margin-top: 0.2rem;">
+              <div style="display: flex; justify-content: space-between; font-size: 1rem; font-weight: 800; color: var(--qj-text-main); border-top: 2px solid var(--qj-text-main); padding-top: 0.45rem; margin-top: 0.2rem;">
                 <span>Gesamtbetrag erhalten:</span>
-                <span style="color: #0ea76b;">€${totalPayment.toFixed(2)}</span>
+                <span style="color: #0091ff;">€${totalPayment.toFixed(2)}</span>
               </div>
             </div>
 
             <!-- Legal Citation Notice -->
-            <div style="font-size: 0.7rem; color: #64748b; line-height: 1.4; background: #f8fafc; border-radius: 6px; padding: 0.55rem;">
-              <strong>Rechtlicher Hinweis gem. § 368 BGB:</strong> Der Empfänger bestätigt hiermit den vollständigen Erhalt des oben genannten Betrags über das QuickJob-Treuhandkonto (Escrow). Aufbewahrungspflichtige Daten werden revisionssicher gem. § 147 Abs. 1 Nr. 4 AO archiviert.
+            <div style="font-size: 0.7rem; color: var(--qj-text-muted); line-height: 1.4; background: var(--qj-surface-subtle); border-radius: 6px; padding: 0.55rem;">
+              <strong>Rechtlicher Hinweis gem. § 368 BGB:</strong> Der Empfänger bestätigt hiermit den vollständigen Erhalt des oben genannten Betrags über das EasyJob-Treuhandkonto (Escrow). Aufbewahrungspflichtige Daten werden revisionssicher gem. § 147 Abs. 1 Nr. 4 AO archiviert.
             </div>
           </div>
 

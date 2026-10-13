@@ -20,3 +20,8 @@ data/outbox/
 *.sqlite3
 .env
 .env.*
+
+# IDE & Agent directories
+.agent/
+.opencode/
+.skills/

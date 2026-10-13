@@ -1,5 +1,5 @@
 /**
- * QuickJob Safety, Moderation & Minor Protection Modal
+ * EasyJob Safety, Moderation & Minor Protection Modal
  */
 import { store } from '../state/store.js';
 
@@ -16,7 +16,7 @@ export function renderSafetyModal(state) {
             <span style="font-size: 1.25rem;">🛡️</span>
             <h3 id="safety-modal-title" style="font-size: 1.05rem; font-weight: 800;">Trust, Safety & Minor Protection</h3>
           </div>
-          <button id="btn-close-safety" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px;">✕</button>
+          <button id="btn-close-safety" aria-label="Schließen" style="font-size: 1.25rem; color: var(--qj-text-muted); padding: 4px;">✕</button>
         </div>
 
         <div class="modal-body">
@@ -27,7 +27,7 @@ export function renderSafetyModal(state) {
               <span>Youth Protection Workflow (Ages 14–17)</span>
             </div>
             <p style="font-size: 0.82rem; color: #6b21a8; line-height: 1.45;">
-              QuickJob is designed to provide teenagers with safe, legal, and educational microjob opportunities with full transparency:
+              EasyJob is designed to provide teenagers with safe, legal, and educational microjob opportunities with full transparency:
             </p>
             <ul style="padding-left: 1.2rem; font-size: 0.8rem; color: #5b21b6; margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.3rem;">
               <li><strong>Parental Consent:</strong> A parent/guardian must approve the digital consent token before tasks can be accepted.</li>
@@ -58,7 +58,7 @@ export function renderSafetyModal(state) {
               <span>Escrow Payment Guarantee</span>
             </div>
             <p style="font-size: 0.82rem; color: #1d4ed8; line-height: 1.45;">
-              No cash under the table. When a microjob is booked, the payment is secured in QuickJob Escrow. When the worker finishes and the employer confirms, funds are instantly transferred.
+              No cash under the table. When a microjob is booked, the payment is secured in EasyJob Escrow. When the worker finishes and the employer confirms, funds are instantly transferred.
             </p>
           </div>
 

@@ -1,7 +1,17 @@
 /**
- * QuickJob Realistic Mock Data
+ * EasyJob Realistic Mock Data
  */
 import { JobStates, ApplicationModes, DefaultAchievements } from '../models/types.js';
+
+/**
+ * Offline-safe inline SVG placeholder for proof-of-work photos.
+ * Avoids remote (unsplash) requests and satisfies CSP `img-src 'self' data:`.
+ */
+const svgPlaceholder = (label) => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#f1f5f9"/><rect x="0" y="0" width="400" height="300" fill="none" stroke="#cbd5e1" stroke-width="2"/><text x="200" y="150" font-family="sans-serif" font-size="24" fill="#64748b" text-anchor="middle" dominant-baseline="middle">${label}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+};
+
 
 export const mockUsers = {
   jasper: {
@@ -24,16 +34,16 @@ export const mockUsers = {
     idCardVerifiedAt: '10.09.2026',
     achievements: [...DefaultAchievements],
     parentPortal: {
-      isActive: false, // Default is disabled as requested by user
-      parentCode: '482910',
+      isActive: false, // Default is disabled (§7: PIN off by default)
+      parentCode: null,
       parentEmail: 'sabine.klein@familie-klein.de'
     },
     settings: {
       theme: 'light',
       notifications: {
-        newJobs: true,
-        messages: true,
-        payments: true,
+        newJobsNearMe: true,
+        chatMessages: true,
+        payouts: true,
         parentAlerts: true,
         pushEnabled: false
       }
@@ -205,11 +215,11 @@ export const mockUsers = {
     isIdentityVerified: true,
     settings: {
       theme: 'light',
-      notifications: { newJobs: true, messages: true, payments: true }
+      notifications: { newJobsNearMe: true, chatMessages: true, payouts: true }
     },
     skills: ['Administration', 'Moderation', 'Compliance'],
     locationApprox: 'Wuppertal-Zentrum',
-    bio: 'Offizieller QuickJob System-Administrator und Compliance Moderator.'
+    bio: 'Offizieller EasyJob System-Administrator und Compliance Moderator.'
   }
 };
 
@@ -233,8 +243,8 @@ export const initialJobs = [
     googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Luisenstra%C3%9Fe+42,+42103+Wuppertal',
     checkInStatus: 'NOT_ARRIVED',
     checkInTime: null,
-    proofPhotoBefore: 'https://images.unsplash.com/photo-1558904541-efa8c4a08931?auto=format&fit=crop&w=400&q=80',
-    proofPhotoAfter: 'https://images.unsplash.com/photo-1592417817098-8f3d69102657?auto=format&fit=crop&w=400&q=80',
+    proofPhotoBefore: svgPlaceholder('Vorher'),
+    proofPhotoAfter: svgPlaceholder('Nachher'),
     aiVisionVerified: true,
     aiVisionSummary: '🤖 KI-Bildprüfung (Gemini Vision): Rasenfläche sauber gemäht, Rasenkanten getrimmt, Schnittgut ordnungsgemäß in Grüngutsäcke verpackt. Plausibilität: 98%.',
     tipAmount: 5,
@@ -282,7 +292,8 @@ export const initialJobs = [
         pitch: 'Hallo, ich wohne um die Ecke und kann Samstag gerne beim Rasenmähen unterstützen.'
       }
     ],
-    isBookmarked: false
+    isBookmarked: false,
+    isBoosted: true
   },
   {
     id: 'job_02',
@@ -426,7 +437,9 @@ export const initialJobs = [
         pitch: 'Hallo TechCraft-Team! Ich interessiere mich sehr für IT-Hardware und habe bereits beim letzten Inventar geholfen.'
       }
     ],
-    isBookmarked: false
+    isBookmarked: false,
+    isTeamwork: true,
+    teamMembersNeeded: 2
   },
   {
     id: 'job_05',
@@ -655,7 +668,7 @@ export const initialConversations = [
         id: 'm4',
         senderId: 'user_techcraft',
         senderName: 'TechCraft Digital GmbH',
-        text: 'Hi! We received your application. Since you are 16, please ensure your guardian consent is verified on your QuickJob profile.',
+        text: 'Hi! We received your application. Since you are 16, please ensure your guardian consent is verified on your EasyJob profile.',
         timestamp: 'Today 09:30',
         isMine: false
       },
@@ -663,7 +676,7 @@ export const initialConversations = [
         id: 'm5',
         senderId: 'user_jasper',
         senderName: 'Jasper Klein',
-        text: 'Hello! Yes, my mother signed the digital QuickJob parental consent form, badge is active on my profile!',
+        text: 'Hello! Yes, my mother signed the digital EasyJob parental consent form, badge is active on my profile!',
         timestamp: 'Today 09:42',
         isMine: true
       }
@@ -742,7 +755,7 @@ export const mockReports = [
     reporterEmail: 'sophia@quickjob.local',
     category: 'BETRUGSVERDACHT',
     categoryLabel: 'Zahlungsumgehung / Phishing-Verdacht',
-    reason: 'Aufforderung zur Abwicklung außerhalb von QuickJob Treuhand',
+    reason: 'Aufforderung zur Abwicklung außerhalb von EasyJob Treuhand',
     details: 'Hat wiederholt versucht, die Treuhand-Zahlung zu umgehen und per verdächtiger externer Website zur Eingabe von Bankdaten aufzufordern.',
     jobId: 'job_03',
     jobTitle: 'Kartonagen sortieren im Lager',
@@ -753,7 +766,7 @@ export const mockReports = [
       'Externer Phishing-Link im Chat geteilt: pay-quickjob-verify.xyz',
       'Weigerung, das integrierte Treuhandkonto (Escrow) zu nutzen'
     ],
-    chatExcerpt: 'Artur: "Geh auf pay-quickjob-verify.xyz und gib deine IBAN ein."\nSophia: "Zahlungen laufen ausschließlich sicher über die QuickJob App."'
+    chatExcerpt: 'Artur: "Geh auf pay-quickjob-verify.xyz und gib deine IBAN ein."\nSophia: "Zahlungen laufen ausschließlich sicher über die EasyJob App."'
   },
   {
     id: 'rep_103',

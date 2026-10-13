@@ -1,5 +1,5 @@
 /**
- * QuickJob Core Data Types & Constants
+ * EasyJob Core Data Types & Constants
  */
 
 export const JobCategories = [

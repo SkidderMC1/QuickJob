@@ -1,13 +1,13 @@
 {
-  "name": "QuickJob — Local Microjobs Marketplace",
-  "short_name": "QuickJob",
+  "name": "EasyJob — Local Microjobs Marketplace",
+  "short_name": "EasyJob",
   "description": "Find and post local microjobs safely with two-stage privacy and escrow payment protection.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#090d16",
-  "theme_color": "#0ea76b",
+  "theme_color": "#0091ff",
   "categories": ["business", "finance", "social", "productivity"],
   "icons": [
     {

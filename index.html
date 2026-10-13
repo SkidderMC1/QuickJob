@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>QuickJob — Local Microjobs Marketplace</title>
-  <meta name="description" content="QuickJob connects young people (14–25), adults, and verified companies for local microjobs with two-stage location privacy and escrow payment protection." />
-  <meta name="theme-color" content="#0ea76b" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>EasyJob — Local Microjobs Marketplace</title>
+  <meta name="description" content="EasyJob connects young people (14–25), adults, and verified companies for local microjobs with two-stage location privacy and escrow payment protection." />
+  <meta name="theme-color" content="#0091ff" />
 
   <!-- iOS / iPad Web App Standalone Capabilities -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="QuickJob" />
+  <meta name="apple-mobile-web-app-title" content="EasyJob" />
 
   <!-- Web App Manifest & App Icons -->
   <link rel="manifest" href="manifest.json" />
@@ -33,20 +33,7 @@
   <!-- Main ES Module Application -->
   <script type="module" src="js/app.js"></script>
 
-  <!-- PWA Service Worker Registration -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then((registration) => {
-            registration.update();
-            console.log('[PWA] Service Worker registered and checked for updates:', registration.scope);
-          })
-          .catch((error) => {
-            console.warn('[PWA] Service Worker registration failed:', error);
-          });
-      });
-    }
-  </script>
+  <!-- PWA Service Worker Registration (external file for a strict CSP) -->
+  <script src="js/sw-register.js" defer></script>
 </body>
 </html>

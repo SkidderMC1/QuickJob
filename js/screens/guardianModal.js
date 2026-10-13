@@ -1,21 +1,22 @@
 /**
- * QuickJob Guardian Consent & Authorization Modal (BGB §§ 107, 113)
+ * EasyJob Guardian Consent & Authorization Modal (BGB §§ 107, 113)
  * Provides minors and legal guardians an auditable, verifiable consent portal.
  */
 import { GuardianConsentManager } from '../legal/guardianConsent.js';
+import { isMinorUser } from '../legal/legalEngine.js';
 import { store } from '../state/store.js';
 
 export function renderGuardianModal(state) {
   if (!state.isGuardianModalOpen) return '';
 
   const user = state.currentUser;
-  const isMinor = user && user.age && user.age < 18;
+  const isMinor = isMinorUser(user);
   const existingConsent = user?.guardianConsent;
   const isActive = Boolean(existingConsent && existingConsent.status === 'ACTIVE');
 
   return `
     <div class="modal-backdrop" id="guardian-modal-backdrop" style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 1rem;">
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="guardian-modal-title" style="background: #fff; width: 100%; max-width: 540px; max-height: 88vh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="guardian-modal-title" style="background: var(--qj-card); width: 100%; max-width: 540px; max-height: 88vh; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
         
         <!-- Header -->
         <div style="padding: 1.25rem; border-bottom: 1px solid #e2e8f0; background: #faf5ff; display: flex; justify-content: space-between; align-items: center;">
@@ -35,6 +36,11 @@ export function renderGuardianModal(state) {
 
         <!-- Body -->
         <div style="flex: 1; padding: 1.25rem; overflow-y: auto;">
+          ${!isMinor ? `
+            <div style="background: var(--qj-surface-subtle); border: 1px solid var(--qj-border); border-radius: 10px; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.78rem; color: var(--qj-text-muted); line-height: 1.45;">
+              Hinweis: Für volljährige Nutzer ist keine elterliche Einwilligung nach §§ 107, 113 BGB erforderlich. Die folgenden Angaben sind freiwillig.
+            </div>
+          ` : ''}
           ${isActive ? `
             <!-- Currently Active Authorization Summary -->
             <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 14px; padding: 1rem; margin-bottom: 1rem;">
@@ -66,7 +72,7 @@ export function renderGuardianModal(state) {
               Nach deutschem Zivil- und Jugendarbeitsschutzrecht (§§ 107, 113 BGB) benötigen Minderjährige unter 18 Jahren für die Annahme von Microjobs die ausdrückliche Einwilligung der Personensorgeberechtigten.
             </p>
 
-            <form id="form-guardian-consent" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <form id="form-guardian-consent" style="display: flex; flex-direction: column; gap: 0.75rem;">
               <div>
                 <label style="display: block; font-size: 0.76rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                   Vollständiger Name des/der Erziehungsberechtigten *
@@ -117,7 +123,7 @@ export function renderGuardianModal(state) {
           `}
         </div>
 
-        <div style="padding: 0.85rem 1.25rem; border-top: 1px solid #e2e8f0; background: #f8fafc; text-align: center;">
+        <div style="padding: 0.85rem 1.25rem; border-top: 1px solid var(--qj-border); background: var(--qj-surface-subtle); text-align: center;">
           <span style="font-size: 0.72rem; color: #64748b;">
             Verifizierte Einwilligungen werden manipulationssicher in der Compliance-Historie archiviert.
           </span>
@@ -135,6 +141,12 @@ function escapeHTML(str) {
 }
 
 export function attachGuardianModalEvents() {
+  // Prevent native form submission (replaces the former inline submit-return handler)
+  const consentForm = document.getElementById('form-guardian-consent');
+  if (consentForm) {
+    consentForm.addEventListener('submit', (e) => e.preventDefault());
+  }
+
   const closeBtn = document.getElementById('btn-close-guardian-modal');
   if (closeBtn) {
     closeBtn.addEventListener('click', () => {

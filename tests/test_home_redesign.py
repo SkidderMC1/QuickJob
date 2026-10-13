@@ -1,7 +1,7 @@
 """
-Comprehensive Automated UI/UX Redesign Test Suite for QuickJob Home Screen
+Comprehensive Automated UI/UX Redesign Test Suite for EasyJob Home Screen
 Verifies:
-1. Simplified Header ([QuickJob logo] [Profile])
+1. Simplified Header ([EasyJob logo] [Profile])
 2. Compact Nearby Map Card (35-45% reduced height, "X jobs near you", "Open map ->")
 3. Categories with horizontal chips and "See all ->"
 4. Nearby Jobs Section heading ("Nearby jobs · X", "See all ->")
@@ -62,7 +62,7 @@ def run_tests():
         # Verify visual clutter removed (safety icon hidden from visible header)
         safety_btn = page.query_selector("#btn-safety-modal")
         assert not page.is_visible("#btn-safety-modal"), "Safety shield must not clutter visible home header"
-        print("✓ Header simplified: [QuickJob logo] [Profile] visible, clutter removed")
+        print("✓ Header simplified: [EasyJob logo] [Profile] visible, clutter removed")
 
         # Step 3: Verify Map Card is removed from Home screen as requested
         print("\n--- TEST 3: Map Card Removed from Home ---")

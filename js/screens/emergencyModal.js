@@ -1,5 +1,5 @@
 /**
- * QuickJob Instant Emergency & SOS Modal
+ * EasyJob Instant Emergency & SOS Modal
  * Provides 1-tap emergency calling, guardian alerts, and live location sharing
  */
 import { store } from '../state/store.js';
@@ -28,7 +28,7 @@ export function renderEmergencyModal(state) {
                 Notfall & Sofort-Hilfe (SOS)
               </h2>
               <span style="font-size: 0.72rem; color: #b91c1c; font-weight: 600;">
-                QuickJob Schutz- & Sicherheits-Zentrale
+                EasyJob Schutz- & Sicherheits-Zentrale
               </span>
             </div>
           </div>
@@ -40,12 +40,12 @@ export function renderEmergencyModal(state) {
         <!-- Body -->
         <div class="modal-body" style="gap: 0.9rem;">
           <!-- Critical Safety Alert -->
-          <div style="background: #ffffff; border: 1.5px solid #fecaca; border-radius: 12px; padding: 0.85rem; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);">
+          <div style="background: var(--qj-card); border: 1.5px solid #fecaca; border-radius: 12px; padding: 0.85rem; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);">
             <div style="font-size: 0.85rem; font-weight: 800; color: #991b1b; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
               <span>⚠️</span>
               <span>Fühlst du dich unwohl oder bist in Gefahr?</span>
             </div>
-            <p style="font-size: 0.8rem; color: #475569; line-height: 1.45; margin: 0;">
+            <p style="font-size: 0.8rem; color: var(--qj-text-muted); line-height: 1.45; margin: 0;">
               Verlasse sofort den Einsatzort! Deine Sicherheit steht an erster Stelle. Du musst keine Aufgaben ausführen, die dir unsicher erscheinen.
             </p>
           </div>
@@ -56,7 +56,7 @@ export function renderEmergencyModal(state) {
             <a 
               href="tel:110" 
               class="btn-emergency-call" 
-              style="display: flex; align-items: center; justify-content: space-between; background: #dc2626; color: #ffffff; padding: 0.9rem 1.1rem; border-radius: 14px; text-decoration: none; font-weight: 800; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);"
+              style="display: flex; align-items: center; justify-content: space-between; background: #dc2626; color: var(--qj-text-inverse); padding: 0.9rem 1.1rem; border-radius: 14px; text-decoration: none; font-weight: 800; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);"
             >
               <div style="display: flex; align-items: center; gap: 0.7rem;">
                 <span style="font-size: 1.4rem;">👮</span>
@@ -72,7 +72,7 @@ export function renderEmergencyModal(state) {
             <a 
               href="tel:112" 
               class="btn-emergency-call" 
-              style="display: flex; align-items: center; justify-content: space-between; background: #b91c1c; color: #ffffff; padding: 0.9rem 1.1rem; border-radius: 14px; text-decoration: none; font-weight: 800; box-shadow: 0 4px 12px rgba(185, 28, 28, 0.25);"
+              style="display: flex; align-items: center; justify-content: space-between; background: #b91c1c; color: var(--qj-text-inverse); padding: 0.9rem 1.1rem; border-radius: 14px; text-decoration: none; font-weight: 800; box-shadow: 0 4px 12px rgba(185, 28, 28, 0.25);"
             >
               <div style="display: flex; align-items: center; gap: 0.7rem;">
                 <span style="font-size: 1.4rem;">🚑</span>
@@ -89,7 +89,7 @@ export function renderEmergencyModal(state) {
               href="tel:${guardianPhone}" 
               class="btn-emergency-call" 
               id="btn-call-guardian"
-              style="display: flex; align-items: center; justify-content: space-between; background: #4338ca; color: #ffffff; padding: 0.9rem 1.1rem; border-radius: 14px; text-decoration: none; font-weight: 800; box-shadow: 0 4px 12px rgba(67, 56, 202, 0.25);"
+              style="display: flex; align-items: center; justify-content: space-between; background: #4338ca; color: var(--qj-text-inverse); padding: 0.9rem 1.1rem; border-radius: 14px; text-decoration: none; font-weight: 800; box-shadow: 0 4px 12px rgba(67, 56, 202, 0.25);"
             >
               <div style="display: flex; align-items: center; gap: 0.7rem;">
                 <span style="font-size: 1.4rem;">👨‍👩‍👧</span>
@@ -103,11 +103,11 @@ export function renderEmergencyModal(state) {
           </div>
 
           <!-- Share Current Location Action -->
-          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.45rem;">
-            <div style="font-size: 0.8rem; font-weight: 700; color: #1e293b;">
+          <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: 12px; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.45rem;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: var(--qj-text-main);">
               📍 Einsatzort & Standort teilen
             </div>
-            <div style="font-size: 0.75rem; color: #64748b;">
+            <div style="font-size: 0.75rem; color: var(--qj-text-muted);">
               Aktueller Einsatz: <strong>${escapeHTML(activeJob ? activeJob.title : 'Microjob')}</strong><br/>
               Adresse: <strong>${escapeHTML(activeJob ? (activeJob.exactAddress || activeJob.approxLocation) : 'Wuppertal')}</strong>
             </div>
@@ -120,9 +120,9 @@ export function renderEmergencyModal(state) {
             </button>
           </div>
 
-          <!-- QuickJob 24/7 Safety Team Notice -->
-          <div style="font-size: 0.72rem; color: #64748b; text-align: center; line-height: 1.4;">
-            🛡️ QuickJob protokolliert diesen Vorfall revisionssicher. Bei Fragen erreichst du unseren Support unter <a href="mailto:notfall@quickjob.local" style="color: #6366f1; font-weight: 700;">notfall@quickjob.local</a>.
+          <!-- EasyJob 24/7 Safety Team Notice -->
+          <div style="font-size: 0.72rem; color: var(--qj-text-muted); text-align: center; line-height: 1.4;">
+            🛡️ EasyJob protokolliert diesen Vorfall revisionssicher. Bei Fragen erreichst du unseren Support unter <a href="mailto:notfall@quickjob.local" style="color: #6366f1; font-weight: 700;">notfall@quickjob.local</a>.
           </div>
         </div>
       </div>

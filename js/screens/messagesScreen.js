@@ -1,5 +1,5 @@
 /**
- * QuickJob Job-Based Messages Screen
+ * EasyJob Job-Based Messages Screen
  */
 import { store } from '../state/store.js';
 import { JobStates } from '../models/types.js';
@@ -25,14 +25,14 @@ export function renderMessagesScreen(state) {
         </span>
       </div>
 
-      <!-- Trust & Privacy Banner -->
-      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--qj-radius-sm); padding: 0.65rem 0.85rem; font-size: 0.78rem; color: #1e40af; display: flex; align-items: center; gap: 0.45rem;">
-        <span>🛡️</span>
-        <span>For your safety, always keep communication and payment inside QuickJob.</span>
+      <!-- Trust & Privacy Safety Pill (Decluttered - Anti-Pattern #34 Remediation) -->
+      <div style="background: rgba(0, 145, 255, 0.06); border: 1px solid rgba(0, 145, 255, 0.2); border-radius: var(--qj-radius-xs); padding: 0.35rem 0.65rem; font-size: 0.73rem; color: #0284c7; display: flex; align-items: center; gap: 0.35rem;">
+        <span style="font-size: 0.85rem;">🛡️</span>
+        <span>Keep chat and payments inside EasyJob for statutory escrow protection.</span>
       </div>
 
       <!-- Conversation Threads List -->
-      <div style="display: flex; flex-direction: column; gap: 0.65rem; margin-top: 0.35rem;">
+      <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.2rem;">
         ${state.conversations.length > 0 ? state.conversations.map(conv => {
           const lastMsg = conv.messages[conv.messages.length - 1];
           return `
@@ -40,7 +40,7 @@ export function renderMessagesScreen(state) {
               class="conversation-item" 
               data-conv-id="${conv.id}"
               id="conv-item-${conv.id}"
-              style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 0.9rem; cursor: pointer; transition: var(--qj-transition); box-shadow: var(--qj-shadow-xs);"
+              style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-sm); padding: 0.75rem 0.85rem; cursor: pointer; transition: var(--qj-transition); box-shadow: var(--qj-shadow-xs);"
             >
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div style="display: flex; align-items: center; gap: 0.6rem;">
@@ -82,7 +82,7 @@ export function renderMessagesScreen(state) {
             </div>
           `;
         }).join('') : `
-          <div style="text-align: center; padding: 2.5rem 1rem; background: white; border-radius: var(--qj-radius-md); border: 1px dashed var(--qj-border);">
+          <div style="text-align: center; padding: 2.5rem 1rem; background: var(--qj-card); border-radius: var(--qj-radius-md); border: 1px dashed var(--qj-border);">
             <div style="font-size: 2rem; margin-bottom: 0.4rem;">💬</div>
             <h3 style="font-size: 1rem; font-weight: 700;">No conversations yet</h3>
             <p style="font-size: 0.8rem; color: var(--qj-text-muted); margin-top: 0.2rem;">
@@ -120,9 +120,9 @@ function renderChatThread(conv, state) {
         </button>
 
         <div style="text-align: center;">
-          <div style="font-size: 0.9rem; font-weight: 800; color: var(--qj-text-main);">
+          <h1 style="font-size: 0.9rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
             ${escapeHTML(conv.participant.name)}
-          </div>
+          </h1>
           <div style="font-size: 0.72rem; color: var(--qj-text-muted);">
             ${conv.participant.role}
           </div>
@@ -164,7 +164,7 @@ function renderChatThread(conv, state) {
         <div>
           ${status === 'WORKER_SELECTED' || status === 'IN_PROGRESS' ? `
             <button class="btn btn-primary btn-sm" id="btn-chat-complete-job" data-job-id="${conv.jobId}">
-              ✓ Als erledigt markieren
+              ✅ Job beendet
             </button>
           ` : status === 'COMPLETED' ? `
             <button class="btn btn-primary btn-sm" id="btn-chat-release-payment" data-job-id="${conv.jobId}">
@@ -191,9 +191,9 @@ function renderChatThread(conv, state) {
             class="btn btn-outline btn-sm" 
             id="btn-chat-live-checkin" 
             data-job-id="${conv.jobId}"
-            style="font-size: 0.74rem; font-weight: 800; color: #0ea76b; border-color: #a7f3d0; background: #ecfdf5; white-space: nowrap;"
+            style="font-size: 0.74rem; font-weight: 800; color: #0091ff; border-color: #a7f3d0; background: #ecfdf5; white-space: nowrap;"
           >
-            📍 Ich bin da (Check-In)
+            📍 Ich bin da
           </button>
         `}
 
@@ -211,7 +211,7 @@ function renderChatThread(conv, state) {
             class="btn btn-outline btn-sm" 
             id="btn-chat-view-receipt" 
             data-job-id="${conv.jobId}"
-            style="font-size: 0.74rem; font-weight: 800; color: #0f172a; border-color: #cbd5e1; background: #f8fafc; white-space: nowrap;"
+            style="font-size: 0.74rem; font-weight: 800; color: var(--qj-text-main); border-color: #cbd5e1; background: var(--qj-surface-subtle); white-space: nowrap;"
           >
             📄 Quittung (§ 368 BGB)
           </button>
@@ -221,9 +221,9 @@ function renderChatThread(conv, state) {
           class="btn btn-danger btn-sm" 
           id="btn-chat-sos" 
           data-job-id="${conv.jobId}"
-          style="font-size: 0.74rem; font-weight: 800; background: #dc2626; color: #ffffff; border: none; border-radius: 8px; padding: 0.35rem 0.7rem; white-space: nowrap; margin-left: auto;"
+          style="font-size: 0.74rem; font-weight: 800; background: #dc2626; color: var(--qj-text-inverse); border: none; border-radius: 8px; padding: 0.35rem 0.7rem; white-space: nowrap; margin-left: auto;"
         >
-          🚨 Notfall SOS
+          🚨 SOS Notfall
         </button>
       </div>
 
@@ -238,7 +238,7 @@ function renderChatThread(conv, state) {
 
         <!-- Inline Before & After Photo Proof Card (if available) -->
         ${hasProof ? `
-          <div style="background: #f8fafc; border: 1.5px solid #86efac; border-radius: 12px; padding: 0.75rem; margin: 0.5rem 0; display: flex; flex-direction: column; gap: 0.45rem;">
+          <div style="background: var(--qj-surface-subtle); border: 1.5px solid #86efac; border-radius: 12px; padding: 0.75rem; margin: 0.5rem 0; display: flex; flex-direction: column; gap: 0.45rem;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="font-size: 0.78rem; font-weight: 800; color: #15803d; display: flex; align-items: center; gap: 0.3rem;">
                 <span>📸</span><span>Vorher-/Nachher-Beweis hochgeladen</span>
@@ -247,7 +247,7 @@ function renderChatThread(conv, state) {
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem;">
               <div style="height: 90px; border-radius: 8px; overflow: hidden; position: relative;">
-                <img src="${job.proofPhotoBefore || 'https://images.unsplash.com/photo-1558904541-efa8c4a08931?auto=format&fit=crop&w=400&q=80'}" style="width: 100%; height: 100%; object-fit: cover;" alt="Vorher" />
+                <img src="${job.proofPhotoBefore || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22%3E%3Crect width=%22400%22 height=%22300%22 fill=%22%23f1f5f9%22/%3E%3C/svg%3E'}" style="width: 100%; height: 100%; object-fit: cover;" alt="Vorher" />
                 <span style="position: absolute; bottom: 3px; left: 3px; font-size: 0.6rem; background: rgba(0,0,0,0.7); color: white; padding: 1px 4px; border-radius: 4px;">Vorher</span>
               </div>
               <div style="height: 90px; border-radius: 8px; overflow: hidden; position: relative; border: 2px solid #10b981;">

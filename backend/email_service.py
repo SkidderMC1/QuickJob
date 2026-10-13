@@ -1,11 +1,11 @@
 """
-QuickJob Email Dispatch & Outbox Infrastructure
+EasyJob Email Dispatch & Outbox Infrastructure
 Sends transactional emails (Email Verification, Password Reset, Security Notices).
 In development and test environments, logs outbox records to SQLite and disk,
 allowing automated verification without external SMTP dependencies.
 """
 import os
-import json
+import secrets
 from datetime import datetime, timezone
 from .database import get_db_connection, OUTBOX_DIR
 
@@ -14,19 +14,19 @@ class EmailService:
     @staticmethod
     def send_verification_email(recipient: str, name: str, raw_token: str, base_url: str = "http://127.0.0.1:8000"):
         verification_link = f"{base_url}/?verify_token={raw_token}"
-        subject = "Bitte bestätige deine E-Mail-Adresse für QuickJob"
+        subject = "Bitte bestätige deine E-Mail-Adresse für EasyJob"
         content = f"""Hallo {name},
 
-vielen Dank für deine Registrierung bei QuickJob!
+vielen Dank für deine Registrierung bei EasyJob!
 Um dein Konto zu aktivieren und Nachbarschafts-Microjobs ausführen oder inserieren zu können, bestätige bitte deine E-Mail-Adresse:
 
 {verification_link}
 
 Dieser Link ist 24 Stunden lang gültig und kann nur einmal verwendet werden.
 
-Falls du dich nicht bei QuickJob registriert hast, kannst du diese Nachricht ignorieren.
+Falls du dich nicht bei EasyJob registriert hast, kannst du diese Nachricht ignorieren.
 
-Dein QuickJob Team
+Dein EasyJob Team
 """
         return EmailService._record_email(
             recipient=recipient,
@@ -39,10 +39,10 @@ Dein QuickJob Team
     @staticmethod
     def send_password_reset_email(recipient: str, name: str, raw_token: str, base_url: str = "http://127.0.0.1:8000"):
         reset_link = f"{base_url}/?reset_token={raw_token}"
-        subject = "Passwort zurücksetzen für dein QuickJob-Konto"
+        subject = "Passwort zurücksetzen für dein EasyJob-Konto"
         content = f"""Hallo {name},
 
-wir haben eine Anfrage zum Zurücksetzen deines Passworts für QuickJob erhalten.
+wir haben eine Anfrage zum Zurücksetzen deines Passworts für EasyJob erhalten.
 Über folgenden Link kannst du ein neues, sicheres Passwort festlegen:
 
 {reset_link}
@@ -51,7 +51,7 @@ Dieser Link ist 1 Stunde lang gültig.
 
 Falls du diese Anfrage nicht gestellt hast, wurde dein Passwort nicht geändert. Du kannst diese E-Mail ignorieren.
 
-Dein QuickJob Team
+Dein EasyJob Team
 """
         return EmailService._record_email(
             recipient=recipient,
@@ -64,17 +64,20 @@ Dein QuickJob Team
     @staticmethod
     def _record_email(recipient: str, subject: str, template_type: str, token: str, content: str):
         now = datetime.now(timezone.utc).isoformat()
-        log_id = f"eml_{int(datetime.now().timestamp()*1000)}"
+        # Random suffix guarantees uniqueness even for emails recorded in the same millisecond.
+        log_id = f"eml_{int(datetime.now().timestamp()*1000)}_{secrets.token_hex(4)}"
 
         # Save to database
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-        INSERT INTO email_logs (id, recipient, subject, template_type, token, content_preview, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (log_id, recipient, subject, template_type, token, content[:400], now))
-        conn.commit()
-        conn.close()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+            INSERT INTO email_logs (id, recipient, subject, template_type, token, content_preview, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (log_id, recipient, subject, template_type, token, content[:400], now))
+            conn.commit()
+        finally:
+            conn.close()
 
         # Save to outbox file for dev inspection
         filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{log_id}.txt"

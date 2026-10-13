@@ -1,5 +1,5 @@
 """
-End-to-End Test Suite for QuickJob Goal Requirements:
+End-to-End Test Suite for EasyJob Goal Requirements:
 1. Header avatar shows only initial letter or profile picture (no security/map icons in top right, no name text).
 2. Profile picture setup during registration and in settings.
 3. Admin Panel visible on admin login with KPI stats, reported users list, profile drawer, report reasons, and moderation actions.
@@ -7,6 +7,7 @@ End-to-End Test Suite for QuickJob Goal Requirements:
 5. Search bar debounces 3s, triggers on Enter and blur without losing focus after every character.
 6. Map screen is dedicated standalone map without jobs feed copy.
 """
+import sys
 import pytest
 from playwright.sync_api import sync_playwright
 
@@ -40,10 +41,17 @@ def test_header_avatar_and_no_top_right_icons():
         profile_btn = page.locator("#btn-header-profile")
         assert profile_btn.is_visible(), "Profile avatar button must be visible in header"
 
-        # Check there is NO visible security icon or map icon in top right
-        visible_header_btns = page.locator(".app-header button:visible").all()
-        assert len(visible_header_btns) == 1, f"Expected only 1 visible button in header (avatar), found {len(visible_header_btns)}"
-        assert visible_header_btns[0].get_attribute("id") == "btn-header-profile"
+        # Check there is NO visible security icon or map icon in top right.
+        # The brand logo is (correctly) a <button> too, so assert the exact set of
+        # visible header buttons rather than a brittle count.
+        visible_header_btn_ids = {
+            b.get_attribute("id") for b in page.locator(".app-header button:visible").all()
+        }
+        assert visible_header_btn_ids == {"brand-logo", "btn-header-profile"}, (
+            f"Unexpected visible header buttons: {visible_header_btn_ids}"
+        )
+        assert "btn-header-map" not in visible_header_btn_ids, "Map icon must not be visible in header"
+        assert "btn-safety-modal" not in visible_header_btn_ids, "Safety icon must not be visible in header"
 
         # Avatar shows initial letter 'J'
         avatar_letter = page.locator("#header-user-avatar-letter")
@@ -242,4 +250,32 @@ def test_registration_avatar_support():
         assert page.locator("#reg-avatar-input").count() == 1
 
         browser.close()
+
+
+def run_all():
+    """Standalone runner so `python tests/test_goal_admin_and_fixes.py` works
+    (the suite is also pytest-collectable)."""
+    tests = [
+        test_header_avatar_and_no_top_right_icons,
+        test_search_debounce_and_no_premature_refresh,
+        test_dedicated_standalone_map_screen,
+        test_admin_panel_features,
+        test_registration_avatar_support,
+    ]
+    passed = 0
+    for t in tests:
+        try:
+            t()
+            print(f"✓ PASS: {t.__name__}", flush=True)
+            passed += 1
+        except Exception as exc:
+            print(f"✗ FAIL: {t.__name__}: {exc}", flush=True)
+    print("=" * 69, flush=True)
+    print(f"GOAL/ADMIN/FIXES RESULTS: {passed}/{len(tests)} TESTS PASSED", flush=True)
+    print("=" * 69, flush=True)
+    return passed == len(tests)
+
+
+if __name__ == "__main__":
+    sys.exit(0 if run_all() else 1)
 

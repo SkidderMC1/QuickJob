@@ -1,23 +1,27 @@
 /**
- * QuickJob Floating Debug Drawer Component
+ * EasyJob Floating Debug Drawer Component
  * Allows testing personas, modes, and resetting data inside the real PWA full-screen app
  */
 import { store } from '../state/store.js';
 
 export function renderDebugDrawer(state) {
+  // Never render tester tooling in production.
+  if (!store.isNonProductionEnvironment()) return '';
   const isDrawerOpen = state.isDebugDrawerOpen;
   const currentPersona = state.currentPersonaKey;
   const currentMode = state.activeMode;
   const displayMode = state.displayMode;
 
   return `
-    <!-- Floating Debug Trigger Pill -->
+    <!-- Discreet Non-Intrusive Debug Trigger (Anti-Pattern #25 Remediation) -->
     <div 
       id="debug-floating-trigger"
-      style="position: fixed; bottom: 74px; right: 12px; z-index: 9999; display: flex; align-items: center; gap: 4px; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: white; padding: 6px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; box-shadow: 0 4px 16px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); cursor: pointer; user-select: none;"
+      style="position: fixed; bottom: calc(60px + env(safe-area-inset-bottom, 0px)); right: 8px; z-index: 9999; display: flex; align-items: center; gap: 3px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #cbd5e1; padding: 2px 7px; border-radius: 9999px; font-size: 0.65rem; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.12); cursor: pointer; user-select: none; opacity: 0.35; transition: opacity 0.2s ease, transform 0.15s ease;"
+      onmouseenter="this.style.opacity='1'; this.style.transform='scale(1.04)';"
+      onmouseleave="this.style.opacity='0.35'; this.style.transform='scale(1)';"
       title="Open Developer & Tester Tools"
     >
-      <span style="font-size: 0.9rem;">🛠️</span>
+      <span style="font-size: 0.75rem;">🛠️</span>
       <span>Debug</span>
     </div>
 
@@ -30,7 +34,7 @@ export function renderDebugDrawer(state) {
           <div class="modal-header" style="border-bottom: 1px solid #1e293b; padding: 1rem 1.25rem;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
               <span style="font-size: 1.2rem;">🛠️</span>
-              <h3 style="font-size: 1rem; font-weight: 800; color: #ffffff;">QuickJob Tester & Debug Console</h3>
+              <h3 style="font-size: 1rem; font-weight: 800; color: #ffffff;">EasyJob Tester & Debug Console</h3>
             </div>
             <button id="btn-close-debug-drawer" style="color: #94a3b8; font-size: 1.25rem;">✕</button>
           </div>
@@ -133,6 +137,8 @@ export function renderDebugDrawer(state) {
 }
 
 export function attachDebugDrawerEvents() {
+  // Never bind tester tooling in production.
+  if (!store.isNonProductionEnvironment()) return;
   const trigger = document.getElementById('debug-floating-trigger');
   if (trigger) {
     trigger.addEventListener('click', () => {

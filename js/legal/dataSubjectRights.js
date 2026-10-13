@@ -1,5 +1,5 @@
 /**
- * QuickJob GDPR Data Subject Rights Engine (Articles 15–21 GDPR)
+ * EasyJob GDPR Data Subject Rights Engine (Articles 15–21 GDPR)
  * Provides technical execution of Data Access/Portability (Art. 15, 20)
  * and Erasure (Art. 17) with statutory fiscal retention exceptions (§ 147 AO / § 257 HGB).
  */
@@ -23,7 +23,7 @@ export class DataSubjectRightsManager {
 
     return {
       exportMetadata: {
-        platform: 'QuickJob Microjobs',
+        platform: 'EasyJob Microjobs',
         exportDate: new Date().toISOString(),
         gdprLegalBasis: 'Art. 15 & 20 DSGVO (Recht auf Auskunft & Datenübertragbarkeit)',
         exportFormatVersion: '1.0.0'

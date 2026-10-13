@@ -1,5 +1,5 @@
 /**
- * QuickJob TDDDG § 25 & GDPR Consent Management Architecture
+ * EasyJob TDDDG § 25 & GDPR Consent Management Architecture
  * Enforces statutory consent for terminal device storage without dark patterns.
  * Strictly necessary storage is exempt under § 25 Abs. 2 Nr. 2 TDDDG.
  */

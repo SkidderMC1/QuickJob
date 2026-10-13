@@ -1,5 +1,5 @@
 /**
- * QuickJob Multi-Step Job Creation Wizard
+ * EasyJob Multi-Step Job Creation Wizard
  */
 import { store } from '../state/store.js';
 import { JobCategories, ApplicationModes } from '../models/types.js';
@@ -16,7 +16,9 @@ let wizardState = {
   dateSchedule: 'Saturday · 14:00',
   location: 'Wuppertal-Elberfeld',
   exactAddress: 'Königsstraße 15, 42103 Wuppertal',
-  applicationMode: ApplicationModes.APPLICATION_REQUIRED
+  applicationMode: ApplicationModes.APPLICATION_REQUIRED,
+  isBoosted: false,
+  isTeamwork: false
 };
 
 export function calculateHourlyRate(payment, durationStr) {
@@ -56,7 +58,7 @@ export function renderCreateJobScreen(state) {
       <!-- Wizard Progress Header -->
       <div class="wizard-progress">
         <div class="step-indicator">
-          <span>✨ Post a Microjob</span>
+          <h1 style="font-size: 0.78rem; font-weight: 700; color: inherit; margin: 0;">✨ Post a Microjob</h1>
           <span style="color: var(--qj-text-subtle);">· Step ${step} of 5</span>
         </div>
         <div class="step-dots">
@@ -67,7 +69,7 @@ export function renderCreateJobScreen(state) {
       </div>
 
       <!-- Step Content Container -->
-      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.25rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 1rem;">
+      <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.25rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 1rem;">
         
         <!-- STEP 1: Category & Title -->
         ${step === 1 ? `
@@ -85,7 +87,7 @@ export function renderCreateJobScreen(state) {
                 <div 
                   class="category-select-item ${wizardState.category === cat.id ? 'active' : ''}" 
                   data-wizard-cat="${cat.id}"
-                  style="border: 1.5px solid ${wizardState.category === cat.id ? 'var(--qj-primary)' : 'var(--qj-border)'}; background: ${wizardState.category === cat.id ? 'var(--qj-primary-light)' : '#ffffff'}; padding: 0.65rem 0.5rem; border-radius: var(--qj-radius-sm); cursor: pointer; display: flex; align-items: center; gap: 0.45rem; font-size: 0.8rem; font-weight: 600;"
+                  style="border: 1.5px solid ${wizardState.category === cat.id ? 'var(--qj-primary)' : 'var(--qj-border)'}; background: ${wizardState.category === cat.id ? 'var(--qj-primary-light)' : 'var(--qj-card)'}; padding: 0.65rem 0.5rem; border-radius: var(--qj-radius-sm); cursor: pointer; display: flex; align-items: center; gap: 0.45rem; font-size: 0.8rem; font-weight: 600;"
                 >
                   <span style="font-size: 1.1rem;">${cat.icon}</span>
                   <span style="line-height: 1.2;">${cat.name}</span>
@@ -114,7 +116,7 @@ export function renderCreateJobScreen(state) {
           <div>
             <h2 style="font-size: 1.15rem; font-weight: 800;">Describe the task</h2>
             <p style="font-size: 0.85rem; color: var(--qj-text-muted); margin-top: 2px;">
-              QuickJob bewertet die Altersfreigabe und Sicherheit automatisch nach dem Jugendarbeitsschutzgesetz.
+              EasyJob bewertet die Altersfreigabe und Sicherheit automatisch nach dem Jugendarbeitsschutzgesetz.
             </p>
           </div>
 
@@ -129,7 +131,7 @@ export function renderCreateJobScreen(state) {
           </div>
 
           <!-- Dynamic Automatic Safety Classification Box (Read-Only AI/Rule Assessment) -->
-          <div id="wizard-safety-box" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.45rem;">
+          <div id="wizard-safety-box" style="background: var(--qj-surface-subtle); border: 1.5px solid var(--qj-border); border-radius: 12px; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.45rem;">
             <div style="display: flex; align-items: center; justify-content: space-between;">
               <span style="font-size: 0.76rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; display: flex; align-items: center; gap: 0.35rem;">
                 <span>🤖</span>
@@ -138,7 +140,7 @@ export function renderCreateJobScreen(state) {
               <span class="badge ${safety.badgeClass}" id="wizard-safety-badge">${safety.badgeText}</span>
             </div>
             
-            <p style="font-size: 0.82rem; color: #1e293b; line-height: 1.45; margin-top: 2px;" id="wizard-safety-reason">
+            <p style="font-size: 0.82rem; color: var(--qj-text-main); line-height: 1.45; margin-top: 2px;" id="wizard-safety-reason">
               ${safety.reason}
             </p>
 
@@ -209,18 +211,47 @@ export function renderCreateJobScreen(state) {
           </div>
 
           <!-- Dynamic Fair-Pay Hourly Calculator Widget -->
-          <div id="wizard-fair-pay-box" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+          <div id="wizard-fair-pay-box" style="background: var(--qj-surface-subtle); border: 1.5px solid var(--qj-border); border-radius: 12px; padding: 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
             <div>
               <div style="font-size: 0.72rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.03em;">
                 💰 Berechneter Stundenlohn
               </div>
-              <div id="wizard-fair-pay-text" style="font-size: 0.82rem; font-weight: 600; color: #1e293b; margin-top: 2px;">
+              <div id="wizard-fair-pay-text" style="font-size: 0.82rem; font-weight: 600; color: var(--qj-text-main); margin-top: 2px;">
                 ${fairPay.text}
               </div>
             </div>
             <span class="badge ${fairPay.badgeClass}" id="wizard-fair-pay-badge" style="font-size: 0.85rem; font-weight: 800; white-space: nowrap;">
               €${fairPay.rate.toFixed(2)}/h
             </span>
+          </div>
+
+          <!-- Boost & Teamwork Add-ons -->
+          <div style="background: var(--qj-surface-subtle); border: 1.5px solid var(--qj-border); border-radius: 12px; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.65rem;">
+            <div style="font-size: 0.74rem; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.03em;">
+              ⚡ Premium Optionen (Optional)
+            </div>
+            
+            <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 0.35rem 0;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.1rem;">🚀</span>
+                <div>
+                  <div style="font-size: 0.84rem; font-weight: 700; color: var(--qj-text-main);">Express Job-Boost</div>
+                  <div style="font-size: 0.72rem; color: var(--qj-text-muted);">Hervorhebung ganz oben im Feed für schnellere Zusagen</div>
+                </div>
+              </div>
+              <input type="checkbox" id="wizard-boost-check" ${wizardState.isBoosted ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: var(--qj-primary);" />
+            </label>
+
+            <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 0.35rem 0; border-top: 1px dashed var(--qj-border); padding-top: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.1rem;">👥</span>
+                <div>
+                  <div style="font-size: 0.84rem; font-weight: 700; color: var(--qj-text-main);">Teamwork-Auftrag (Helfer-Duo)</div>
+                  <div style="font-size: 0.72rem; color: var(--qj-text-muted);">Aufgabe eignet sich für 2 Helfer gleichzeitig (z. B. Tragen, Garten)</div>
+                </div>
+              </div>
+              <input type="checkbox" id="wizard-teamwork-check" ${wizardState.isTeamwork ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: var(--qj-primary);" />
+            </label>
           </div>
 
           <div class="form-group">
@@ -275,7 +306,7 @@ export function renderCreateJobScreen(state) {
             <label class="form-label">Application Mode</label>
             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
               <label 
-                style="border: 1.5px solid ${wizardState.applicationMode === ApplicationModes.APPLICATION_REQUIRED ? 'var(--qj-primary)' : 'var(--qj-border)'}; background: ${wizardState.applicationMode === ApplicationModes.APPLICATION_REQUIRED ? 'var(--qj-primary-light)' : '#ffffff'}; padding: 0.75rem; border-radius: var(--qj-radius-sm); cursor: pointer; display: flex; align-items: flex-start; gap: 0.5rem;"
+                style="border: 1.5px solid ${wizardState.applicationMode === ApplicationModes.APPLICATION_REQUIRED ? 'var(--qj-primary)' : 'var(--qj-border)'}; background: ${wizardState.applicationMode === ApplicationModes.APPLICATION_REQUIRED ? 'var(--qj-primary-light)' : 'var(--qj-card)'}; padding: 0.75rem; border-radius: var(--qj-radius-sm); cursor: pointer; display: flex; align-items: flex-start; gap: 0.5rem;"
               >
                 <input 
                   type="radio" 
@@ -293,7 +324,7 @@ export function renderCreateJobScreen(state) {
               </label>
 
               <label 
-                style="border: 1.5px solid ${wizardState.applicationMode === ApplicationModes.DIRECT_ACCEPT ? 'var(--qj-primary)' : 'var(--qj-border)'}; background: ${wizardState.applicationMode === ApplicationModes.DIRECT_ACCEPT ? 'var(--qj-primary-light)' : '#ffffff'}; padding: 0.75rem; border-radius: var(--qj-radius-sm); cursor: pointer; display: flex; align-items: flex-start; gap: 0.5rem;"
+                style="border: 1.5px solid ${wizardState.applicationMode === ApplicationModes.DIRECT_ACCEPT ? 'var(--qj-primary)' : 'var(--qj-border)'}; background: ${wizardState.applicationMode === ApplicationModes.DIRECT_ACCEPT ? 'var(--qj-primary-light)' : 'var(--qj-card)'}; padding: 0.75rem; border-radius: var(--qj-radius-sm); cursor: pointer; display: flex; align-items: flex-start; gap: 0.5rem;"
               >
                 <input 
                   type="radio" 
@@ -323,12 +354,15 @@ export function renderCreateJobScreen(state) {
           </div>
 
           <!-- Preview Card -->
-          <div style="border: 1.5px solid var(--qj-primary); border-radius: var(--qj-radius-md); padding: 1rem; background: #ffffff; box-shadow: var(--qj-shadow-sm);">
+          <div style="border: 1.5px solid var(--qj-primary); border-radius: var(--qj-radius-md); padding: 1rem; background: var(--qj-card); box-shadow: var(--qj-shadow-sm);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <span class="badge ${wizardState.applicationMode === ApplicationModes.DIRECT_ACCEPT ? 'badge-success' : 'badge-purple'}">
-                  ${wizardState.applicationMode === ApplicationModes.DIRECT_ACCEPT ? '⚡ Direct Accept' : '📝 Apply'}
-                </span>
+                <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
+                  <span class="badge ${wizardState.applicationMode === ApplicationModes.DIRECT_ACCEPT ? 'badge-success' : 'badge-purple'}">
+                    ${wizardState.applicationMode === ApplicationModes.DIRECT_ACCEPT ? '⚡ Direct Accept' : '📝 Apply'}
+                  </span>
+                  ${wizardState.isBoosted ? '<span class="badge badge-boost">🚀 Boost</span>' : ''}
+                  ${wizardState.isTeamwork ? '<span class="badge badge-teamwork">👥 Teamwork</span>' : ''}
+                </div>
                 <h3 style="font-size: 1.05rem; font-weight: 800; margin-top: 4px;">
                   ${escapeHTML(wizardState.title || 'Untitled Microjob')}
                 </h3>
@@ -348,13 +382,13 @@ export function renderCreateJobScreen(state) {
               ${escapeHTML(wizardState.description || 'No description provided.')}
             </p>
 
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.65rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 0.5rem;">
-              <span style="font-size: 0.78rem; font-weight: 700; color: #475569;">Altersfreigabe (automatisch ermittelt):</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.65rem; background: var(--qj-surface-subtle); border-radius: 8px; border: 1px solid var(--qj-border); margin-top: 0.5rem;">
+              <span style="font-size: 0.78rem; font-weight: 700; color: var(--qj-text-muted);">Altersfreigabe (automatisch ermittelt):</span>
               <span class="badge ${safety.badgeClass}">${safety.badgeText}</span>
             </div>
 
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.65rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 0.35rem;">
-              <span style="font-size: 0.78rem; font-weight: 700; color: #475569;">Berechneter Stundenlohn:</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.65rem; background: var(--qj-surface-subtle); border-radius: 8px; border: 1px solid var(--qj-border); margin-top: 0.35rem;">
+              <span style="font-size: 0.78rem; font-weight: 700; color: var(--qj-text-muted);">Berechneter Stundenlohn:</span>
               <span class="badge ${fairPay.badgeClass}">€${fairPay.rate.toFixed(2)}/Std</span>
             </div>
           </div>
@@ -363,7 +397,7 @@ export function renderCreateJobScreen(state) {
           <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: var(--qj-radius-sm); padding: 0.75rem; font-size: 0.78rem; color: #065f46; display: flex; gap: 0.5rem;">
             <span>🛡️</span>
             <div>
-              <strong>QuickJob Escrow:</strong> Your €${wizardState.payment} payment is held securely and only transferred when you verify the helper completed the job.
+              <strong>EasyJob Escrow:</strong> Your €${wizardState.payment} payment is held securely and only transferred when you verify the helper completed the job.
             </div>
           </div>
         ` : ''}
@@ -483,6 +517,20 @@ export function attachCreateJobEvents() {
     });
   }
 
+  const boostCheck = document.getElementById('wizard-boost-check');
+  if (boostCheck) {
+    boostCheck.addEventListener('change', (e) => {
+      wizardState.isBoosted = e.target.checked;
+    });
+  }
+
+  const teamworkCheck = document.getElementById('wizard-teamwork-check');
+  if (teamworkCheck) {
+    teamworkCheck.addEventListener('change', (e) => {
+      wizardState.isTeamwork = e.target.checked;
+    });
+  }
+
   const scheduleInput = document.getElementById('wizard-schedule');
   if (scheduleInput) {
     scheduleInput.addEventListener('input', (e) => {
@@ -566,7 +614,9 @@ export function attachCreateJobEvents() {
         minAge: safety.minAge,
         ageSuitability: safety.ageSuitability,
         description: wizardState.description,
-        requirements: requirements
+        requirements: requirements,
+        isBoosted: Boolean(wizardState.isBoosted),
+        isTeamwork: Boolean(wizardState.isTeamwork)
       });
 
       // Reset wizard
@@ -581,7 +631,9 @@ export function attachCreateJobEvents() {
         dateSchedule: 'Saturday · 14:00',
         location: 'Wuppertal-Elberfeld',
         exactAddress: 'Königsstraße 15, 42103 Wuppertal',
-        applicationMode: ApplicationModes.APPLICATION_REQUIRED
+        applicationMode: ApplicationModes.APPLICATION_REQUIRED,
+        isBoosted: false,
+        isTeamwork: false
       };
     });
   }

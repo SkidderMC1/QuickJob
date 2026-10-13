@@ -1,5 +1,5 @@
 /**
- * QuickJob Digital Guardian Authorization & Verification System
+ * EasyJob Digital Guardian Authorization & Verification System
  * Implements statutory consent workflows under German Civil Law (BGB §§ 107, 113)
  * and Minor Data Protection (GDPR Art. 8 & § 16 BDSG).
  */

@@ -1,5 +1,5 @@
 """
-QuickJob Persistent SQLite Database & Schema Manager
+EasyJob Persistent SQLite Database & Schema Manager
 Provides ACID-compliant relational persistence for accounts, sessions,
 single-use cryptographic tokens, legal documents, and auditable AGB acceptances.
 """

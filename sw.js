@@ -1,9 +1,9 @@
 /**
- * QuickJob PWA Service Worker
+ * EasyJob PWA Service Worker
  * Provides offline support, caching, and instant startup
  */
 
-const CACHE_NAME = 'quickjob-v4';
+const CACHE_NAME = 'easyjob-v9';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -13,10 +13,17 @@ const ASSETS_TO_CACHE = [
   './css/mobile-chassis.css',
   './css/app.css',
   './js/app.js',
+  './js/sw-register.js',
   './js/models/types.js',
   './js/data/mockData.js',
   './js/state/store.js',
+  './js/services/authService.js',
   './js/utils/safetyClassifier.js',
+  './js/legal/consentManager.js',
+  './js/legal/dataSubjectRights.js',
+  './js/legal/guardianConsent.js',
+  './js/legal/legalDocuments.js',
+  './js/legal/legalEngine.js',
   './js/components/devBar.js',
   './js/components/header.js',
   './js/components/nav.js',
@@ -77,6 +84,13 @@ self.addEventListener('activate', (event) => {
 // Fetch Event: Network First with Cache fallback (ensures latest code is served)
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  const requestUrl = new URL(event.request.url);
+
+  // Only handle same-origin static assets. Never intercept or cache API
+  // responses, and ignore cross-origin (non-basic) requests entirely.
+  if (requestUrl.origin !== self.location.origin) return;
+  if (requestUrl.pathname === '/api' || requestUrl.pathname.startsWith('/api/')) return;
 
   event.respondWith(
     fetch(event.request)

@@ -1,5 +1,5 @@
 /**
- * QuickJob Central Authoritative Legal Eligibility Engine
+ * EasyJob Central Authoritative Legal Eligibility Engine
  * Enforces German Youth Protection Law (JArbSchG), Child Labor Protection Ordinance (KindArbSchV),
  * and Civil Law Guardian Authorization requirements (BGB §§ 107, 113).
  *
@@ -50,6 +50,27 @@ export const LegalAgeTiers = {
     description: 'Volljährige Erwerbsperson ohne Beschränkungen des JArbSchG.'
   }
 };
+
+/**
+ * Authoritative minor predicate — the single shared source of truth for
+ * "is this user a minor?" across UI and state.
+ *
+ * Pure function: prefers the explicit numeric age and falls back to the
+ * stored ageCategory when age is not available.
+ *
+ * @param {object|null|undefined} user
+ * @returns {boolean} true when the user is under 18 years old
+ */
+export function isMinorUser(user) {
+  if (!user) return false;
+  if (user.age !== undefined && user.age !== null && user.age !== '') {
+    return Number(user.age) < 18;
+  }
+  return user.ageCategory === 'YOUTH_14_17'
+    || user.ageCategory === 'YOUTH_15_17'
+    || user.ageCategory === 'CHILD_13_14'
+    || user.ageCategory === 'CHILD_UNDER_13';
+}
 
 // Prohibited hazardous keywords under § 22 JArbSchG
 export const HAZARDOUS_KEYWORDS_18_PLUS = [

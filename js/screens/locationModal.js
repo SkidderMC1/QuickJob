@@ -1,5 +1,5 @@
 /**
- * QuickJob Geolocation Permission & Privacy Consent Modal (TDDDG § 25 / Art. 6 DSGVO)
+ * EasyJob Geolocation Permission & Privacy Consent Modal (TDDDG § 25 / Art. 6 DSGVO)
  */
 import { store } from '../state/store.js';
 
@@ -14,7 +14,7 @@ export function renderLocationModal(state) {
         <!-- Header -->
         <div class="modal-header">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(14, 167, 107, 0.12); color: #0ea76b; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+            <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(0, 145, 255, 0.12); color: #0091ff; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
               📍
             </div>
             <div>
@@ -26,7 +26,7 @@ export function renderLocationModal(state) {
               </span>
             </div>
           </div>
-          <button id="btn-close-location-modal" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px; border: none; background: transparent; cursor: pointer;">
+          <button id="btn-close-location-modal" aria-label="Schließen" style="font-size: 1.25rem; color: var(--qj-text-muted); padding: 4px; border: none; background: transparent; cursor: pointer;">
             ✕
           </button>
         </div>
@@ -38,17 +38,17 @@ export function renderLocationModal(state) {
           </div>
 
           <div>
-            <h3 style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0;">
+            <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
               Microjobs in deiner Nachbarschaft finden
             </h3>
-            <p style="font-size: 0.82rem; color: #64748b; line-height: 1.5; margin: 0.5rem auto 0; max-width: 320px;">
-              Darf QuickJob deinen ungefähren Standort nutzen, um dir offene Aufgaben in deiner fußläufigen und fahrradtauglichen Umgebung auf der interaktiven Karte anzuzeigen?
+            <p style="font-size: 0.82rem; color: var(--qj-text-muted); line-height: 1.5; margin: 0.5rem auto 0; max-width: 320px;">
+              Darf EasyJob deinen ungefähren Standort nutzen, um dir offene Aufgaben in deiner fußläufigen und fahrradtauglichen Umgebung auf der interaktiven Karte anzuzeigen?
             </p>
           </div>
 
           <!-- Privacy Guarantee Box -->
-          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.85rem; text-align: left; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.75rem; color: #475569;">
-            <div style="font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.3rem;">
+          <div style="background: var(--qj-surface-subtle); border: 1px solid var(--qj-border); border-radius: 12px; padding: 0.85rem; text-align: left; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.75rem; color: var(--qj-text-muted);">
+            <div style="font-weight: 700; color: var(--qj-text-main); display: flex; align-items: center; gap: 0.3rem;">
               <span>🛡️</span><span>Datenschutz-Garantie:</span>
             </div>
             <div>• Dein genauer GPS-Punkt wird niemals an andere Nutzer übertragen.</div>

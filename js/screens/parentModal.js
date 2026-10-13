@@ -1,5 +1,5 @@
 /**
- * QuickJob Parental Dashboard & Guardian Security Portal (§ 113 BGB & JArbSchG)
+ * EasyJob Parental Dashboard & Guardian Security Portal (§ 113 BGB & JArbSchG)
  * Includes 6-digit PIN protection, shareable parent link, daily working-hour tracker
  */
 import { store } from '../state/store.js';
@@ -8,10 +8,12 @@ export function renderParentModal(state) {
   if (!state.isParentModalOpen) return '';
 
   const user = state.currentUser || {};
-  const portal = user.parentPortal || { isActive: false, parentCode: '482910', parentEmail: 'sabine.klein@familie-klein.de' };
+  // Default is PIN-off with no configured code (§7). Never fall back to a
+  // hardcoded PIN: only a code the user actually configured may unlock.
+  const portal = user.parentPortal || { isActive: false, parentCode: null, parentEmail: '' };
   const isCodeActive = portal.isActive;
   const isUnlocked = state.isParentUnlocked || !isCodeActive;
-  const parentLink = `${window.location.origin}/?parent_view=usr_jasper`;
+  const parentLink = buildParentLink(user);
 
   return `
     <div class="modal-overlay" id="parent-modal-overlay">
@@ -81,7 +83,7 @@ export function renderParentModal(state) {
             <!-- Unlocked Full Parent Dashboard -->
             <div style="display: flex; flex-direction: column; gap: 1rem;" id="parent-dashboard-content">
               <!-- Teenager Overview Banner -->
-              <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; align-items: center; justify-content: space-between;">
+              <div style="background: var(--qj-card); border: 1.5px solid var(--qj-border); border-radius: 14px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; align-items: center; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                   <div class="employer-avatar" style="width: 44px; height: 44px; font-size: 1rem; background: #e0e7ff; color: #4338ca;">
                     ${user.avatarText || 'JK'}
@@ -101,7 +103,7 @@ export function renderParentModal(state) {
               </div>
 
               <!-- Statutory Working Hours Tracker (KindArbSchV / JArbSchG max 2h) -->
-              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem;">
+              <div style="background: var(--qj-surface-subtle); border: 1px solid var(--qj-border); border-radius: 14px; padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem;">
                 <div style="display: flex; justify-content: space-between; align-items: baseline;">
                   <span style="font-size: 0.8rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.35rem;">
                     <span>⏱️</span>
@@ -139,19 +141,19 @@ export function renderParentModal(state) {
               </div>
 
               <!-- Active & Completed Jobs List -->
-              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1rem; display: flex; flex-direction: column; gap: 0.65rem;">
+              <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: 14px; padding: 1rem; display: flex; flex-direction: column; gap: 0.65rem;">
                 <h4 style="font-size: 0.85rem; font-weight: 800; color: #0f172a; margin: 0;">
                   📋 Aktuelle & Letzte Aufträge
                 </h4>
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
+                  <div style="background: var(--qj-surface-subtle); border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
                     <div>
                       <div style="font-size: 0.82rem; font-weight: 700; color: #0f172a;">Rasen mähen & Hecke schneiden</div>
                       <div style="font-size: 0.7rem; color: #64748b;">Auftraggeber: Dr. Marcus Lang · Luisenviertel</div>
                     </div>
                     <span class="badge badge-success" style="font-size: 0.68rem;">Aktiv · €28</span>
                   </div>
-                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
+                  <div style="background: var(--qj-surface-subtle); border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.65rem; display: flex; justify-content: space-between; align-items: center;">
                     <div>
                       <div style="font-size: 0.82rem; font-weight: 700; color: #0f172a;">Gassi gehen mit Barnaby</div>
                       <div style="font-size: 0.7rem; color: #64748b;">Auftraggeberin: Sarah K. · Hardt Park</div>
@@ -162,12 +164,12 @@ export function renderParentModal(state) {
               </div>
 
               <!-- Shareable Link & Code Settings -->
-              <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1rem; display: flex; flex-direction: column; gap: 0.65rem;">
+              <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: 14px; padding: 1rem; display: flex; flex-direction: column; gap: 0.65rem;">
                 <div style="font-size: 0.85rem; font-weight: 800; color: #0f172a;">
                   🔑 Eltern-Code & Zugangslink-Verwaltung
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border-radius: 8px; padding: 0.65rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; background: var(--qj-surface-subtle); border-radius: 8px; padding: 0.65rem;">
                   <div>
                     <div style="font-size: 0.8rem; font-weight: 700; color: #0f172a;">Eltern-Code Schutz:</div>
                     <div style="font-size: 0.7rem; color: #64748b;">PIN-Abfrage vor Öffnen des Dashboards</div>
@@ -177,7 +179,7 @@ export function renderParentModal(state) {
                     class="btn btn-sm ${isCodeActive ? 'btn-primary' : 'btn-outline'}" 
                     style="font-size: 0.75rem; font-weight: 700;"
                   >
-                    ${isCodeActive ? 'Aktiviert (Code: ' + portal.parentCode + ')' : 'Code aktivieren'}
+                    ${isCodeActive ? (portal.parentCode ? 'Aktiviert (Code: ' + portal.parentCode + ')' : 'PIN-Schutz aktiv') : 'Code aktivieren'}
                   </button>
                 </div>
 
@@ -187,7 +189,7 @@ export function renderParentModal(state) {
                     readonly 
                     value="${parentLink}" 
                     class="form-input" 
-                    style="flex: 1; font-size: 0.74rem; background: #f8fafc; padding: 0.5rem; border-radius: 8px; border: 1px solid #cbd5e1;" 
+                    style="flex: 1; font-size: 0.74rem; background: var(--qj-surface-subtle); padding: 0.5rem; border-radius: 8px; border: 1px solid var(--qj-border);" 
                   />
                   <button 
                     id="btn-copy-parent-link" 
@@ -230,9 +232,9 @@ export function attachParentModalEvents() {
       const input = document.getElementById('parent-code-input');
       const err = document.getElementById('parent-code-error');
       const enteredCode = input ? input.value.trim() : '';
-      const actualCode = store.getState().currentUser?.parentPortal?.parentCode || '482910';
+      const actualCode = store.getState().currentUser?.parentPortal?.parentCode;
 
-      if (enteredCode === actualCode || enteredCode === '482910') {
+      if (actualCode && enteredCode === actualCode) {
         store.setState({ isParentUnlocked: true });
         store.showToast('✓ Eltern-Code korrekt! Dashboard freigeschaltet.');
       } else {
@@ -244,7 +246,7 @@ export function attachParentModalEvents() {
 
   if (copyLinkBtn) {
     copyLinkBtn.addEventListener('click', () => {
-      const link = `${window.location.origin}/?parent_view=usr_jasper`;
+      const link = buildParentLink(store.getState().currentUser);
       navigator.clipboard?.writeText(link);
       store.showToast('✓ Eltern-Link in die Zwischenablage kopiert!');
     });
@@ -256,9 +258,14 @@ export function attachParentModalEvents() {
       const currentActive = user.parentPortal?.isActive || false;
       const newActive = !currentActive;
       store.updateUserParentPortal(newActive);
-      store.showToast(newActive ? '✓ Eltern-Code aktiviert (Code: 482910)' : 'Eltern-Code deaktiviert.');
+      store.showToast(newActive ? '✓ Eltern-Code aktiviert.' : 'Eltern-Code deaktiviert.');
     });
   }
+}
+
+function buildParentLink(user) {
+  const parentUserId = user?.id || '';
+  return `${window.location.origin}/?parent_view=${encodeURIComponent(parentUserId)}`;
 }
 
 function escapeHTML(str) {

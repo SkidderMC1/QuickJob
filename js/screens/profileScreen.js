@@ -1,26 +1,30 @@
 /**
- * QuickJob Profile Screen Component
+ * EasyJob Profile Screen Component
  */
 import { store } from '../state/store.js';
-import { DefaultAchievements } from '../models/types.js';
+import { DefaultAchievements, JobCategories } from '../models/types.js';
+import { isMinorUser } from '../legal/legalEngine.js';
 
 export function renderProfileScreen(state) {
   const user = state.currentUser;
-  const isMinor = user.ageCategory === 'YOUTH_14_17';
+  const isMinor = isMinorUser(user);
   const isEmployer = state.activeMode === 'post';
   const savedJobs = state.jobs.filter(j => j.isBookmarked);
   const achievements = user.achievements || DefaultAchievements;
   const isParentActive = user.parentPortal?.isActive || false;
-  const parentCode = user.parentPortal?.parentCode || '482910';
+  const parentCode = user.parentPortal?.parentCode || '—';
   const parentLink = `https://quickjob.app/eltern/${user.id || 'jasper'}`;
-  const completedJobs = state.jobs.filter(j => j.state === 'COMPLETED' || j.state === 'REVIEWED');
+  const completedJobs = state.jobs.filter(j =>
+    (j.state === 'COMPLETED' || j.state === 'REVIEWED') &&
+    (j.employer?.id === user.id || j.worker?.id === user.id)
+  );
   const activeTheme = state.activeTheme || user.settings?.theme || 'light';
   const notifs = user.settings?.notifications || { newJobsNearMe: true, chatMessages: true, payouts: true };
 
   return `
     <div class="screen-container" id="screen-profile">
       <!-- Profile Header Card -->
-      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.25rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.9rem;">
+      <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.25rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.9rem;">
         <div style="display: flex; align-items: center; gap: 0.85rem;">
           <div style="position: relative; flex-shrink: 0;">
             ${(user.avatarUrl || user.profilePicture) ? `
@@ -28,12 +32,12 @@ export function renderProfileScreen(state) {
                 src="${escapeHTML(user.avatarUrl || user.profilePicture)}" 
                 alt="${escapeHTML(user.name)}" 
                 id="profile-avatar-img"
-                style="width: 62px; height: 62px; border-radius: 50%; object-fit: cover; border: 2.5px solid #0ea76b; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"
+                style="width: 62px; height: 62px; border-radius: 50%; object-fit: cover; border: 2.5px solid #0091ff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"
               />
             ` : `
               <div 
                 id="profile-avatar-letter"
-                style="width: 62px; height: 62px; border-radius: 50%; background: #0ea76b; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 800; border: 2.5px solid #ffffff; box-shadow: 0 4px 10px rgba(14, 167, 107, 0.25);"
+                style="width: 62px; height: 62px; border-radius: 50%; background: #0091ff; color: var(--qj-text-inverse); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 800; border: 2.5px solid var(--qj-card); box-shadow: 0 4px 10px rgba(0, 145, 255, 0.25);"
               >
                 ${(user.name || 'U').charAt(0).toUpperCase()}
               </div>
@@ -41,7 +45,7 @@ export function renderProfileScreen(state) {
             <label 
               for="profile-avatar-file-input" 
               id="profile-avatar-change-btn" 
-              style="position: absolute; bottom: -2px; right: -2px; width: 26px; height: 26px; border-radius: 50%; background: #ffffff; border: 1.5px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15);" 
+              style="position: absolute; bottom: -2px; right: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--qj-card); border: 1.5px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15);" 
               title="Profilbild ändern"
             >
               📷
@@ -51,10 +55,10 @@ export function renderProfileScreen(state) {
 
           <div style="flex: 1; min-width: 0;">
             <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
-              <h2 style="font-size: 1.2rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
+              <h1 style="font-size: 1.2rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
                 ${escapeHTML(user.name)}
-              </h2>
-              ${user.isIdentityVerified ? '<span title="Ausweis verifiziert" style="color: #0ea76b; font-weight: 800; font-size: 1.15rem;">✓</span>' : ''}
+              </h1>
+              ${user.isIdentityVerified ? '<span title="Ausweis verifiziert" style="color: #0091ff; font-weight: 800; font-size: 1.15rem;">✓</span>' : ''}
               ${user.isCompany ? '<span title="Verified Company">🏢</span>' : ''}
               ${user.role === 'admin' ? '<span class="badge" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-weight: 800; font-size: 0.7rem;">ADMINISTRATOR</span>' : ''}
             </div>
@@ -72,10 +76,10 @@ export function renderProfileScreen(state) {
         </div>
 
         ${user.role === 'admin' ? `
-          <div style="background: linear-gradient(135deg, #1e1b4b, #312e81); color: #ffffff; border-radius: var(--qj-radius-lg); padding: 1rem 1.15rem; box-shadow: 0 4px 15px rgba(49, 46, 129, 0.25); display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+          <div style="background: linear-gradient(135deg, #1e1b4b, #312e81); color: var(--qj-text-inverse); border-radius: var(--qj-radius-lg); padding: 1rem 1.15rem; box-shadow: 0 4px 15px rgba(49, 46, 129, 0.25); display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
             <div>
               <div style="font-size: 0.72rem; font-weight: 800; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.05em;">
-                🛡️ QuickJob Administration
+                🛡️ EasyJob Administration
               </div>
               <div style="font-size: 1rem; font-weight: 800; margin-top: 2px;">
                 Admin & Compliance Center
@@ -91,7 +95,7 @@ export function renderProfileScreen(state) {
         ` : ''}
 
         <p style="font-size: 0.85rem; color: var(--qj-text-muted); line-height: 1.4;">
-          ${escapeHTML(user.bio || 'Active QuickJob local microjob community member.')}
+          ${escapeHTML(user.bio || 'Active EasyJob local microjob community member.')}
         </p>
 
         <!-- Stats Grid -->
@@ -134,7 +138,7 @@ export function renderProfileScreen(state) {
         </div>
       </div>
 
-      <!-- QuickJob FinTech Wallet & Escrow Balance Card -->
+      <!-- EasyJob FinTech Wallet & Escrow Balance Card -->
       <div class="wallet-card">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
           <div>
@@ -151,7 +155,7 @@ export function renderProfileScreen(state) {
             </div>
           </div>
 
-          <button class="btn btn-primary btn-sm" id="btn-profile-withdraw" style="padding: 0.45rem 0.85rem; font-size: 0.8rem; box-shadow: 0 2px 8px rgba(14, 167, 107, 0.4);">
+          <button class="btn btn-primary btn-sm" id="btn-profile-withdraw" style="padding: 0.45rem 0.85rem; font-size: 0.8rem; box-shadow: 0 2px 8px rgba(0, 145, 255, 0.4);">
             💸 Auszahlen
           </button>
         </div>
@@ -163,7 +167,7 @@ export function renderProfileScreen(state) {
       </div>
 
       <!-- Gespeicherte Jobs (Saved Bookmarks) Card -->
-      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-saved-jobs-container">
+      <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-saved-jobs-container">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; align-items: center; gap: 0.45rem;">
             <span style="font-size: 1.1rem;">⭐</span>
@@ -192,7 +196,7 @@ export function renderProfileScreen(state) {
               >
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
                   <div style="display: flex; align-items: center; gap: 0.45rem; flex: 1; min-width: 0;">
-                    <span style="font-size: 1.15rem;">${job.categoryIcon || '📋'}</span>
+                    <span style="font-size: 1.15rem;">${JobCategories.find(c => c.id === job.category)?.icon || '📋'}</span>
                     <div style="font-weight: 700; font-size: 0.88rem; color: var(--qj-text-main); line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                       ${escapeHTML(job.title)}
                     </div>
@@ -267,7 +271,7 @@ export function renderProfileScreen(state) {
 
       <!-- Skills Section -->
       ${user.skills && user.skills.length > 0 ? `
-        <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 1rem;">
+        <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 1rem;">
           <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem;">
             Verified Skills
           </h3>
@@ -282,7 +286,7 @@ export function renderProfileScreen(state) {
       ` : ''}
 
       <!-- Recent Reviews -->
-      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 1rem;">
+      <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 1rem;">
         <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.65rem;">
           Recent Reviews
         </h3>
@@ -309,7 +313,7 @@ export function renderProfileScreen(state) {
       </div>
 
       <!-- Badges & Achievements Card -->
-      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-achievements-card">
+      <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-achievements-card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span style="font-size: 1.25rem;">🏆</span>
@@ -329,7 +333,7 @@ export function renderProfileScreen(state) {
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;" id="achievements-grid">
           ${achievements.map(ach => `
-            <div style="background: ${ach.unlocked ? '#f8fafc' : '#f1f5f9'}; border: 1px solid ${ach.unlocked ? '#e2e8f0' : '#cbd5e1'}; border-radius: 10px; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.3rem; opacity: ${ach.unlocked ? '1' : '0.6'};">
+            <div style="background: ${ach.unlocked ? 'var(--qj-surface-subtle)' : 'var(--qj-surface-muted)'}; border: 1px solid ${ach.unlocked ? '#e2e8f0' : '#cbd5e1'}; border-radius: 10px; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.3rem; opacity: ${ach.unlocked ? '1' : '0.6'};">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 1.4rem;">${ach.icon}</span>
                 <span class="badge ${ach.unlocked ? 'badge-success' : 'badge-muted'}" style="font-size: 0.65rem;">
@@ -343,7 +347,7 @@ export function renderProfileScreen(state) {
                 ${escapeHTML(ach.description)}
               </div>
               ${ach.unlocked && ach.unlockedDate ? `
-                <div style="font-size: 0.65rem; color: #0ea76b; font-weight: 600; margin-top: 2px;">
+                <div style="font-size: 0.65rem; color: #0091ff; font-weight: 600; margin-top: 2px;">
                   Freigeschaltet: ${ach.unlockedDate}
                 </div>
               ` : ''}
@@ -353,7 +357,7 @@ export function renderProfileScreen(state) {
       </div>
 
       <!-- Ausweis-Verifikation (KYC) Card -->
-      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-id-verification-card">
+      <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-id-verification-card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span style="font-size: 1.25rem;">🆔</span>
@@ -367,17 +371,17 @@ export function renderProfileScreen(state) {
             </div>
           </div>
           ${user.isIdentityVerified ? `
-            <span class="badge badge-success" style="font-weight: 800; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">
-              ✓ Verifiziert
+            <span class="badge badge-success" id="profile-id-verified-badge" style="font-weight: 800; background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">
+              ✓ Ausweis verifiziert
             </span>
           ` : `
-            <span class="badge badge-warning" style="font-weight: 700;">
+            <span class="badge badge-warning" id="profile-id-unverified-badge" style="font-weight: 700;">
               Ausstehend ⚠️
             </span>
           `}
         </div>
 
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem 0.85rem; font-size: 0.78rem; color: var(--qj-text-muted); line-height: 1.45;">
+        <div style="background: var(--qj-surface-subtle); border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem 0.85rem; font-size: 0.78rem; color: var(--qj-text-muted); line-height: 1.45;">
           <strong style="color: var(--qj-text-main);">Gesetzliche Regelung:</strong>
           Für <strong>Helfer (Arbeitnehmer)</strong> ist die Ausweisverifikation vor Annahme von bezahlten Aufträgen verpflichtend. Für <strong>Auftraggeber</strong> ist sie freiwillig.
         </div>
@@ -394,27 +398,27 @@ export function renderProfileScreen(state) {
             </div>
             <span style="font-size: 1.4rem; color: #059669;">🛡️</span>
           </div>
-        ` : `
-          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-            <div style="display: flex; gap: 0.5rem;">
-              <select id="select-id-type" class="form-input" style="flex: 1; padding: 0.5rem; font-size: 0.82rem; border-radius: 8px;">
-                <option value="Personalausweis">Personalausweis</option>
-                <option value="Reisepass">Reisepass</option>
-                <option value="Schülerausweis">Schülerausweis (mit Foto)</option>
-              </select>
-              <button class="btn btn-primary btn-sm" id="btn-profile-verify-id" style="font-weight: 700; white-space: nowrap; padding: 0.5rem 0.85rem;">
-                ✓ Jetzt verifizieren
-              </button>
-            </div>
-            <div style="font-size: 0.72rem; color: var(--qj-text-muted);">
-              Hinweis: Du kannst deinen Ausweis jederzeit auch hier in den Einstellungen hochladen und aktualisieren.
-            </div>
+        ` : ''}
+
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <div style="display: flex; gap: 0.5rem;">
+            <select id="select-id-type" class="form-input" style="flex: 1; padding: 0.5rem; font-size: 0.82rem; border-radius: 8px;">
+              <option value="Personalausweis">Personalausweis</option>
+              <option value="Reisepass">Reisepass</option>
+              <option value="Schülerausweis">Schülerausweis (mit Foto)</option>
+            </select>
+            <button class="btn btn-primary btn-sm" id="btn-profile-verify-id" style="font-weight: 700; white-space: nowrap; padding: 0.5rem 0.85rem;">
+              ✓ Jetzt verifizieren
+            </button>
           </div>
-        `}
+          <div style="font-size: 0.72rem; color: var(--qj-text-muted);">
+            Hinweis: Du kannst deinen Ausweis jederzeit auch hier in den Einstellungen hochladen und aktualisieren.
+          </div>
+        </div>
       </div>
 
       <!-- Eltern-Dashboard & Eltern-Code Card -->
-      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-parent-portal-card">
+      <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-parent-portal-card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span style="font-size: 1.25rem;">👨‍👩‍👧</span>
@@ -462,7 +466,7 @@ export function renderProfileScreen(state) {
             </label>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; background: ${isParentActive ? '#ecfdf5' : '#f8fafc'}; border: 1px solid ${isParentActive ? '#a7f3d0' : '#e2e8f0'}; border-radius: 8px; padding: 0.6rem 0.8rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; background: ${isParentActive ? 'var(--qj-primary-light)' : 'var(--qj-surface-subtle)'}; border: 1px solid ${isParentActive ? '#a7f3d0' : '#e2e8f0'}; border-radius: 8px; padding: 0.6rem 0.8rem;">
             <span style="font-size: 0.78rem; font-weight: 600; color: var(--qj-text-muted);">
               Aktueller Eltern-Code:
             </span>
@@ -478,7 +482,7 @@ export function renderProfileScreen(state) {
       </div>
 
       <!-- Erledigte Aufträge & Rechtssichere Quittungen (§ 368 BGB) -->
-      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-receipts-card">
+      <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-receipts-card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span style="font-size: 1.25rem;">🧾</span>
@@ -522,7 +526,7 @@ export function renderProfileScreen(state) {
       </div>
 
       <!-- App-Einstellungen (Dark Mode & Push-Mitteilungen) -->
-      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-settings-card">
+      <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; box-shadow: var(--qj-shadow-xs); display: flex; flex-direction: column; gap: 0.85rem;" id="profile-settings-card">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
           <span style="font-size: 1.25rem;">⚙️</span>
           <div>
@@ -574,11 +578,11 @@ export function renderProfileScreen(state) {
       </div>
 
       <!-- Account Authentication & Security Card (Redesigned) -->
-      <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 18px; padding: 1.35rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 1rem;" id="profile-auth-card">
+      <div style="background: var(--qj-card); border: 1.5px solid #e2e8f0; border-radius: 18px; padding: 1.35rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 1rem;" id="profile-auth-card">
         <!-- Header -->
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.85rem;">
           <div style="display: flex; align-items: center; gap: 0.55rem;">
-            <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(14, 167, 107, 0.1); color: #0ea76b; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 800;">
+            <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(0, 145, 255, 0.1); color: #0091ff; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 800;">
               🛡️
             </div>
             <div>
@@ -594,7 +598,7 @@ export function renderProfileScreen(state) {
         </div>
 
         <!-- Account Info Block -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem;">
+        <div style="background: var(--qj-surface-subtle); border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
             <span style="color: #64748b; font-weight: 600;">E-Mail-Adresse:</span>
             <span style="font-weight: 700; color: #0f172a;">${escapeHTML(user.email || 'konto@quickjob.local')}</span>
@@ -607,8 +611,8 @@ export function renderProfileScreen(state) {
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
             <span style="color: #64748b; font-weight: 600;">Sitzungs-Status:</span>
-            <span style="color: #0ea76b; font-weight: 700; display: flex; align-items: center; gap: 0.3rem;">
-              <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #0ea76b;"></span>
+            <span style="color: #0091ff; font-weight: 700; display: flex; align-items: center; gap: 0.3rem;">
+              <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #0091ff;"></span>
               Aktiv (HttpOnly Cookie)
             </span>
           </div>
@@ -624,12 +628,12 @@ export function renderProfileScreen(state) {
         </div>
 
         <!-- Password Change Section (Collapsible Accordion) -->
-        <details style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.9rem;">
+        <details style="background: var(--qj-card); border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.75rem 0.9rem;">
           <summary style="font-size: 0.84rem; font-weight: 700; color: #4338ca; cursor: pointer; user-select: none; display: flex; align-items: center; gap: 0.45rem;">
             <span>🔑</span>
             <span>Passwort ändern</span>
           </summary>
-          <form id="form-profile-change-password" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 0.65rem; margin-top: 0.85rem; border-top: 1px solid #f1f5f9; padding-top: 0.75rem;">
+          <form id="form-profile-change-password" style="display: flex; flex-direction: column; gap: 0.65rem; margin-top: 0.85rem; border-top: 1px solid #f1f5f9; padding-top: 0.75rem;">
             <div>
               <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 0.25rem;">Aktuelles Passwort</label>
               <input type="password" id="change-current-pw" placeholder="••••••••" required class="form-input" style="width: 100%; padding: 0.55rem; font-size: 0.84rem; border-radius: 8px; border: 1px solid #cbd5e1;" />
@@ -652,7 +656,7 @@ export function renderProfileScreen(state) {
         <div style="margin-top: 0.25rem;">
           <button 
             id="btn-profile-logout" 
-            style="width: 100%; padding: 0.95rem 1.25rem; font-size: 1rem; font-weight: 800; color: #ffffff; background-color: #dc2626; background: #dc2626; border: none; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 0.6rem; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.35); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;"
+            style="width: 100%; padding: 0.95rem 1.25rem; font-size: 1rem; font-weight: 800; color: var(--qj-text-inverse); background-color: #dc2626; background: #dc2626; border: none; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 0.6rem; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.35); cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease;"
           >
             <span style="font-size: 1.15rem;">🚪</span>
             <span>Abmelden</span>
@@ -661,7 +665,7 @@ export function renderProfileScreen(state) {
       </div>
 
       <!-- Legal & Privacy Center Card (Compliance & GDPR Hub) -->
-      <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 1.1rem; display: flex; flex-direction: column; gap: 0.85rem;" id="profile-compliance-hub">
+      <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 1.1rem; display: flex; flex-direction: column; gap: 0.85rem;" id="profile-compliance-hub">
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <div style="font-size: 0.92rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.4rem;">
             <span>⚖️</span>
@@ -754,7 +758,7 @@ export function attachProfileScreenEvents() {
   const deleteAccountBtn = document.getElementById('btn-delete-account');
   if (deleteAccountBtn) {
     deleteAccountBtn.addEventListener('click', () => {
-      if (window.confirm('Möchten Sie Ihr QuickJob-Konto und alle zugehörigen Daten wirklich löschen? Steuerlich relevante Buchungsdaten werden gem. § 147 AO für 10 Jahre revisionssicher archiviert.')) {
+      if (window.confirm('Möchten Sie Ihr EasyJob-Konto und alle zugehörigen Daten wirklich löschen? Steuerlich relevante Buchungsdaten werden gem. § 147 AO für 10 Jahre revisionssicher archiviert.')) {
         store.deleteAccount();
       }
     });
@@ -810,20 +814,6 @@ export function attachProfileScreenEvents() {
   if (profileLogoutBtn) {
     profileLogoutBtn.addEventListener('click', async () => {
       await store.logoutUser();
-    });
-  }
-
-  const profileLoginBtn = document.getElementById('btn-profile-login');
-  if (profileLoginBtn) {
-    profileLoginBtn.addEventListener('click', () => {
-      store.setAuthMode('login');
-    });
-  }
-
-  const profileRegisterBtn = document.getElementById('btn-profile-register');
-  if (profileRegisterBtn) {
-    profileRegisterBtn.addEventListener('click', () => {
-      store.setAuthMode('register');
     });
   }
 

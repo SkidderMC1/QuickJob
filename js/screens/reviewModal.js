@@ -1,5 +1,5 @@
 /**
- * QuickJob Interactive 5-Star Review & Compliment Modal
+ * EasyJob Interactive 5-Star Review & Compliment Modal
  */
 import { store } from '../state/store.js';
 
@@ -38,7 +38,7 @@ export function renderReviewModal(state) {
               Bewertung für ${escapeHTML(recipientName)}
             </h2>
           </div>
-          <button id="btn-close-review" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px;">
+          <button id="btn-close-review" aria-label="Schließen" style="font-size: 1.25rem; color: var(--qj-text-muted); padding: 4px;">
             ✕
           </button>
         </div>
@@ -96,12 +96,12 @@ export function renderReviewModal(state) {
           </div>
 
           <!-- Trinkgeld (Tip) Feature -->
-          <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;" id="review-tip-container">
+          <div style="background: var(--qj-surface-subtle); border: 1.5px solid var(--qj-border); border-radius: 12px; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;" id="review-tip-container">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <label class="form-label" style="margin: 0; font-weight: 800; font-size: 0.85rem; color: #0f172a;">
+              <label class="form-label" style="margin: 0; font-weight: 800; font-size: 0.85rem; color: var(--qj-text-main);">
                 <span>☕ Trinkgeld geben (Tip)</span>
               </label>
-              <span id="selected-tip-display" style="font-size: 0.82rem; font-weight: 800; color: #0ea76b;">
+              <span id="selected-tip-display" style="font-size: 0.82rem; font-weight: 800; color: #0091ff;">
                 ${selectedTip > 0 ? `+ €${selectedTip.toFixed(2)}` : 'Kein Trinkgeld'}
               </span>
             </div>
@@ -111,7 +111,7 @@ export function renderReviewModal(state) {
               <button type="button" class="btn btn-sm tip-btn ${selectedTip === 5 ? 'btn-primary' : 'btn-outline'}" data-tip="5">+ 5 €</button>
               <button type="button" class="btn btn-sm tip-btn ${selectedTip === 10 ? 'btn-primary' : 'btn-outline'}" data-tip="10">+ 10 €</button>
             </div>
-            <div style="font-size: 0.7rem; color: #64748b;">
+            <div style="font-size: 0.7rem; color: var(--qj-text-muted);">
               Das Trinkgeld geht zu 100 % an den Helfer und wird auf der Quittung ausgewiesen.
             </div>
           </div>

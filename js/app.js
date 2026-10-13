@@ -1,5 +1,5 @@
 /**
- * QuickJob Main Application Entry Point & Orchestrator
+ * EasyJob Main Application Entry Point & Orchestrator
  */
 import { store } from './state/store.js';
 import { renderDevBar, attachDevBarEvents } from './components/devBar.js';
@@ -37,6 +37,24 @@ function getCurrentTimeString() {
 
 let lastStateSnapshot = null;
 
+// --- Modal focus management (WAI-ARIA dialog pattern) ---
+// Tracks whether a modal dialog currently holds focus so we can move focus into
+// it on open and restore it to the triggering control on close.
+let _modalFocusActive = false;
+let _preModalFocusId = null;
+
+function getActiveModalDialog() {
+  const dialogs = Array.from(document.querySelectorAll('[role="dialog"][aria-modal="true"], [role="alertdialog"][aria-modal="true"]'))
+    .filter(d => d.getClientRects().length > 0 && window.getComputedStyle(d).display !== 'none');
+  return dialogs.length ? dialogs[dialogs.length - 1] : null;
+}
+
+function getFocusableElements(container) {
+  return Array.from(container.querySelectorAll(
+    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  )).filter(el => el.getClientRects().length > 0);
+}
+
 function renderApp() {
   const state = store.getState();
   const root = document.getElementById('app-root');
@@ -44,29 +62,9 @@ function renderApp() {
 
   // Optimized atomic toast updater: Avoids tearing down the whole DOM on toast changes
   if (lastStateSnapshot && root.children.length > 0) {
-    const isOnlyToastChange = (
+    const isOnlyToastChange = Boolean(
       lastStateSnapshot.toast !== state.toast &&
-      lastStateSnapshot.currentScreen === state.currentScreen &&
-      lastStateSnapshot.displayMode === state.displayMode &&
-      lastStateSnapshot.isAuthenticated === state.isAuthenticated &&
-      lastStateSnapshot.selectedJobId === state.selectedJobId &&
-      lastStateSnapshot.selectedConversationId === state.selectedConversationId &&
-      lastStateSnapshot.reviewJobId === state.reviewJobId &&
-      lastStateSnapshot.applicantJobId === state.applicantJobId &&
-      lastStateSnapshot.reportJobId === state.reportJobId &&
-      lastStateSnapshot.activeLegalDocType === state.activeLegalDocType &&
-      lastStateSnapshot.isGuardianModalOpen === state.isGuardianModalOpen &&
-      lastStateSnapshot.isLocationModalOpen === state.isLocationModalOpen &&
-      lastStateSnapshot.isEmergencyModalOpen === state.isEmergencyModalOpen &&
-      lastStateSnapshot.isParentModalOpen === state.isParentModalOpen &&
-      lastStateSnapshot.isProofModalOpen === state.isProofModalOpen &&
-      lastStateSnapshot.isSafetyModalOpen === state.isSafetyModalOpen &&
-      lastStateSnapshot.receiptModalJobId === state.receiptModalJobId &&
-      lastStateSnapshot.activeMode === state.activeMode &&
-      lastStateSnapshot.activeTheme === state.activeTheme &&
-      lastStateSnapshot.currentUser === state.currentUser &&
-      lastStateSnapshot.jobs === state.jobs &&
-      lastStateSnapshot.filters === state.filters
+      Object.keys(state).every(k => k === 'toast' || lastStateSnapshot[k] === state[k])
     );
 
     if (isOnlyToastChange) {
@@ -97,6 +95,9 @@ function renderApp() {
 
   lastStateSnapshot = { ...state };
 
+  // Capture focus before the DOM is rebuilt so it can be restored on modal close.
+  const activeBeforeRender = document.activeElement;
+
   // Sync theme
   const theme = state.activeTheme || state.currentUser?.settings?.theme || 'light';
   if (theme === 'dark') {
@@ -120,7 +121,9 @@ function renderApp() {
     state.isEmergencyModalOpen ||
     state.receiptModalJobId ||
     state.isProofModalOpen ||
-    state.isParentModalOpen
+    state.isParentModalOpen ||
+    state.selectedAdminReportId ||
+    state.isConsentModalOpen
   );
   if (isAnyModalOpen) {
     document.body.classList.add('modal-open');
@@ -136,7 +139,7 @@ function renderApp() {
     // 100% Native Fullscreen PWA Experience
     root.innerHTML = `
       <div class="native-pwa-container">
-        <!-- QuickJob Top Bar -->
+        <!-- EasyJob Top Bar -->
         ${renderHeader(state)}
 
         <!-- Scrollable Main Viewport Area -->
@@ -193,7 +196,7 @@ function renderApp() {
         ${isAuth ? renderBottomNav(state) : ''}
 
         <!-- Floating Debug Tool -->
-        ${renderDebugDrawer(state)}
+        ${store.isNonProductionEnvironment() ? renderDebugDrawer(state) : ''}
 
         <!-- TDDDG § 25 Storage Consent Banner -->
         ${renderConsentBanner(state)}
@@ -204,7 +207,7 @@ function renderApp() {
     root.innerHTML = `
       <div class="preview-container">
         <!-- Desktop Dev Header Controls -->
-        ${renderDevBar(state)}
+        ${store.isNonProductionEnvironment() ? renderDevBar(state) : ''}
 
         <!-- Smartphone Chassis -->
         <div class="phone-bezel ${state.viewportSize}" id="phone-bezel">
@@ -226,7 +229,7 @@ function renderApp() {
               </div>
             </div>
 
-            <!-- QuickJob Top Bar -->
+            <!-- EasyJob Top Bar -->
             ${renderHeader(state)}
 
             <!-- Scrollable Main Viewport Area -->
@@ -288,7 +291,7 @@ function renderApp() {
         </div>
 
         <!-- Floating Debug Tool -->
-        ${renderDebugDrawer(state)}
+        ${store.isNonProductionEnvironment() ? renderDebugDrawer(state) : ''}
 
         <!-- TDDDG § 25 Storage Consent Banner -->
         ${renderConsentBanner(state)}
@@ -296,11 +299,39 @@ function renderApp() {
     `;
   }
 
+  // Modal focus management: when a dialog is (re)rendered/open, move focus into
+  // it; when it closes, restore focus to the control that opened it.
+  const activeDialog = getActiveModalDialog();
+  if (activeDialog) {
+    if (!_modalFocusActive) {
+      _modalFocusActive = true;
+      _preModalFocusId = (activeBeforeRender && activeBeforeRender.id) ? activeBeforeRender.id : null;
+      const focusables = getFocusableElements(activeDialog);
+      if (focusables.length > 0) {
+        focusables[0].focus();
+      } else {
+        if (!activeDialog.hasAttribute('tabindex')) activeDialog.setAttribute('tabindex', '-1');
+        activeDialog.focus();
+      }
+    } else if (!activeDialog.contains(document.activeElement)) {
+      const focusables = getFocusableElements(activeDialog);
+      if (focusables.length > 0) focusables[0].focus();
+    }
+  } else if (_modalFocusActive) {
+    _modalFocusActive = false;
+    const prevId = _preModalFocusId;
+    _preModalFocusId = null;
+    if (prevId) {
+      const target = document.getElementById(prevId);
+      if (target && typeof target.focus === 'function') target.focus();
+    }
+  }
+
   // Attach interactive events
-  if (!isNative) attachDevBarEvents();
+  if (!isNative && store.isNonProductionEnvironment()) attachDevBarEvents();
   attachHeaderEvents();
   if (isAuth) attachNavEvents();
-  attachDebugDrawerEvents();
+  if (store.isNonProductionEnvironment()) attachDebugDrawerEvents();
   attachConsentBannerEvents();
 
   if (!isAuth) {
@@ -366,7 +397,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (state.selectedJobId || state.isSafetyModalOpen || state.reviewJobId || 
           state.applicantJobId || state.reportJobId || state.activeLegalDocType || 
           state.isGuardianModalOpen || state.isLocationModalOpen || state.isEmergencyModalOpen ||
-          state.receiptModalJobId || state.isProofModalOpen || state.isParentModalOpen) {
+          state.receiptModalJobId || state.isProofModalOpen || state.isParentModalOpen ||
+          state.selectedAdminReportId || state.isConsentModalOpen) {
         store.setState({
           selectedJobId: null,
           isSafetyModalOpen: false,
@@ -379,8 +411,34 @@ document.addEventListener('DOMContentLoaded', () => {
           isEmergencyModalOpen: false,
           receiptModalJobId: null,
           isProofModalOpen: false,
-          isParentModalOpen: false
+          isParentModalOpen: false,
+          selectedAdminReportId: null,
+          isConsentModalOpen: false
         });
+      }
+    }
+
+    // Trap Tab focus within the currently open modal dialog (WAI-ARIA).
+    if (e.key === 'Tab') {
+      const dialog = getActiveModalDialog();
+      if (dialog) {
+        const focusables = getFocusableElements(dialog);
+        if (focusables.length === 0) {
+          e.preventDefault();
+        } else {
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          const active = document.activeElement;
+          if (e.shiftKey) {
+            if (active === first || !dialog.contains(active)) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else if (active === last || !dialog.contains(active)) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
       }
     }
 

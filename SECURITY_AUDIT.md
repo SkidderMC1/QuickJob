@@ -223,5 +223,57 @@
 
 ---
 
-### FINAL STATUS:
-**`SECURE_FOR_TEST_ENVIRONMENT`**
+## 5. SECOND ADVERSARIAL ENGAGEMENT — 2026-10-09
+
+A second offensive (black-box + white-box) penetration test plus parallel source
+audits were run against a later revision of the working tree. This section
+corrects two earlier "fixed" claims and records the newly found issues.
+
+### 5.1 Corrections to earlier findings
+
+- **SEC-002 (dev outbox token harvesting) — partially corrected.** Unauthenticated
+  calls do return 403, but the guard still accepted a built-in default key
+  (`DEFAULT_DEV_KEY`) whenever `QUICKJOB_ENV` was unset (default `development`),
+  and the same key was embedded in the shipped front end
+  (`js/services/authService.js`). Reproduced: the attacker harvested an admin
+  reset token and completed account takeover **from the local host**.
+  **Remediation:** removed the key from client code; dev endpoints now require a
+  loopback client and fail closed outside explicit dev/test environments;
+  production never seeds known credentials; a startup warning is logged when
+  `QUICKJOB_ENV` is unset. **Residual:** the built-in dev key remains for local
+  convenience behind a loopback-only bind — acceptable for local/test, to be
+  removed for any non-loopback deployment.
+- **SEC-004 (security headers) — partially corrected.** The CSP was not strict
+  (`script-src 'self' 'unsafe-inline'`), and `Permissions-Policy: geolocation=()`
+  disabled the map "locate me" feature. **Remediation:** all inline
+  `<script>`/event handlers removed (service-worker registration externalized to
+  `js/sw-register.js`); CSP tightened to `script-src 'self'`; `Permissions-Policy`
+  now `geolocation=(self)`.
+
+### 5.2 Newly found & remediated
+
+| ID | Severity | Finding | Remediation |
+|----|----------|---------|-------------|
+| SEC-006 | HIGH | Client-side admin auth bypass — `store.loginUser` catch fallback granted `isAuthenticated`/`admin` for `admin@quickjob.local` on any API error / any password | Removed the fallback; admin role comes only from the server response. Verified live: wrong password no longer authenticates. |
+| SEC-007 | HIGH | Self-service KYC — client flipped `isIdentityVerified`; exact job address present in public state pre-booking | KYC no longer derived from `email_verified`; only `verifyIdentity` may grant it. Address-release remains an architectural residual. |
+| SEC-008 | MEDIUM | Parent/guardian dashboard backdoor — hardcoded PIN `482910` accepted universally | Removed from `parentModal`, the store default and the profile fallback; a per-user random code is generated on activation; only the configured code unlocks. |
+| SEC-009 | MEDIUM | Debug drawer / dev persona tooling rendered to unauthenticated visitors | Gated behind a non-production flag; persona switch no longer authenticates. |
+| SEC-010 | LOW | Duplicate-registration race returned HTTP 500 (unique violation raised at `INSERT`, not `commit`) | Guarded the INSERT → rollback → 409; verified 10 concurrent duplicates → 1×201 + 9×409. |
+| SEC-011 | LOW | No rate limit on verify-email / reset-password; per-IP bucket not cleared on login success | Added limits (verify 20/min, reset 15/min) and per-IP reset on success. |
+| SEC-012 | LOW | Non-ASCII `X-Dev-Key` caused 500 (`TypeError` in `compare_digest`) | Compare UTF-8 bytes → 403. |
+
+### 5.3 Re-verified secure this engagement
+
+Admin routes require auth (401/403) · SQL injection (parameterized) · path
+traversal (`..`, encoded, `.git`, `.db`, `.py`) · role escalation on register ·
+under-13 registration block · reset-token replay · session reuse after logout ·
+XSS via chat/fields (`escapeHTML`/`textContent`) · CORS origin reflection (no
+`Access-Control-Allow-Origin`) · service-worker `/api/` caching · token in login
+body.
+
+### 5.4 Updated status
+
+**`SECURE_LOCALHOST_ONLY`** — no unauthenticated/admin/IDOR/SQLi/XSS/path-traversal/token-replay
+vector remains reachable. Residual items are architectural (client-trusted
+KYC and address release) or deployment-level (HTTPS cookie `Secure`, and the
+loopback-only built-in dev key).

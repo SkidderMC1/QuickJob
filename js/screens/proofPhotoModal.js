@@ -1,7 +1,17 @@
 /**
- * QuickJob Before & After Photo Proof & AI Vision Verification Modal
+ * EasyJob Before & After Photo Proof & AI Vision Verification Modal
  */
 import { store } from '../state/store.js';
+
+/**
+ * Offline-safe inline SVG placeholder for proof-of-work photos.
+ * Mirrors js/data/mockData.js so the before/after preview always renders
+ * without any remote (unsplash) request, satisfying CSP `img-src 'self' data:`.
+ */
+function svgPlaceholder(label) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#f1f5f9"/><rect x="0" y="0" width="400" height="300" fill="none" stroke="#cbd5e1" stroke-width="2"/><text x="200" y="150" font-family="sans-serif" font-size="24" fill="#64748b" text-anchor="middle" dominant-baseline="middle">${label}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
 
 export function renderProofPhotoModal(state) {
   if (!state.isProofModalOpen) return '';
@@ -9,8 +19,8 @@ export function renderProofPhotoModal(state) {
   const job = state.jobs.find(j => j.id === state.proofModalJobId) || state.jobs[0];
   if (!job) return '';
 
-  const defaultBefore = job.proofPhotoBefore || 'https://images.unsplash.com/photo-1558904541-efa8c4a08931?auto=format&fit=crop&w=400&q=80';
-  const defaultAfter = job.proofPhotoAfter || 'https://images.unsplash.com/photo-1592417817098-8f3d69102657?auto=format&fit=crop&w=400&q=80';
+  const defaultBefore = job.proofPhotoBefore || svgPlaceholder('Vorher');
+  const defaultAfter = job.proofPhotoAfter || svgPlaceholder('Nachher');
   const isVerified = state.tempAiVerified || job.aiVisionVerified;
 
   return `
@@ -33,26 +43,26 @@ export function renderProofPhotoModal(state) {
               </span>
             </div>
           </div>
-          <button id="btn-close-proof-photo" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px; border: none; background: transparent; cursor: pointer;">
+          <button id="btn-close-proof-photo" aria-label="Schließen" style="font-size: 1.25rem; color: var(--qj-text-muted); padding: 4px; border: none; background: transparent; cursor: pointer;">
             ✕
           </button>
         </div>
 
         <!-- Body -->
         <div class="modal-body" style="gap: 1rem;">
-          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem; font-size: 0.8rem; color: #334155;">
+          <div style="background: var(--qj-surface-subtle); border: 1px solid var(--qj-border); border-radius: 10px; padding: 0.75rem; font-size: 0.8rem; color: var(--qj-text-main);">
             <strong>Auftrag:</strong> ${escapeHTML(job.title)}<br/>
-            <span style="color: #64748b; font-size: 0.74rem;">Lade Vorher- und Nachher-Fotos hoch, um die ordnungsgemäße Erledigung vor der Auszahlung transparent zu belegen.</span>
+            <span style="color: var(--qj-text-muted); font-size: 0.74rem;">Lade Vorher- und Nachher-Fotos hoch, um die ordnungsgemäße Erledigung vor der Auszahlung transparent zu belegen.</span>
           </div>
 
           <!-- 2-Photo Grid -->
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
             <!-- Before Photo Box -->
             <div style="display: flex; flex-direction: column; gap: 0.35rem;">
-              <span style="font-size: 0.74rem; font-weight: 700; color: #64748b; text-transform: uppercase;">
+              <span style="font-size: 0.74rem; font-weight: 700; color: var(--qj-text-muted); text-transform: uppercase;">
                 1. Vor Beginn (Vorher)
               </span>
-              <div style="position: relative; border-radius: 10px; overflow: hidden; height: 130px; background: #e2e8f0; border: 1px solid #cbd5e1;">
+              <div style="position: relative; border-radius: 10px; overflow: hidden; height: 130px; background: var(--qj-surface-muted); border: 1px solid var(--qj-border);">
                 <img 
                   id="preview-photo-before" 
                   src="${defaultBefore}" 
@@ -70,7 +80,7 @@ export function renderProofPhotoModal(state) {
               <span style="font-size: 0.74rem; font-weight: 700; color: #059669; text-transform: uppercase;">
                 2. Nach Fertigstellung (Nachher)
               </span>
-              <div style="position: relative; border-radius: 10px; overflow: hidden; height: 130px; background: #e2e8f0; border: 2px solid #10b981;">
+              <div style="position: relative; border-radius: 10px; overflow: hidden; height: 130px; background: var(--qj-surface-muted); border: 2px solid #10b981;">
                 <img 
                   id="preview-photo-after" 
                   src="${defaultAfter}" 
@@ -105,7 +115,7 @@ export function renderProofPhotoModal(state) {
             <button 
               id="btn-run-ai-vision" 
               class="btn btn-outline btn-sm" 
-              style="font-size: 0.76rem; font-weight: 700; border-color: ${isVerified ? '#86efac' : '#c4b5fd'}; color: ${isVerified ? '#15803d' : '#5b21b6'}; background: #ffffff;"
+              style="font-size: 0.76rem; font-weight: 700; border-color: ${isVerified ? '#86efac' : '#c4b5fd'}; color: ${isVerified ? '#15803d' : '#5b21b6'}; background: var(--qj-card);"
             >
               🔄 ${isVerified ? 'Erneut mit KI prüfen' : 'Jetzt KI-Bildprüfung durchführen'}
             </button>

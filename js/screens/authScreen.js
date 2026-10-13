@@ -1,5 +1,5 @@
 /**
- * QuickJob Dedicated Authentication & Account Management Screen
+ * EasyJob Dedicated Authentication & Account Management Screen
  * Supports Login, Registration (with explicit un-preselected AGB acceptance),
  * Forgot Password, Password Reset, and Email Verification.
  */
@@ -11,18 +11,18 @@ export function renderAuthScreen(state) {
   return `
     <div class="auth-screen-container" style="padding: 1.25rem 1rem; max-width: 480px; margin: 0 auto;">
       <!-- Auth Card Shell -->
-      <div style="background: #ffffff; border: 1.5px solid var(--qj-border, #e2e8f0); border-radius: 20px; padding: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.06);">
+      <div style="background: var(--qj-card); border: 1.5px solid var(--qj-border, #e2e8f0); border-radius: 20px; padding: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.06);">
         
         <!-- Brand Header -->
         <div style="text-align: center; margin-bottom: 1.5rem;">
           <div style="font-size: 2.2rem; line-height: 1; margin-bottom: 0.35rem;">⚡</div>
-          <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0;">
+          <h1 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0;">
             ${mode === 'login' ? 'Willkommen zurück' :
               mode === 'register' ? 'Konto erstellen' :
               mode === 'forgot_password' ? 'Passwort vergessen?' :
               mode === 'reset_password' ? 'Neues Passwort festlegen' :
               'E-Mail bestätigen'}
-          </h2>
+          </h1>
           <p style="font-size: 0.8rem; color: #64748b; margin: 0.25rem 0 0 0;">
             ${mode === 'login' ? 'Melden Sie sich an, um Microjobs auszuführen oder zu inserieren.' :
               mode === 'register' ? 'Registrieren Sie sich für sichere Nachbarschaftshilfe.' :
@@ -36,7 +36,7 @@ export function renderAuthScreen(state) {
         ${mode === 'login' ? `
           <form id="form-auth-login" style="display: flex; flex-direction: column; gap: 0.85rem;">
             <div>
-              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
+              <label for="login-email" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                 E-Mail-Adresse
               </label>
               <input type="email" id="login-email" class="form-input" placeholder="name@beispiel.de" required style="width: 100%; padding: 0.65rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.88rem;" />
@@ -44,7 +44,7 @@ export function renderAuthScreen(state) {
 
             <div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
-                <label style="font-size: 0.78rem; font-weight: 700; color: #334155;">
+                <label for="login-password" style="font-size: 0.78rem; font-weight: 700; color: #334155;">
                   Passwort
                 </label>
                 <button type="button" id="btn-to-forgot-password" class="btn btn-link" style="font-size: 0.74rem; color: #6366f1; text-decoration: underline; padding: 0;">
@@ -66,7 +66,8 @@ export function renderAuthScreen(state) {
             </button>
           </form>
 
-          <!-- Quick Persona Pills for Tester Convenience -->
+          <!-- Quick Persona Pills for Tester Convenience (non-production only) -->
+          ${store.isNonProductionEnvironment() ? `
           <div style="margin-top: 1.25rem; border-top: 1px solid #f1f5f9; padding-top: 1rem; text-align: center;">
             <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 800; color: #94a3b8; margin-bottom: 0.5rem;">
               Test-Zugangsdaten (1-Klick)
@@ -86,6 +87,7 @@ export function renderAuthScreen(state) {
               </button>
             </div>
           </div>
+          ` : ''}
 
           <!-- Switch to Register -->
           <div style="text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: #64748b;">
@@ -98,23 +100,23 @@ export function renderAuthScreen(state) {
 
         <!-- MODE 2: REGISTER -->
         ${mode === 'register' ? `
-          <form id="form-auth-register" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 0.8rem;">
+          <form id="form-auth-register" style="display: flex; flex-direction: column; gap: 0.8rem;">
             <div>
-              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
+              <label for="reg-name" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                 Vollständiger Name *
               </label>
               <input type="text" id="reg-name" class="form-input" placeholder="z. B. Max Mustermann" required style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
             </div>
 
             <!-- Profile Picture (Avatar) Setup during Registration -->
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.7rem;">
+            <div style="background: var(--qj-surface-subtle); border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.7rem;">
               <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
                 Profilbild (optional)
               </label>
               <div style="display: flex; align-items: center; gap: 0.85rem;">
                 <div 
                   id="reg-avatar-preview" 
-                  style="width: 52px; height: 52px; border-radius: 50%; background: #ffffff; border: 2px dashed #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; overflow: hidden; cursor: pointer; flex-shrink: 0;"
+                  style="width: 52px; height: 52px; border-radius: 50%; background: var(--qj-card); border: 2px dashed #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; overflow: hidden; cursor: pointer; flex-shrink: 0;"
                   title="Bild auswählen"
                 >
                   📷
@@ -125,7 +127,7 @@ export function renderAuthScreen(state) {
                   </label>
                   <input type="file" id="reg-avatar-input" accept="image/*" style="display: none;" />
                   <div style="font-size: 0.68rem; color: #64748b; margin-top: 3px; line-height: 1.3;">
-                    JPG, PNG oder WebP. Wenn keines gewählt wird, zeigt QuickJob deinen ersten Buchstaben.
+                    JPG, PNG oder WebP. Wenn keines gewählt wird, zeigt EasyJob deinen ersten Buchstaben.
                   </div>
                 </div>
               </div>
@@ -133,13 +135,13 @@ export function renderAuthScreen(state) {
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
               <div>
-                <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
+                <label for="reg-age" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                   Alter *
                 </label>
-                <input type="number" id="reg-age" min="10" max="99" class="form-input" placeholder="z. B. 16" required style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
+                <input type="number" id="reg-age" min="10" max="99" class="form-input" placeholder="z. B. 16" aria-describedby="reg-age-feedback" required style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
               </div>
               <div>
-                <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
+                <label for="reg-role" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                   Hauptrolle *
                 </label>
                 <select id="reg-role" class="form-input" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;">
@@ -149,31 +151,31 @@ export function renderAuthScreen(state) {
               </div>
             </div>
 
-            <div id="reg-age-feedback" style="font-size: 0.72rem; padding: 0.4rem 0.6rem; border-radius: 6px; display: none;"></div>
+            <div id="reg-age-feedback" role="status" aria-live="polite" style="font-size: 0.72rem; padding: 0.4rem 0.6rem; border-radius: 6px; display: none;"></div>
 
             <div>
-              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
+              <label for="reg-email" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                 E-Mail-Adresse *
               </label>
               <input type="email" id="reg-email" class="form-input" placeholder="ihre.email@beispiel.de" required style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
             </div>
 
             <div>
-              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
+              <label for="reg-password" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                 Passwort * (mind. 8 Zeichen, Buchstabe + Ziffer/Sonderzeichen)
               </label>
               <input type="password" id="reg-password" class="form-input" placeholder="Mindestens 8 Zeichen" required style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
             </div>
 
             <div>
-              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
+              <label for="reg-password-confirm" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                 Passwort bestätigen *
               </label>
               <input type="password" id="reg-password-confirm" class="form-input" placeholder="Passwort wiederholen" required style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
             </div>
 
             <!-- Ausweis-Verifikation (ID/KYC) Block -->
-            <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem;" id="reg-id-card-section">
+            <div style="background: var(--qj-surface-subtle); border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem;" id="reg-id-card-section">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <label style="font-size: 0.78rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 0.35rem;">
                   <span>🪪</span>
@@ -190,7 +192,7 @@ export function renderAuthScreen(state) {
               </div>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem;">
-                <select id="reg-id-type" class="form-input" style="padding: 0.5rem; font-size: 0.78rem; border-radius: 6px; border: 1px solid #cbd5e1;">
+                <select id="reg-id-type" class="form-input" aria-label="Ausweis-Typ" style="padding: 0.5rem; font-size: 0.78rem; border-radius: 6px; border: 1px solid #cbd5e1;">
                   <option value="personalausweis">Personalausweis</option>
                   <option value="schuelerausweis">Schülerausweis</option>
                   <option value="reisepass">Reisepass</option>
@@ -200,13 +202,14 @@ export function renderAuthScreen(state) {
                   id="reg-id-number" 
                   placeholder="Ausweis- / Schülernummer (optional)" 
                   class="form-input" 
+                  aria-label="Ausweis- oder Schülernummer"
                   style="padding: 0.5rem; font-size: 0.78rem; border-radius: 6px; border: 1px solid #cbd5e1;" 
                 />
               </div>
             </div>
 
             <!-- Mandatory Un-preselected AGB Checkbox (§ 305 Abs. 2 BGB) -->
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem; margin-top: 0.2rem;">
+            <div style="background: var(--qj-surface-subtle); border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.75rem; margin-top: 0.2rem;">
               <label style="display: flex; align-items: flex-start; gap: 0.55rem; cursor: pointer;">
                 <input type="checkbox" id="reg-check-agb" style="margin-top: 0.2rem; transform: scale(1.15);" />
                 <span style="font-size: 0.76rem; color: #1e293b; line-height: 1.45;">
@@ -230,9 +233,9 @@ export function renderAuthScreen(state) {
 
         <!-- MODE 3: FORGOT PASSWORD -->
         ${mode === 'forgot_password' ? `
-          <form id="form-auth-forgot" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <form id="form-auth-forgot" style="display: flex; flex-direction: column; gap: 0.85rem;">
             <div>
-              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
+              <label for="forgot-email" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                 Registrierte E-Mail-Adresse
               </label>
               <input type="email" id="forgot-email" class="form-input" placeholder="ihre.email@beispiel.de" required style="width: 100%; padding: 0.65rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.88rem;" />
@@ -252,23 +255,23 @@ export function renderAuthScreen(state) {
 
         <!-- MODE 4: RESET PASSWORD -->
         ${mode === 'reset_password' ? `
-          <form id="form-auth-reset" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <form id="form-auth-reset" style="display: flex; flex-direction: column; gap: 0.85rem;">
             <div>
-              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
+              <label for="reset-token" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                 Sicherheits-Token
               </label>
               <input type="text" id="reset-token" class="form-input" value="${state.authPendingToken || ''}" placeholder="Aus dem E-Mail-Link" required style="width: 100%; padding: 0.65rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
             </div>
 
             <div>
-              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
+              <label for="reset-new-password" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                 Neues Passwort *
               </label>
               <input type="password" id="reset-new-password" class="form-input" placeholder="Mindestens 8 Zeichen" required style="width: 100%; padding: 0.65rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
             </div>
 
             <div>
-              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
+              <label for="reset-new-password-confirm" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                 Neues Passwort bestätigen *
               </label>
               <input type="password" id="reset-new-password-confirm" class="form-input" placeholder="Wiederholen" required style="width: 100%; padding: 0.65rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
@@ -293,9 +296,9 @@ export function renderAuthScreen(state) {
               ✉️ Bitte geben Sie den Verifizierungs-Token aus Ihrer Bestätigungs-E-Mail ein oder klicken Sie direkt auf den Link in der E-Mail.
             </div>
 
-            <form id="form-auth-verify" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 0.85rem;">
+            <form id="form-auth-verify" style="display: flex; flex-direction: column; gap: 0.85rem;">
               <div>
-                <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
+                <label for="verify-token-input" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.25rem;">
                   Verifizierungs-Token
                 </label>
                 <input type="text" id="verify-token-input" class="form-input" value="${state.authPendingToken || ''}" placeholder="Token einfügen..." required style="width: 100%; padding: 0.65rem; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.85rem;" />
@@ -311,7 +314,7 @@ export function renderAuthScreen(state) {
                 Keine E-Mail erhalten?
               </p>
               <div style="display: flex; gap: 0.5rem;">
-                <input type="email" id="resend-email-input" class="form-input" placeholder="Ihre E-Mail..." style="flex: 1; padding: 0.5rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid #cbd5e1;" />
+                <input type="email" id="resend-email-input" class="form-input" placeholder="Ihre E-Mail..." aria-label="E-Mail-Adresse für erneuten Versand" style="flex: 1; padding: 0.5rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid #cbd5e1;" />
                 <button type="button" id="btn-auth-resend-email" class="btn btn-outline btn-sm" style="font-weight: 700;">
                   Erneut senden
                 </button>
@@ -362,19 +365,21 @@ export function attachAuthScreenEvents() {
     store.openLegalDoc('PRIVACY');
   });
 
-  // 1-Click tester login pills
-  const quickPills = document.querySelectorAll('.btn-quick-login');
-  quickPills.forEach(pill => {
-    pill.addEventListener('click', (e) => {
-      const email = e.currentTarget.getAttribute('data-email');
-      const emailInput = document.getElementById('login-email');
-      const pwInput = document.getElementById('login-password');
-      if (emailInput && pwInput) {
-        emailInput.value = email;
-        pwInput.value = 'Password123!';
-      }
+  // 1-Click tester login pills (non-production only — never ship shared credentials)
+  if (store.isNonProductionEnvironment()) {
+    const quickPills = document.querySelectorAll('.btn-quick-login');
+    quickPills.forEach(pill => {
+      pill.addEventListener('click', (e) => {
+        const email = e.currentTarget.getAttribute('data-email');
+        const emailInput = document.getElementById('login-email');
+        const pwInput = document.getElementById('login-password');
+        if (emailInput && pwInput) {
+          emailInput.value = email;
+          pwInput.value = 'Password123!';
+        }
+      });
     });
-  });
+  }
 
   // Dynamic age feedback during registration
   const ageInput = document.getElementById('reg-age');
@@ -420,7 +425,7 @@ export function attachAuthScreenEvents() {
       if (e.target.value === 'employer') {
         idBadge.className = 'badge badge-muted';
         idBadge.innerText = 'Optional für Auftraggeber';
-        idNotice.style.background = '#f8fafc';
+        idNotice.style.background = 'var(--qj-surface-subtle)';
         idNotice.style.borderColor = '#e2e8f0';
         idNotice.style.color = '#475569';
         idNotice.innerHTML = '<strong>Ausweis-Upload (optional für Auftraggeber):</strong> Für Auftraggeber ist der Ausweis freiwillig. Verifizierte Profile erhalten ein Vertrauensabzeichen. Du kannst deinen Ausweis jederzeit in den Einstellungen hinzufügen.';
@@ -465,7 +470,7 @@ export function attachAuthScreenEvents() {
         reader.onload = (evt) => {
           currentRegAvatarDataUrl = evt.target.result;
           avatarPreview.innerHTML = `<img src="${currentRegAvatarDataUrl}" alt="Preview" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`;
-          avatarPreview.style.border = '2px solid #0ea76b';
+          avatarPreview.style.border = '2px solid #0091ff';
         };
         reader.readAsDataURL(file);
       }

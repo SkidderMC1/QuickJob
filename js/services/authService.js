@@ -1,5 +1,5 @@
 /**
- * QuickJob Authentication Service Client
+ * EasyJob Authentication Service Client
  * Handles REST API communication with the backend authentication and session system.
  */
 
@@ -132,9 +132,22 @@ export class AuthService {
     if (recipient) params.push(`recipient=${encodeURIComponent(recipient)}`);
     if (templateType) params.push(`template_type=${encodeURIComponent(templateType)}`);
     if (params.length) url += `?${params.join('&')}`;
+    // Dev-only endpoint. No secret is ever baked into shipped client code; a
+    // non-production runtime config value (`window.QUICKJOB_DEV_KEY`) may inject
+    // it. In production the header is omitted entirely.
+    const headers = {};
+    const isNonProd = typeof window !== 'undefined' && (
+      window.QUICKJOB_ENV
+        ? String(window.QUICKJOB_ENV).toLowerCase() !== 'production'
+        : ['localhost', '127.0.0.1', ''].includes(window.location.hostname) ||
+          window.location.protocol === 'file:'
+    );
+    if (isNonProd && window.QUICKJOB_DEV_KEY) {
+      headers['X-Dev-Key'] = window.QUICKJOB_DEV_KEY;
+    }
     return this.request(url, {
       method: 'GET',
-      headers: { 'X-Dev-Key': 'quickjob-dev-test-secret' }
+      headers
     });
   }
 }

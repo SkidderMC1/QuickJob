@@ -1,5 +1,5 @@
 /**
- * QuickJob Top Application Header
+ * EasyJob Top Application Header
  */
 import { store } from '../state/store.js';
 
@@ -9,10 +9,10 @@ export function renderHeader(state) {
 
   return `
     <header class="app-header" id="app-header">
-      <div class="brand-logo" id="brand-logo" style="cursor: pointer;" title="QuickJob">
+      <button type="button" class="brand-logo" id="brand-logo" title="EasyJob" style="cursor: pointer; background: none; border: none; padding: 0; font-family: inherit;">
         <div class="logo-icon">⚡</div>
-        <div>Quick<span class="brand-highlight">Job</span></div>
-      </div>
+        <div>Easy<span class="brand-highlight">Job</span></div>
+      </button>
 
       <div style="display: flex; align-items: center; gap: 0.45rem;">
         ${isAuth && user ? `
@@ -27,12 +27,12 @@ export function renderHeader(state) {
                 src="${escapeHTML(user.avatarUrl || user.profilePicture)}" 
                 alt="${escapeHTML(user.name)}" 
                 id="header-user-avatar-img"
-                style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #0ea76b; box-shadow: 0 2px 6px rgba(14, 167, 107, 0.25);"
+                style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #0091ff; box-shadow: 0 2px 6px rgba(0, 145, 255, 0.25);"
               />
             ` : `
               <div 
                 id="header-user-avatar-letter"
-                style="width: 36px; height: 36px; border-radius: 50%; background: #0ea76b; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 800; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(14, 167, 107, 0.25);"
+                style="width: 36px; height: 36px; border-radius: 50%; background: #0091ff; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 800; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0, 145, 255, 0.25);"
               >
                 ${(user.name || 'U').charAt(0).toUpperCase()}
               </div>

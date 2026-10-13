@@ -1,5 +1,5 @@
 """
-Automated End-to-End Tests for QuickJob MVP & New Features
+Automated End-to-End Tests for EasyJob MVP & New Features
 Uses Playwright with Chromium to verify:
 1. Desktop preview framing and mobile portrait viewport (390x844)
 2. Home screen browsing & category filtering
@@ -51,16 +51,16 @@ def run_tests():
 
         try:
             # Step 1: Open app & verify desktop preview shell
-            log("\n[Step 1] Loading QuickJob at Desktop Viewport (1280x960)...")
+            log("\n[Step 1] Loading EasyJob at Desktop Viewport (1280x960)...")
             page.goto(BASE_URL, wait_until="domcontentloaded", timeout=10000)
             page.wait_for_selector("#phone-bezel", timeout=5000)
             page.wait_for_selector("#dev-controls", timeout=5000)
             page.wait_for_selector(".dynamic-island", timeout=5000)
             
             # Verify title & brand
-            assert "QuickJob" in page.title(), f"Page title should contain QuickJob, got '{page.title()}'"
+            assert "EasyJob" in page.title(), f"Page title should contain EasyJob, got '{page.title()}'"
             brand_text = page.inner_text("#brand-logo")
-            assert "QuickJob" in brand_text, f"Brand header should display QuickJob, got '{brand_text}'"
+            assert "EasyJob" in brand_text, f"Brand header should display EasyJob, got '{brand_text}'"
             
             screenshot_path = os.path.join(ARTIFACTS_DIR, "desktop_preview_home.png")
             page.screenshot(path=screenshot_path)

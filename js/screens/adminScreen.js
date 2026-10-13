@@ -1,10 +1,16 @@
 /**
- * QuickJob Admin & Compliance Management Panel Screen
+ * EasyJob Admin & Compliance Management Panel Screen
  * Comprehensive administrative moderation interface for viewing platform statistics,
  * reviewing reported users and incidents, taking disciplinary actions (warn/ban),
  * and inspecting user profiles.
  */
 import { store } from '../state/store.js';
+
+// Debounce state for the admin user-directory search. Kept at module scope so a
+// pending timer and the "refocus after re-render" intent survive the full-screen
+// DOM replacement that `setAdminUserFilter` triggers.
+let adminSearchTimer = null;
+let adminSearchShouldRefocus = false;
 
 export function renderAdminScreen(state) {
   const adminStats = state.adminStats || {
@@ -41,21 +47,21 @@ export function renderAdminScreen(state) {
   return `
     <div class="screen-container admin-screen-container" id="screen-admin" style="padding-bottom: 5rem;">
       <!-- 1. Admin Header Bar -->
-      <div style="background: linear-gradient(135deg, #0f172a, #1e293b); color: #ffffff; border-radius: var(--qj-radius-lg); padding: 1.25rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); margin-bottom: 1rem;">
+      <div style="background: linear-gradient(135deg, #0f172a, #1e293b); color: var(--qj-text-inverse); border-radius: var(--qj-radius-lg); padding: 1.25rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); margin-bottom: 1rem;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
           <div>
-            <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: #dc2626; color: #ffffff; padding: 0.2rem 0.55rem; border-radius: 20px; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;">
+            <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: var(--qj-danger); color: var(--qj-text-inverse); padding: 0.2rem 0.55rem; border-radius: 20px; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;">
               <span>🛡️</span>
               <span>Admin & Moderation Panel</span>
             </div>
-            <h1 style="font-size: 1.35rem; font-weight: 800; color: #ffffff; margin: 0.5rem 0 0.25rem 0;">
-              QuickJob Leitstand
+            <h1 style="font-size: 1.35rem; font-weight: 800; color: var(--qj-text-inverse); margin: 0.5rem 0 0.25rem 0;">
+              EasyJob Leitstand
             </h1>
             <p style="font-size: 0.78rem; color: #94a3b8; margin: 0; line-height: 1.4;">
               Marktplatz-Überwachung, Vorfallsmeldungen, Jugendschutz gem. JArbSchG und Kontosperren.
             </p>
           </div>
-          <button class="btn btn-outline btn-sm" id="btn-admin-exit" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); color: #ffffff; font-size: 0.75rem; white-space: nowrap;">
+          <button class="btn btn-outline btn-sm" id="btn-admin-exit" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); color: var(--qj-text-inverse); font-size: 0.75rem; white-space: nowrap;">
             ← Zurück
           </button>
         </div>
@@ -67,11 +73,11 @@ export function renderAdminScreen(state) {
           <h2 style="font-size: 0.92rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
             📊 Plattform-Statistiken (Live)
           </h2>
-          <span style="font-size: 0.7rem; color: #0ea76b; font-weight: 700;">● System online</span>
+          <span style="font-size: 0.7rem; color: #0091ff; font-weight: 700;">● System online</span>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.55rem;">
-          <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 0.85rem; box-shadow: var(--qj-shadow-xs);">
+          <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 0.85rem; box-shadow: var(--qj-shadow-xs);">
             <div style="font-size: 0.7rem; color: var(--qj-text-muted); font-weight: 700; text-transform: uppercase;">
               Registrierte Nutzer
             </div>
@@ -83,11 +89,11 @@ export function renderAdminScreen(state) {
             </div>
           </div>
 
-          <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 0.85rem; box-shadow: var(--qj-shadow-xs);">
+          <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 0.85rem; box-shadow: var(--qj-shadow-xs);">
             <div style="font-size: 0.7rem; color: var(--qj-text-muted); font-weight: 700; text-transform: uppercase;">
               Offene Meldungen
             </div>
-            <div style="font-size: 1.4rem; font-weight: 800; color: ${pendingReports.length > 0 ? '#dc2626' : '#0ea76b'}; margin-top: 2px;" id="stat-pending-reports">
+            <div style="font-size: 1.4rem; font-weight: 800; color: ${pendingReports.length > 0 ? '#dc2626' : '#0091ff'}; margin-top: 2px;" id="stat-pending-reports">
               ${pendingReports.length} ⚠️
             </div>
             <div style="font-size: 0.7rem; color: #64748b; margin-top: 2px;">
@@ -95,11 +101,11 @@ export function renderAdminScreen(state) {
             </div>
           </div>
 
-          <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 0.85rem; box-shadow: var(--qj-shadow-xs);">
+          <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 0.85rem; box-shadow: var(--qj-shadow-xs);">
             <div style="font-size: 0.7rem; color: var(--qj-text-muted); font-weight: 700; text-transform: uppercase;">
               Treuhandvolumen (Escrow)
             </div>
-            <div style="font-size: 1.4rem; font-weight: 800; color: #0ea76b; margin-top: 2px;" id="stat-escrow-volume">
+            <div style="font-size: 1.4rem; font-weight: 800; color: #0091ff; margin-top: 2px;" id="stat-escrow-volume">
               €${(adminStats.escrowVolumeEur || 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })}
             </div>
             <div style="font-size: 0.7rem; color: #64748b; margin-top: 2px;">
@@ -107,7 +113,7 @@ export function renderAdminScreen(state) {
             </div>
           </div>
 
-          <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 0.85rem; box-shadow: var(--qj-shadow-xs);">
+          <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 0.85rem; box-shadow: var(--qj-shadow-xs);">
             <div style="font-size: 0.7rem; color: var(--qj-text-muted); font-weight: 700; text-transform: uppercase;">
               Ausweis-Quote (KYC)
             </div>
@@ -148,7 +154,7 @@ export function renderAdminScreen(state) {
 
           <div style="display: flex; flex-direction: column; gap: 0.75rem;" id="admin-reports-list">
             ${reports.length === 0 ? `
-              <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 2rem; text-align: center; color: var(--qj-text-muted);">
+              <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 2rem; text-align: center; color: var(--qj-text-muted);">
                 Aktuell liegen keine Vorfallsmeldungen vor. Der Marktplatz läuft sauber.
               </div>
             ` : reports.map(rep => {
@@ -179,7 +185,7 @@ export function renderAdminScreen(state) {
                   class="admin-report-card" 
                   id="admin-report-${rep.id}"
                   data-report-id="${rep.id}"
-                  style="background: #ffffff; border: 1.5px solid ${isPending ? '#fca5a5' : 'var(--qj-border)'}; border-radius: var(--qj-radius-md); padding: 1rem; box-shadow: var(--qj-shadow-xs); cursor: pointer; transition: all 0.15s ease;"
+                  style="background: var(--qj-card); border: 1.5px solid ${isPending ? '#fca5a5' : 'var(--qj-border)'}; border-radius: var(--qj-radius-md); padding: 1rem; box-shadow: var(--qj-shadow-xs); cursor: pointer; transition: all 0.15s ease;"
                 >
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem;">
                     <div style="display: flex; align-items: center; gap: 0.65rem;">
@@ -188,7 +194,7 @@ export function renderAdminScreen(state) {
                       </div>
                       <div>
                         <div style="display: flex; align-items: center; gap: 0.4rem;">
-                          <h4 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin: 0;">
+                          <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
                             ${escapeHTML(rep.reportedUserName)}
                           </h4>
                           <span style="font-size: 0.72rem; color: #64748b;">${escapeHTML(rep.reportedUserHandle)}</span>
@@ -201,11 +207,11 @@ export function renderAdminScreen(state) {
                     <div>${statusBadge}</div>
                   </div>
 
-                  <div style="background: #f8fafc; border-left: 3px solid #dc2626; border-radius: 4px; padding: 0.5rem 0.65rem; margin-bottom: 0.5rem;">
+                  <div style="background: var(--qj-surface-subtle); border-left: 3px solid var(--qj-danger); border-radius: 4px; padding: 0.5rem 0.65rem; margin-bottom: 0.5rem;">
                     <div style="font-size: 0.72rem; font-weight: 800; color: #991b1b; text-transform: uppercase;">
                       ${escapeHTML(rep.categoryLabel || rep.category)}
                     </div>
-                    <div style="font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-top: 2px;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--qj-text-main); margin-top: 2px;">
                       ${escapeHTML(rep.reason)}
                     </div>
                     <div style="font-size: 0.74rem; color: #475569; margin-top: 3px; line-height: 1.35;">
@@ -246,15 +252,15 @@ export function renderAdminScreen(state) {
             ${usersList.map(u => {
               const isBanned = u.status === 'banned';
               return `
-                <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 0.8rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-md); padding: 0.8rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
                   <div style="display: flex; align-items: center; gap: 0.65rem;">
-                    <div style="width: 38px; height: 38px; border-radius: 50%; background: ${isBanned ? '#fee2e2' : '#f1f5f9'}; color: ${isBanned ? '#dc2626' : '#0ea76b'}; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; border: 1.5px solid ${isBanned ? '#fca5a5' : '#cbd5e1'};">
+                    <div style="width: 38px; height: 38px; border-radius: 50%; background: ${isBanned ? '#fee2e2' : '#f1f5f9'}; color: ${isBanned ? '#dc2626' : '#0091ff'}; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; border: 1.5px solid ${isBanned ? '#fca5a5' : '#cbd5e1'};">
                       ${u.name.charAt(0)}
                     </div>
                     <div>
-                      <div style="font-size: 0.88rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 0.35rem;">
+                      <div style="font-size: 0.88rem; font-weight: 800; color: var(--qj-text-main); display: flex; align-items: center; gap: 0.35rem;">
                         <span>${escapeHTML(u.name)}</span>
-                        ${u.kyc ? '<span title="Ausweis verifiziert" style="color: #0ea76b; font-size: 0.85rem;">✓</span>' : ''}
+                        ${u.kyc ? '<span title="Ausweis verifiziert" style="color: #0091ff; font-size: 0.85rem;">✓</span>' : ''}
                         ${isBanned ? '<span class="badge" style="background: #fef2f2; color: #dc2626; font-size: 0.65rem;">GESPERRT</span>' : ''}
                       </div>
                       <div style="font-size: 0.72rem; color: #64748b;">
@@ -267,7 +273,7 @@ export function renderAdminScreen(state) {
                     <button 
                       class="btn ${isBanned ? 'btn-outline' : 'btn-outline'} btn-sm btn-admin-toggle-ban" 
                       data-user-id="${u.id}"
-                      style="font-size: 0.72rem; padding: 0.3rem 0.6rem; border-color: ${isBanned ? '#0ea76b' : '#dc2626'}; color: ${isBanned ? '#0ea76b' : '#dc2626'}; font-weight: 700;"
+                      style="font-size: 0.72rem; padding: 0.3rem 0.6rem; border-color: ${isBanned ? '#0091ff' : '#dc2626'}; color: ${isBanned ? '#0091ff' : '#dc2626'}; font-weight: 700;"
                     >
                       ${isBanned ? 'Entsperren' : 'Sperren'}
                     </button>
@@ -282,31 +288,31 @@ export function renderAdminScreen(state) {
       <!-- TAB 3: LEGAL COMPLIANCE & AUDIT LOGS -->
       ${activeTab === 'stats' ? `
         <section id="admin-section-stats">
-          <div style="background: #ffffff; border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; display: flex; flex-direction: column; gap: 0.85rem;">
+          <div style="background: var(--qj-card); border: 1px solid var(--qj-border); border-radius: var(--qj-radius-lg); padding: 1.15rem; display: flex; flex-direction: column; gap: 0.85rem;">
             <div style="display: flex; align-items: center; gap: 0.45rem;">
               <span style="font-size: 1.25rem;">⚖️</span>
-              <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0;">
+              <h3 style="font-size: 1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
                 Gesetzlicher Jugendschutz & Compliance Audit
               </h3>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr; gap: 0.5rem; font-size: 0.78rem;">
-              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem;">
-                <div style="font-weight: 800; color: #0f172a;">§ 5 Abs. 1 JArbSchG (Verbot der Kinderarbeit)</div>
+              <div style="background: var(--qj-surface-subtle); border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.75rem;">
+                <div style="font-weight: 800; color: var(--qj-text-main);">§ 5 Abs. 1 JArbSchG (Verbot der Kinderarbeit)</div>
                 <div style="color: #64748b; margin-top: 2px;">
                   100% automatische Registrierungssperre für Personen unter 13 Jahren aktiv.
                 </div>
               </div>
 
-              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem;">
-                <div style="font-weight: 800; color: #0f172a;">KindArbSchV & § 113 BGB (Erziehungsberechtigte)</div>
+              <div style="background: var(--qj-surface-subtle); border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.75rem;">
+                <div style="font-weight: 800; color: var(--qj-text-main);">KindArbSchV & § 113 BGB (Erziehungsberechtigte)</div>
                 <div style="color: #64748b; margin-top: 2px;">
                   Arbeitszeitbegrenzung auf max. 2h/Tag an Schultagen für 13–14-Jährige. Eltern-Portal mit PIN-Code aktivierbar.
                 </div>
               </div>
 
-              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem;">
-                <div style="font-weight: 800; color: #0f172a;">§ 8 & § 22 JArbSchG (Arbeitszeit- & Gefahrenschutz)</div>
+              <div style="background: var(--qj-surface-subtle); border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.75rem;">
+                <div style="font-weight: 800; color: var(--qj-text-main);">§ 8 & § 22 JArbSchG (Arbeitszeit- & Gefahrenschutz)</div>
                 <div style="color: #64748b; margin-top: 2px;">
                   Arbeitszeitfenster für Jugendliche 14–17 Jahre auf 06:00 bis 20:00 Uhr beschränkt. Schwere Lasten und Gefahrgut automatisch ausgeblendet.
                 </div>
@@ -318,8 +324,8 @@ export function renderAdminScreen(state) {
 
       <!-- 4. Selected Report & User Profile Details Modal / Drawer -->
       ${selectedReport ? `
-        <div class="modal-backdrop" id="admin-report-modal" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); z-index: 1000; padding: 1rem;">
-          <div style="background: #ffffff; border-radius: 18px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 1.25rem; box-shadow: 0 20px 40px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 0.85rem;">
+        <div class="modal-backdrop" id="admin-report-modal" role="dialog" aria-modal="true" aria-labelledby="admin-report-modal-title" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); z-index: 950; padding: 1rem;">
+          <div style="background: var(--qj-card); border-radius: 18px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 1.25rem; box-shadow: 0 20px 40px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 0.85rem;">
             
             <!-- Modal Header -->
             <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
@@ -327,22 +333,22 @@ export function renderAdminScreen(state) {
                 <span class="badge" style="background: #fee2e2; color: #991b1b; font-size: 0.7rem; font-weight: 800;">
                   FALL #${selectedReport.id}
                 </span>
-                <h2 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin: 0.35rem 0 0 0;">
+                <h2 id="admin-report-modal-title" style="font-size: 1.15rem; font-weight: 800; color: var(--qj-text-main); margin: 0.35rem 0 0 0;">
                   Vorfall & Nutzerprofil prüfen
                 </h2>
               </div>
-              <button id="btn-admin-close-modal" style="background: none; border: none; font-size: 1.35rem; cursor: pointer; color: #64748b;">✕</button>
+              <button id="btn-admin-close-modal" aria-label="Schließen" style="background: none; border: none; font-size: 1.35rem; cursor: pointer; color: #64748b;">✕</button>
             </div>
 
             <!-- Reported User Profile Card -->
-            <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 0.85rem;">
+            <div style="background: var(--qj-surface-subtle); border: 1.5px solid var(--qj-border); border-radius: 12px; padding: 0.85rem;">
               <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <div style="width: 48px; height: 48px; border-radius: 50%; background: #dc2626; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 800;">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--qj-danger); color: var(--qj-text-inverse); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 800;">
                   ${(selectedReport.reportedUserName || 'U').charAt(0).toUpperCase()}
                 </div>
                 <div style="flex: 1;">
                   <div style="display: flex; align-items: center; gap: 0.4rem;">
-                    <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0;">
+                    <h3 style="font-size: 1rem; font-weight: 800; color: var(--qj-text-main); margin: 0;">
                       ${escapeHTML(selectedReport.reportedUserName)}
                     </h3>
                     <span style="font-size: 0.75rem; color: #64748b;">${escapeHTML(selectedReport.reportedUserHandle)}</span>
@@ -356,13 +362,13 @@ export function renderAdminScreen(state) {
                 </div>
               </div>
 
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.35rem; margin-top: 0.65rem; background: #ffffff; border-radius: 8px; padding: 0.5rem; text-align: center; border: 1px solid #e2e8f0;">
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.35rem; margin-top: 0.65rem; background: var(--qj-card); border-radius: 8px; padding: 0.5rem; text-align: center; border: 1px solid var(--qj-border);">
                 <div>
                   <div style="font-size: 0.85rem; font-weight: 800; color: #d97706;">★ ${selectedReport.reportedUserRating}</div>
                   <div style="font-size: 0.65rem; color: #64748b;">Bewertung (${selectedReport.reportedUserRatingCount || 1})</div>
                 </div>
                 <div>
-                  <div style="font-size: 0.85rem; font-weight: 800; color: #0ea76b;">${selectedReport.reportedUserCompletedJobs}</div>
+                  <div style="font-size: 0.85rem; font-weight: 800; color: #0091ff;">${selectedReport.reportedUserCompletedJobs}</div>
                   <div style="font-size: 0.65rem; color: #64748b;">Erledigte Jobs</div>
                 </div>
                 <div>
@@ -374,7 +380,7 @@ export function renderAdminScreen(state) {
 
             <!-- Incident & Accusation Details -->
             <div style="display: flex; flex-direction: column; gap: 0.45rem;">
-              <div style="font-size: 0.78rem; font-weight: 800; color: #0f172a; text-transform: uppercase;">
+              <div style="font-size: 0.78rem; font-weight: 800; color: var(--qj-text-main); text-transform: uppercase;">
                 Vorfall & Beweislage
               </div>
               <div style="background: #fff1f2; border: 1px solid #fecdd3; border-radius: 10px; padding: 0.75rem;">
@@ -391,11 +397,11 @@ export function renderAdminScreen(state) {
 
               <!-- Evidence & Chat Excerpt -->
               ${selectedReport.chatExcerpt ? `
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.65rem;">
+                <div style="background: var(--qj-surface-subtle); border: 1px solid var(--qj-border); border-radius: 8px; padding: 0.65rem;">
                   <div style="font-size: 0.7rem; font-weight: 800; color: #475569; text-transform: uppercase;">
                     Auszug aus Chatverlauf:
                   </div>
-                  <pre style="margin: 4px 0 0 0; font-size: 0.72rem; color: #1e293b; white-space: pre-wrap; font-family: monospace; line-height: 1.4;">${escapeHTML(selectedReport.chatExcerpt)}</pre>
+                  <pre style="margin: 4px 0 0 0; font-size: 0.72rem; color: var(--qj-text-main); white-space: pre-wrap; font-family: monospace; line-height: 1.4;">${escapeHTML(selectedReport.chatExcerpt)}</pre>
                 </div>
               ` : ''}
 
@@ -415,7 +421,7 @@ export function renderAdminScreen(state) {
 
             <!-- Disciplinary / Moderation Action Buttons -->
             <div style="border-top: 1px solid #e2e8f0; padding-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
-              <div style="font-size: 0.76rem; font-weight: 800; color: #0f172a;">
+              <div style="font-size: 0.76rem; font-weight: 800; color: var(--qj-text-main);">
                 Moderationsentscheidung treffen:
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem;">
@@ -423,7 +429,7 @@ export function renderAdminScreen(state) {
                   class="btn btn-warning" 
                   id="btn-admin-warn-user" 
                   data-report-id="${selectedReport.id}" 
-                  style="font-size: 0.76rem; font-weight: 800; padding: 0.55rem; background: #f59e0b; border: none; color: #ffffff;"
+                  style="font-size: 0.76rem; font-weight: 800; padding: 0.55rem; background: var(--qj-warning); border: none; color: var(--qj-text-inverse);"
                 >
                   ⚠️ Nutzer verwarnen
                 </button>
@@ -431,7 +437,7 @@ export function renderAdminScreen(state) {
                   class="btn btn-danger" 
                   id="btn-admin-ban-user" 
                   data-report-id="${selectedReport.id}" 
-                  style="font-size: 0.76rem; font-weight: 800; padding: 0.55rem; background: #dc2626; border: none; color: #ffffff;"
+                  style="font-size: 0.76rem; font-weight: 800; padding: 0.55rem; background: var(--qj-danger); border: none; color: var(--qj-text-inverse);"
                 >
                   ⛔ Nutzer sperren (Ban)
                 </button>
@@ -481,14 +487,48 @@ export function attachAdminScreenEvents() {
     store.setAdminTab('stats');
   });
 
-  // User search
+  // User search (debounced 200ms; re-renders once per pause, focus stays stable)
   const userSearch = document.getElementById('admin-search-users-input');
   if (userSearch) {
+    // Restore focus/caret after the debounced re-render replaced the input node.
+    if (adminSearchShouldRefocus) {
+      userSearch.focus();
+      const end = userSearch.value.length;
+      try { userSearch.setSelectionRange(end, end); } catch (e) { /* noop */ }
+      adminSearchShouldRefocus = false;
+    }
+    const applySearch = (value) => {
+      adminSearchTimer = null;
+      const state = store.getState();
+      if (state.currentScreen !== 'admin') return;
+      if ((state.adminUserFilter || '') !== value) {
+        adminSearchShouldRefocus = true;
+        store.setAdminUserFilter(value);
+      }
+    };
     userSearch.addEventListener('input', (e) => {
-      store.setAdminUserFilter(e.target.value);
+      const value = e.target.value;
+      if (adminSearchTimer) clearTimeout(adminSearchTimer);
+      adminSearchTimer = setTimeout(() => applySearch(value), 200);
+    });
+    userSearch.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (adminSearchTimer) clearTimeout(adminSearchTimer);
+        applySearch(userSearch.value);
+      } else if (e.key === 'Escape') {
+        if (adminSearchTimer) clearTimeout(adminSearchTimer);
+        adminSearchTimer = null;
+        adminSearchShouldRefocus = false;
+        userSearch.blur();
+      }
     });
   }
   document.getElementById('btn-admin-clear-search')?.addEventListener('click', () => {
+    if (adminSearchTimer) {
+      clearTimeout(adminSearchTimer);
+      adminSearchTimer = null;
+    }
     store.setAdminUserFilter('');
   });
 
@@ -504,10 +544,18 @@ export function attachAdminScreenEvents() {
     });
   });
 
-  // Close modal
+  // Close modal via close button or backdrop click
   document.getElementById('btn-admin-close-modal')?.addEventListener('click', () => {
     store.closeAdminReport();
   });
+  const adminModalBackdrop = document.getElementById('admin-report-modal');
+  if (adminModalBackdrop) {
+    adminModalBackdrop.addEventListener('click', (e) => {
+      if (e.target === adminModalBackdrop) {
+        store.closeAdminReport();
+      }
+    });
+  }
 
   // Actions on reported user
   document.getElementById('btn-admin-warn-user')?.addEventListener('click', (e) => {

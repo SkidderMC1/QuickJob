@@ -1,5 +1,5 @@
 """
-QuickJob Cryptographic Security & Password Management
+EasyJob Cryptographic Security & Password Management
 Implements OWASP & NIST compliant password hashing (PBKDF2-HMAC-SHA256 with 600,000 iterations),
 constant-time verification, cryptographic token hashing, and password policy enforcement.
 """
@@ -35,6 +35,10 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, stored_hash: str) -> bool:
     """Verify password against stored PBKDF2 hash using constant-time comparison."""
     if not plain_password or not stored_hash:
+        return False
+    # Hard cap BEFORE hashing: PBKDF2 cost grows linearly with input length, so an
+    # unbounded password would allow CPU-exhaustion DoS on login/change-password.
+    if len(plain_password) > 128:
         return False
     try:
         parts = stored_hash.split('$')

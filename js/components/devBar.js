@@ -1,9 +1,11 @@
 /**
- * QuickJob Desktop Preview Dev Control Bar Component
+ * EasyJob Desktop Preview Dev Control Bar Component
  */
 import { store } from '../state/store.js';
 
 export function renderDevBar(state) {
+  // Never render the preview/dev control bar in production.
+  if (!store.isNonProductionEnvironment()) return '';
   const currentSize = state.viewportSize;
   const currentPersona = state.currentPersonaKey;
 
@@ -11,7 +13,7 @@ export function renderDevBar(state) {
     <div class="dev-controls" id="dev-controls">
       <div class="dev-brand">
         <span class="dev-brand-badge">PREVIEW</span>
-        <span>QuickJob Phone Simulator</span>
+        <span>EasyJob Phone Simulator</span>
       </div>
 
       <div class="dev-group">
@@ -53,7 +55,7 @@ export function renderDevBar(state) {
           </option>
         </select>
 
-        <button class="dev-pill-btn" id="btn-dev-switch-native" style="background: rgba(14, 167, 107, 0.2); color: #34d399; border-color: rgba(52, 211, 153, 0.3);">
+        <button class="dev-pill-btn" id="btn-dev-switch-native" style="background: rgba(0, 145, 255, 0.2); color: #7cc4ff; border-color: rgba(0, 145, 255, 0.3);">
           📱 Vollbild-App (PWA)
         </button>
 
@@ -66,6 +68,8 @@ export function renderDevBar(state) {
 }
 
 export function attachDevBarEvents() {
+  // Never bind preview/dev controls in production.
+  if (!store.isNonProductionEnvironment()) return;
   const switchNativeBtn = document.getElementById('btn-dev-switch-native');
   if (switchNativeBtn) {
     switchNativeBtn.addEventListener('click', () => {
@@ -97,7 +101,7 @@ export function attachDevBarEvents() {
   const resetBtn = document.getElementById('btn-dev-reset');
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
-      if (confirm('Reset all QuickJob test data back to default initial seed?')) {
+      if (confirm('Reset all EasyJob test data back to default initial seed?')) {
         store.resetAll();
       }
     });

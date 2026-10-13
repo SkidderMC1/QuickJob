@@ -1,5 +1,5 @@
 /**
- * QuickJob Intelligent Automatic Age & Safety Classification Engine
+ * EasyJob Intelligent Automatic Age & Safety Classification Engine
  * Analyzes microjob category, keywords, duration, and time schedule
  * according to child & youth labor protection principles (JArbSchG).
  */

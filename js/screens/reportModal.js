@@ -1,5 +1,5 @@
 /**
- * QuickJob Safety Incident & Report Modal
+ * EasyJob Safety Incident & Report Modal
  * Enables helpers, minors, and employers to report violations, safety hazards, or inappropriate behavior.
  */
 import { store } from '../state/store.js';
@@ -18,7 +18,7 @@ const reportCategories = [
     id: 'suspicious',
     icon: '🚩',
     title: 'Verdächtiges oder unklares Angebot',
-    desc: 'Aufgabe weicht von der Beschreibung ab oder fordert Zahlungen außerhalb von QuickJob.'
+    desc: 'Aufgabe weicht von der Beschreibung ab oder fordert Zahlungen außerhalb von EasyJob.'
   },
   {
     id: 'conduct',
@@ -53,7 +53,7 @@ export function renderReportModal(state) {
               Sicherheitsmeldung
             </h3>
           </div>
-          <button id="btn-close-report" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px;">
+          <button id="btn-close-report" aria-label="Schließen" style="font-size: 1.25rem; color: var(--qj-text-muted); padding: 4px;">
             ✕
           </button>
         </div>
@@ -75,7 +75,7 @@ export function renderReportModal(state) {
             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
               ${reportCategories.map(cat => `
                 <label 
-                  style="border: 1.5px solid ${selectedCategory === cat.id ? '#ef4444' : 'var(--qj-border)'}; background: ${selectedCategory === cat.id ? '#fef2f2' : '#ffffff'}; padding: 0.75rem; border-radius: var(--qj-radius-sm); cursor: pointer; display: flex; align-items: flex-start; gap: 0.6rem; transition: var(--qj-transition);"
+                  style="border: 1.5px solid ${selectedCategory === cat.id ? '#ef4444' : 'var(--qj-border)'}; background: ${selectedCategory === cat.id ? 'rgba(239, 68, 68, 0.15)' : 'var(--qj-card)'}; padding: 0.75rem; border-radius: var(--qj-radius-sm); cursor: pointer; display: flex; align-items: flex-start; gap: 0.6rem; transition: var(--qj-transition);"
                 >
                   <input 
                     type="radio" 
@@ -85,11 +85,11 @@ export function renderReportModal(state) {
                     style="margin-top: 3px; accent-color: #ef4444;"
                   />
                   <div>
-                    <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.35rem;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--qj-text-main); display: flex; align-items: center; gap: 0.35rem;">
                       <span>${cat.icon}</span>
                       <span>${cat.title}</span>
                     </div>
-                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px; line-height: 1.35;">
+                    <div style="font-size: 0.75rem; color: var(--qj-text-muted); margin-top: 2px; line-height: 1.35;">
                       ${cat.desc}
                     </div>
                   </div>

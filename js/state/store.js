@@ -1,9 +1,9 @@
 /**
- * QuickJob Central Reactive State Store
+ * EasyJob Central Reactive State Store
  */
 import { mockUsers, initialJobs, initialConversations, mockReports, initialAdminStats } from '../data/mockData.js';
 import { JobStates } from '../models/types.js';
-import { LegalEligibilityEngine } from '../legal/legalEngine.js';
+import { LegalEligibilityEngine, isMinorUser } from '../legal/legalEngine.js';
 import { GuardianConsentManager } from '../legal/guardianConsent.js';
 import { ConsentManager } from '../legal/consentManager.js';
 import { DataSubjectRightsManager } from '../legal/dataSubjectRights.js';
@@ -11,10 +11,20 @@ import { AuthService } from '../services/authService.js';
 
 const STORAGE_KEY = 'quickjob_state_v1';
 
+/**
+ * CSP-safe (img-src 'self' data:) inline SVG placeholder for proof-of-work photos.
+ * Keeps persisted proof references renderable without remote requests.
+ */
+function proofPlaceholder(label) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#f1f5f9"/><rect x="0" y="0" width="400" height="300" fill="none" stroke="#cbd5e1" stroke-width="2"/><text x="200" y="150" font-family="sans-serif" font-size="24" fill="#64748b" text-anchor="middle" dominant-baseline="middle">${label}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 class Store {
   constructor() {
     this.listeners = [];
     this._replyTimeouts = {};
+    this._sessionEpoch = 0; // monotonic generation guarding async auth responses
     this.state = this.loadInitialState();
     this.checkSession();
   }
@@ -25,27 +35,7 @@ class Store {
                          window.location.search.includes('mode=app') ||
                          window.location.search.includes('mode=standalone');
 
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return {
-          ...parsed,
-          displayMode: parsed.displayMode || (isStandalone ? 'native' : 'simulator'),
-          isDebugDrawerOpen: false,
-          currentUser: mockUsers[parsed.currentPersonaKey || 'jasper'] || mockUsers.jasper,
-          isAuthenticated: false,
-          authSession: null,
-          authViewMode: 'login',
-          authPendingToken: '',
-          currentScreen: 'auth' // Mandatory Auth Gate: Must be logged in to access app
-        };
-      } catch (e) {
-        console.warn('Failed to parse cached state, reverting to initial mock data', e);
-      }
-    }
-
-    return {
+    const baseState = {
       currentPersonaKey: 'jasper',
       currentUser: mockUsers.jasper,
       isAuthenticated: false,
@@ -70,7 +60,6 @@ class Store {
       agbAcceptanceHistory: [
         { documentId: 'AGB', version: '1.1.0', acceptedAt: '2026-09-22T10:00:00.000Z', userId: 'user_jasper' }
       ],
-      isFilterModalOpen: false,
       isSafetyModalOpen: false,
       viewportSize: 'size-390',
       toast: null,
@@ -78,6 +67,7 @@ class Store {
       // New Features State
       jobsViewMode: 'list', // 'list' or 'map'
       locationPermissionGranted: null, // null (not asked), true, or false
+      userCoordinates: null,
       isLocationModalOpen: false,
       isEmergencyModalOpen: false,
       emergencyJobId: null,
@@ -108,6 +98,51 @@ class Store {
       adminTab: 'reports', // 'reports' | 'users' | 'stats'
       adminUserFilter: ''
     };
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const personaKey = parsed.currentPersonaKey || baseState.currentPersonaKey;
+        const baseUser = mockUsers[personaKey] || mockUsers.jasper;
+        // Restore app-relevant keys explicitly. Auth state is intentionally NOT
+        // restored — a fresh, server-verified session is required (Mandatory Auth Gate).
+        return {
+          ...baseState,
+          currentPersonaKey: personaKey,
+          // User snapshot carries notifications + identity/KYC flags.
+          currentUser: parsed.currentUser ? { ...baseUser, ...parsed.currentUser } : baseUser,
+          activeMode: parsed.activeMode || baseState.activeMode,
+          displayMode: parsed.displayMode || baseState.displayMode,
+          viewportSize: parsed.viewportSize || baseState.viewportSize,
+          activeTheme: parsed.activeTheme || baseState.activeTheme,
+          selectedJobId: parsed.selectedJobId || null,
+          selectedConversationId: parsed.selectedConversationId || null,
+          jobsViewMode: parsed.jobsViewMode || baseState.jobsViewMode,
+          filters: parsed.filters || baseState.filters,
+          jobs: parsed.jobs || baseState.jobs,
+          conversations: parsed.conversations || baseState.conversations,
+          reports: parsed.reports || baseState.reports,
+          adminStats: parsed.adminStats || baseState.adminStats,
+          agbAcceptedVersion: parsed.agbAcceptedVersion || baseState.agbAcceptedVersion,
+          agbAcceptedAt: parsed.agbAcceptedAt || baseState.agbAcceptedAt,
+          agbAcceptanceHistory: parsed.agbAcceptanceHistory || baseState.agbAcceptanceHistory,
+          locationPermissionGranted: parsed.locationPermissionGranted !== undefined ? parsed.locationPermissionGranted : baseState.locationPermissionGranted,
+          userCoordinates: parsed.userCoordinates || null,
+          // Mandatory Auth Gate: never trust persisted auth; start at login.
+          isAuthenticated: false,
+          authSession: null,
+          authViewMode: 'login',
+          authPendingToken: '',
+          currentScreen: 'auth',
+          isDebugDrawerOpen: false
+        };
+      } catch (e) {
+        console.warn('Failed to parse cached state, reverting to initial mock data', e);
+      }
+    }
+
+    return baseState;
   }
 
   save() {
@@ -115,14 +150,26 @@ class Store {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         currentPersonaKey: this.state.currentPersonaKey,
         activeMode: this.state.activeMode,
-        currentScreen: this.state.currentScreen,
         displayMode: this.state.displayMode,
         selectedJobId: this.state.selectedJobId,
         selectedConversationId: this.state.selectedConversationId,
+        jobsViewMode: this.state.jobsViewMode,
         filters: this.state.filters,
         jobs: this.state.jobs,
         conversations: this.state.conversations,
-        viewportSize: this.state.viewportSize
+        viewportSize: this.state.viewportSize,
+        // Explicit app-relevant state that must survive reloads
+        reports: this.state.reports,
+        adminStats: this.state.adminStats,
+        activeTheme: this.state.activeTheme,
+        locationPermissionGranted: this.state.locationPermissionGranted,
+        userCoordinates: this.state.userCoordinates,
+        agbAcceptedVersion: this.state.agbAcceptedVersion,
+        agbAcceptedAt: this.state.agbAcceptedAt,
+        agbAcceptanceHistory: this.state.agbAcceptanceHistory,
+        // User snapshot (notifications + identity/KYC flags).
+        // NOTE: isAuthenticated is NEVER persisted (Mandatory Auth Gate).
+        currentUser: this.state.currentUser
       }));
     } catch (e) {
       console.warn('LocalStorage save error', e);
@@ -188,17 +235,37 @@ class Store {
     this.setState({ viewportSize: size });
   }
 
-  // Persona switching
+  /**
+   * Dev/test tooling is only available outside production. An explicit
+   * `window.QUICKJOB_ENV` wins; otherwise dev hosts (localhost / file://) qualify.
+   */
+  isNonProductionEnvironment() {
+    try {
+      if (typeof window === 'undefined') return false;
+      if (window.QUICKJOB_ENV) {
+        return String(window.QUICKJOB_ENV).toLowerCase() !== 'production';
+      }
+      const host = window.location.hostname;
+      return host === 'localhost' || host === '127.0.0.1' || host === '' || window.location.protocol === 'file:';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Persona switching (debug tooling only — never authenticates)
   switchPersona(personaKey) {
     const user = mockUsers[personaKey] || mockUsers.jasper;
     const isEmployerPersona = personaKey === 'marcus' || personaKey === 'techcraft';
-    this.setState({
+    const patch = {
       currentPersonaKey: personaKey,
       currentUser: user,
-      isAuthenticated: true,
-      currentScreen: this.state.currentScreen === 'auth' ? 'home' : this.state.currentScreen,
       activeMode: isEmployerPersona ? 'post' : 'find'
-    });
+    };
+    // A persona switch must NOT authenticate; it only advances an existing session.
+    if (this.state.isAuthenticated && this.state.currentScreen === 'auth') {
+      patch.currentScreen = 'home';
+    }
+    this.setState(patch);
     this.showToast(`Switched active persona to ${user.name}`);
   }
 
@@ -209,8 +276,8 @@ class Store {
   }
 
   isMinor() {
-    const user = this.state.currentUser;
-    return Boolean(user && (user.ageCategory === 'YOUTH_14_17' || (user.age && user.age < 18)));
+    // Shared, authoritative minor predicate (age < 18 or youth/child ageCategory).
+    return isMinorUser(this.state.currentUser);
   }
 
   // Filter actions
@@ -441,6 +508,9 @@ class Store {
         bubble.appendChild(timeDiv);
         scrollContainer.appendChild(bubble);
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
+        // Persist the state mutation without a full-tree re-render (Failure Memory:
+        // keep the atomic in-place bubble append).
+        this.save();
       } else {
         this.setState({ conversations: updatedConvs });
         if (this.state.currentScreen !== 'messages' || this.state.selectedConversationId !== conversationId) {
@@ -518,7 +588,10 @@ class Store {
       description: jobData.description,
       requirements: jobData.requirements || ['Punctual', 'Reliable'],
       applicantsCount: 0,
-      isBookmarked: false
+      isBookmarked: false,
+      isBoosted: Boolean(jobData.isBoosted),
+      isTeamwork: Boolean(jobData.isTeamwork),
+      teamMembersNeeded: jobData.isTeamwork ? 2 : 1
     };
 
     const jobs = [newJob, ...this.state.jobs];
@@ -528,6 +601,14 @@ class Store {
       selectedJobId: null
     });
     this.showToast('Microjob published successfully!');
+  }
+
+  // Job detail sheet
+  openJobDetail(jobId) {
+    if (jobId === undefined || jobId === null) return;
+    const job = this.state.jobs.find(j => j.id === jobId);
+    if (!job) return; // ignore unknown/missing ids
+    this.setState({ selectedJobId: jobId });
   }
 
   // Review & Rating Modal actions
@@ -541,12 +622,22 @@ class Store {
 
   submitReview(jobId, rating, tags = [], comment = '', tipAmount = 0) {
     const parsedTip = Number(tipAmount) || 0;
+    const targetJob = this.state.jobs.find(j => j.id === jobId);
+    const workerId = targetJob && targetJob.worker ? targetJob.worker.id : null;
+
+    // Credit the JOB'S WORKER (100% of the tip per § 9), not merely the tipper.
     const jobs = this.state.jobs.map(j => {
       if (j.id === jobId) {
+        const worker = (j.worker && parsedTip > 0) ? {
+          ...j.worker,
+          walletBalance: (j.worker.walletBalance || 0) + parsedTip,
+          totalEarned: (j.worker.totalEarned || 0) + parsedTip
+        } : j.worker;
         return { 
           ...j, 
           state: JobStates.REVIEWED,
-          tipAmount: parsedTip
+          tipAmount: parsedTip,
+          worker
         };
       }
       return j;
@@ -559,9 +650,9 @@ class Store {
       return c;
     });
 
-    // If tip given, update wallet of worker
+    // Mirror the credit onto the logged-in user when they are the job's worker.
     let currentUser = this.state.currentUser;
-    if (parsedTip > 0 && currentUser.role === 'worker') {
+    if (parsedTip > 0 && currentUser && workerId && currentUser.id === workerId) {
       currentUser = {
         ...currentUser,
         walletBalance: (currentUser.walletBalance || 0) + parsedTip,
@@ -737,7 +828,10 @@ class Store {
           state: JobStates.COMPLETED,
           checkInStatus: 'COMPLETED',
           aiVisionVerified: true,
-          aiVisionSummary: '🤖 KI-Bildprüfung (Gemini Vision): Arbeitsergebnis erfolgreich und plausibel verifiziert (98% Übereinstimmung).'
+          aiVisionSummary: '🤖 KI-Bildprüfung (Gemini Vision): Arbeitsergebnis erfolgreich und plausibel verifiziert (98% Übereinstimmung).',
+          // Persist BOTH proof photos so the chat proof card actualizes (hasProof).
+          proofPhotoBefore: j.proofPhotoBefore || proofPlaceholder('Vorher'),
+          proofPhotoAfter: j.proofPhotoAfter || proofPlaceholder('Nachher')
         };
       }
       return j;
@@ -791,7 +885,9 @@ class Store {
     const updatedPortal = {
       ...(current.parentPortal || {}),
       isActive: !!isActive,
-      parentCode: current.parentPortal?.parentCode || '482910'
+      // A per-user code is generated on first activation. Never fall back to a
+      // shared hardcoded PIN — that would be a universal backdoor (rule §7).
+      parentCode: current.parentPortal?.parentCode || String(Math.floor(100000 + Math.random() * 900000))
     };
     this.setState({
       currentUser: {
@@ -957,6 +1053,7 @@ class Store {
   }
 
   submitReport(jobId, category, details) {
+    const job = this.state.jobs.find(j => j.id === jobId);
     const jobs = this.state.jobs.map(j => {
       if (j.id === jobId) {
         return { ...j, moderation: 'FLAGGED' };
@@ -964,8 +1061,37 @@ class Store {
       return j;
     });
 
+    const reporter = this.state.currentUser || {};
+    const reported = (job && job.employer) ? job.employer : {};
+    const report = {
+      id: `rep_${Date.now()}`,
+      jobId,
+      jobTitle: job ? job.title : '',
+      category,
+      categoryLabel: category,
+      details,
+      reason: details,
+      status: 'PENDING',
+      createdAt: new Date().toLocaleString('de-DE'),
+      reporter: { id: reporter.id, name: reporter.name },
+      reporterId: reporter.id,
+      reporterName: reporter.name,
+      reportedUserId: reported.id || null,
+      reportedUserName: reported.name || 'Unbekannt',
+      reportedUserHandle: reported.handle || '',
+      reportedUserEmail: reported.email || '',
+      reportedUserRole: 'employer',
+      reportedUserAge: '',
+      reportedUserStatus: 'active',
+      reportedUserRating: '3.0',
+      reportedUserRatingCount: 0,
+      reportedUserCompletedJobs: 0,
+      reportedUserReliability: 0
+    };
+
     this.setState({
       jobs,
+      reports: [report, ...(this.state.reports || [])],
       reportJobId: null
     });
     this.showToast('🛡️ Sicherheitsmeldung vertraulich eingegangen. Unser Team prüft den Vorfall sofort.');
@@ -1087,8 +1213,10 @@ class Store {
 
   // Authentication & Session Management Methods
   async checkSession() {
+    const epoch = ++this._sessionEpoch; // tag this request generation
     try {
       const res = await AuthService.getSession();
+      if (epoch !== this._sessionEpoch) return; // stale response superseded by a newer auth op
       if (res && res.authenticated && res.user) {
         this.setState({
           isAuthenticated: true,
@@ -1102,9 +1230,11 @@ class Store {
             age: res.user.age,
             role: res.user.role,
             emailVerified: res.user.email_verified,
-            isIdentityVerified: res.user.email_verified,
-            walletBalance: res.user.wallet_balance !== undefined ? res.user.wallet_balance : this.state.currentUser.walletBalance,
-            escrowBalance: res.user.escrow_balance !== undefined ? res.user.escrow_balance : this.state.currentUser.escrowBalance
+            isIdentityVerified: res.user.is_identity_verified !== undefined
+              ? Boolean(res.user.is_identity_verified)
+              : (this.state.currentUser?.isIdentityVerified ?? (Object.values(mockUsers).find(u => u.email === res.user.email)?.isIdentityVerified ?? false)),
+            walletBalance: res.user.wallet_balance !== undefined ? res.user.wallet_balance : this.state.currentUser?.walletBalance,
+            escrowBalance: res.user.escrow_balance !== undefined ? res.user.escrow_balance : this.state.currentUser?.escrowBalance
           }
         });
       } else {
@@ -1116,6 +1246,7 @@ class Store {
         });
       }
     } catch (e) {
+      if (epoch !== this._sessionEpoch) return;
       // Not logged in or session expired - strictly route to login screen
       this.setState({
         isAuthenticated: false,
@@ -1139,8 +1270,12 @@ class Store {
     try {
       const res = await AuthService.login({ email: cleanEmail, password, remember_me: remember });
       if (res && res.success && res.user) {
-        const isAdmin = res.user.role === 'admin' || cleanEmail === 'admin@quickjob.local';
+        // Admin role comes solely from the server response — never infer it from
+        // a known email, which would let a non-admin response be treated as admin.
+        const mockPersona = Object.values(mockUsers).find(u => u.email === cleanEmail) || {};
+        const isAdmin = res.user.role === 'admin';
         const userObj = isAdmin ? { ...mockUsers.admin, ...res.user, role: 'admin' } : {
+          ...mockPersona,
           ...this.state.currentUser,
           id: res.user.id,
           name: res.user.name,
@@ -1148,9 +1283,11 @@ class Store {
           age: res.user.age,
           role: res.user.role,
           emailVerified: res.user.email_verified,
-          isIdentityVerified: res.user.email_verified,
-          walletBalance: res.user.wallet_balance !== undefined ? res.user.wallet_balance : this.state.currentUser.walletBalance,
-          escrowBalance: res.user.escrow_balance !== undefined ? res.user.escrow_balance : this.state.currentUser.escrowBalance
+          isIdentityVerified: res.user.is_identity_verified !== undefined
+            ? Boolean(res.user.is_identity_verified)
+            : (mockPersona.isIdentityVerified ?? (this.state.currentUser?.isIdentityVerified ?? false)),
+          walletBalance: res.user.wallet_balance !== undefined ? res.user.wallet_balance : (this.state.currentUser?.walletBalance ?? mockPersona.walletBalance ?? 0),
+          escrowBalance: res.user.escrow_balance !== undefined ? res.user.escrow_balance : (this.state.currentUser?.escrowBalance ?? mockPersona.escrowBalance ?? 0)
         };
         this.setState({
           isAuthenticated: true,
@@ -1162,17 +1299,6 @@ class Store {
         return { success: true, user: res.user };
       }
     } catch (err) {
-      // Fallback for mock tester credentials
-      if (cleanEmail === 'admin@quickjob.local') {
-        this.setState({
-          isAuthenticated: true,
-          authSession: mockUsers.admin,
-          currentScreen: 'admin',
-          currentUser: { ...mockUsers.admin }
-        });
-        this.showToast('✓ Als Administrator angemeldet.');
-        return { success: true, user: mockUsers.admin };
-      }
       this.showToast(err.message || 'Anmeldung fehlgeschlagen.', 'error');
       return { success: false, error: err.message };
     }
@@ -1235,8 +1361,7 @@ class Store {
           currentScreen: 'home',
           currentUser: {
             ...prev.currentUser,
-            emailVerified: true,
-            isIdentityVerified: true
+            emailVerified: true
           }
         }));
         this.showToast('✓ E-Mail erfolgreich verifiziert! Konto ist uneingeschränkt aktiv.');
@@ -1483,7 +1608,7 @@ class Store {
     localStorage.removeItem(STORAGE_KEY);
     this.state = this.loadInitialState();
     this.notify();
-    this.showToast('Reset QuickJob data to initial mock seed.');
+    this.showToast('Reset EasyJob data to initial mock seed.');
   }
 }
 

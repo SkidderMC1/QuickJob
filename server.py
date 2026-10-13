@@ -1,9 +1,10 @@
 """
-QuickJob Production Server Entry Point
+EasyJob Production Server Entry Point
 Combines FastAPI REST API for Authentication, Sessions, and Legal Compliance
-with high-performance static file serving for the QuickJob PWA frontend.
+with high-performance static file serving for the EasyJob PWA frontend.
 """
 import os
+import logging
 import uvicorn
 from fastapi import FastAPI, Request, status
 from fastapi.staticfiles import StaticFiles
@@ -14,10 +15,12 @@ import json
 
 from backend.database import init_db, seed_default_legal_documents, get_db_connection
 from backend.security import hash_password
-from backend.api_auth import router as auth_router
+from backend.api_auth import router as auth_router, DEV_ENVIRONMENTS
+
+logger = logging.getLogger("quickjob")
 
 app = FastAPI(
-    title="QuickJob API & Application Server",
+    title="EasyJob API & Application Server",
     version="1.1.0",
     docs_url="/api/docs",
     redoc_url=None
@@ -30,10 +33,13 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:3000"
 ]
+# Allow local network devices (LAN RFC1918) on the same Wi-Fi/Ethernet network
+ALLOWED_ORIGIN_REGEX = r"^https?://(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$"
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=ALLOWED_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -88,10 +94,12 @@ async def security_and_path_filter_middleware(request: Request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    # geolocation must be allowed for same-origin so the map "locate me" works;
+    # microphone/camera stay disabled.
+    response.headers["Permissions-Policy"] = "geolocation=(self), microphone=(), camera=()"
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "
+        "script-src 'self'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
         "img-src 'self' data:; "
@@ -193,7 +201,7 @@ def seed_default_personas():
             0.0, 0.0, 5.0, 100,
             json.dumps(["Administration", "Moderation", "Compliance"]),
             "Wuppertal-Zentrum",
-            "Offizieller QuickJob System-Administrator und Compliance Moderator.",
+            "Offizieller EasyJob System-Administrator und Compliance Moderator.",
             None, now, now
         )
     ]
@@ -222,7 +230,7 @@ def seed_default_personas():
             "rep_102", "user_sophia", "Sophia Weber", "sophia@quickjob.local",
             "user_artur_s", "Artur Schneider", "artur.trade@mail-fake.com", "employer",
             "BETRUGSVERDACHT", "Zahlungsumgehung / Phishing-Verdacht",
-            "Aufforderung zur Abwicklung außerhalb von QuickJob Treuhand",
+            "Aufforderung zur Abwicklung außerhalb von EasyJob Treuhand",
             "Hat wiederholt versucht, die Treuhand-Zahlung zu umgehen und per verdächtiger externer Website zur Eingabe von Bankdaten aufzufordern.",
             "job_03", "Kartonagen sortieren im Lager", "PENDING", "CRITICAL",
             None, None, now, None
@@ -255,7 +263,19 @@ def seed_default_personas():
 # Initialize database and seed records
 init_db()
 seed_default_legal_documents()
-seed_default_personas()
+
+# Default demo personas all share the well-known password "Password123!", so they
+# must never be created in production. Only seed them for local dev/test/demo runs,
+# using the same shared environment set as the dev-endpoint guard (api_auth).
+QUICKJOB_ENV = os.environ.get("QUICKJOB_ENV", "development").strip().lower()
+if "QUICKJOB_ENV" not in os.environ:
+    logger.warning(
+        "QUICKJOB_ENV is unset; defaulting to 'development'. This is intended for local "
+        "dev/test only (dev endpoints and demo seeding stay enabled). "
+        "Set QUICKJOB_ENV=production in real deployments."
+    )
+if QUICKJOB_ENV != "production" and QUICKJOB_ENV in DEV_ENVIRONMENTS:
+    seed_default_personas()
 
 # Serve static assets securely from whitelisted subdirectories
 STATIC_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -291,4 +311,8 @@ async def serve_service_worker():
 
 
 if __name__ == "__main__":
-    uvicorn.run("server:app", host="127.0.0.1", port=8000, log_level="info")
+    # Bind to all interfaces by default so other devices on the same network can
+    # reach the dev server. Set QUICKJOB_HOST=127.0.0.1 to restrict to localhost.
+    host = os.environ.get("QUICKJOB_HOST", "0.0.0.0")
+    port = int(os.environ.get("QUICKJOB_PORT", "8000"))
+    uvicorn.run("server:app", host=host, port=port, log_level="info")

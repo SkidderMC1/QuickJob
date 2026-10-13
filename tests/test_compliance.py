@@ -30,6 +30,14 @@ def run_compliance_tests():
         page.goto(BASE_URL, wait_until="networkidle")
         page.wait_for_timeout(1000)
 
+        # The mandatory auth gate hides the bottom nav (and profile/jobs screens)
+        # until a real session exists. Persona switches are debug tooling that no
+        # longer authenticate, so establish a valid session first; the legal checks
+        # below still run against the switched persona's in-store profile.
+        page.evaluate("() => store.loginUser('sophia@quickjob.local', 'Password123!')")
+        page.wait_for_function("() => store.getState().isAuthenticated === true", timeout=10000)
+        page.wait_for_timeout(300)
+
         # ---------------------------------------------------------------------
         # TEST 1: Absolute Prohibition of Child Labor Under 13 (§ 5 Abs. 1 JArbSchG)
         # ---------------------------------------------------------------------

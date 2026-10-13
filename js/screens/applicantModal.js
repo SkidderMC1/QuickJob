@@ -1,5 +1,5 @@
 /**
- * QuickJob Applicant Management & Selection Modal
+ * EasyJob Applicant Management & Selection Modal
  * Allows employers to inspect applicant profiles, age compliance, and assign workers.
  */
 import { store } from '../state/store.js';
@@ -28,7 +28,7 @@ export function renderApplicantModal(state) {
               ${applicants.length} Helfer haben sich beworben · Vergütung: €${job.payment}
             </div>
           </div>
-          <button id="btn-close-applicants" aria-label="Schließen" style="font-size: 1.25rem; color: #64748b; padding: 4px;">
+          <button id="btn-close-applicants" aria-label="Schließen" style="font-size: 1.25rem; color: var(--qj-text-muted); padding: 4px;">
             ✕
           </button>
         </div>
@@ -68,9 +68,9 @@ export function renderApplicantModal(state) {
                   </div>
 
                   <!-- Pitch / Bewerbungsnachricht -->
-                  <div style="background: #f8fafc; border-radius: 8px; padding: 0.65rem; border: 1px solid #e2e8f0; font-size: 0.82rem; color: #334155; line-height: 1.4;">
+                  <div style="background: var(--qj-surface-subtle); border-radius: 8px; padding: 0.65rem; border: 1px solid var(--qj-border); font-size: 0.82rem; color: var(--qj-text-main); line-height: 1.4;">
                     "${escapeHTML(app.pitch || 'Hallo! Ich bin motiviert und helfe gerne bei dieser Aufgabe.')}"
-                    <div style="font-size: 0.68rem; color: #94a3b8; margin-top: 4px;">
+                    <div style="font-size: 0.68rem; color: var(--qj-text-subtle); margin-top: 4px;">
                       Eingegangen: ${app.appliedAt || 'Vor kurzem'}
                     </div>
                   </div>
@@ -101,7 +101,7 @@ export function renderApplicantModal(state) {
           <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--qj-radius-sm); padding: 0.65rem 0.85rem; font-size: 0.76rem; color: #1e40af; display: flex; gap: 0.4rem; margin-top: 0.5rem;">
             <span>🛡️</span>
             <div>
-              <strong>Treuhand-Garantie:</strong> Erst nach Auswahl eines Helfers wird deine genaue Hausnummer freigegeben. Die Zahlung (€${job.payment}) verbleibt geschützt im QuickJob Escrow.
+              <strong>Treuhand-Garantie:</strong> Erst nach Auswahl eines Helfers wird deine genaue Hausnummer freigegeben. Die Zahlung (€${job.payment}) verbleibt geschützt im EasyJob Escrow.
             </div>
           </div>
         </div>
